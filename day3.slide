@@ -1,0 +1,158 @@
+Introduction to Go
+01 January 2021
+
+Julien Cretel
+jcretel-infosec+golang-human-coders@protonmail.com
+@jub0bs
+
+* Go's mascot
+
+\... is a gopher ([[https://blog.golang.org/gopher][more about this choice on Golang's blog]])
+
+.image https://blog.golang.org/gopher/gopher.png 400 _
+
+
+
+* Concurrency
+
+- Go has native support for concurrency.
+- arguably Go's most fascinating aspect
+- very relevant in this era of multicores
+
+
+
+* Concurrency is not parallelism
+
+*Concurrency*
+
+- the art of composing a programme in terms of independenly executing computations
+- a quality of the programme's structure (happens at _writing_ time)
+
+*Parallelism*
+
+- the act of executing code on multiple cores 
+- a quality of the programme's execution (happens at _run_ time)
+
+[[https://www.youtube.com/watch?v=oV9rvDllKEg][see Rob Pike's talk on the topic]]
+
+
+
+* Go's concurrency model
+
+Largely inspired by [[https://dl.acm.org/doi/10.1145/359576.359585][Tony Hoare's  _Communicating_Sequential_Processes_ (1978)]]
+
+Two fundamental mechanisms
+
+- goroutines
+- channels
+
+
+
+* Goroutines
+
+A goroutine
+
+- is a concurrent function execution
+- can be thought of as a very lightweight thread
+- has no ID (unlike a Unix process)
+
+The `main` function is itself a goroutine that is created when the programme starts.
+
+It's common for programmes to have hundreds, or even thousands of goroutines.
+
+
+
+* The Go scheduler
+
+- the part of Go's runtime responsible for "juggling" goroutines
+- continuously attempts to switch between goroutines in order to maximise work
+- no need to understand how it works, at this stage of your Go learning
+
+
+
+* The go keyword
+
+- spawns a new goroutine
+- causes the following function call to get executed "in the background"
+
+  go grindCoffeeBeans()
+  go frothMilk()
+
+- similar to the ampersand operator in Unix shells
+
+  #!/usr/bin/env sh
+
+  grindCoffeeBeans &
+  frothMilk &
+
+- `go` statements return _immediately_!
+
+
+
+* The golden rule
+
+Before launching a goroutine, you must understand exactly under what conditions it will terminate.
+
+In other words, do not spawn goroutines willy-nilly!
+
+Otherwise, you would expose yourself to bugs and _goroutine_leaks_.
+
+
+
+* Exercise: first steps with goroutines
+
+Write two functions, `grindBeans` and `frothMilk`, that
+
+- take no parameters and return no results,
+- simply write an informative message to stdout.
+
+Call them concurrently in the `main` function.
+
+
+
+* Exercise: first steps with goroutines
+
+.play goroutines_without_waitgroup.go /^//START/,/^//END/
+
+Does the programme behave as you expected? Why or why not?
+
+
+* Exercise: first steps with goroutines
+
+Nothing gets written to stdout because
+
+- `go` statements _immediately_ return control to `main`, and
+- `main` terminates _before_ your two goroutines themselves terminate!
+
+We need a way to tell `main` to "wait" until the two goroutines terminate.
+
+Any ideas?
+
+
+
+* Exercise: first steps with goroutines
+
+Sleep a bit at the end?
+
+.play goroutines_with_sleep.go /^//START/,/^//END/
+
+Kinda works, but not entirely satisfactory... Why?
+
+
+
+* Exercise: first steps with goroutines
+
+How long should the sleep be, exactly? Impossible to know in advance.
+
+- Wait too little: `main` terminates too quickly for all the other goroutines to terminate.
+- Wait too long: `main` ends up needlessly spinning and wasting time.
+
+Sleeping is simply not a reliable way of coordinating goroutines!
+
+We need another mechanism...
+
+
+
+* Wait groups
+
+TODO
