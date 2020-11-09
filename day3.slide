@@ -33,6 +33,8 @@ jcretel-infosec+golang-human-coders@protonmail.com
 - the act of executing code on multiple cores 
 - a quality of the programme's execution (happens at _run_ time)
 
+Concurrency _enables_ parallelism.
+
 [[https://www.youtube.com/watch?v=oV9rvDllKEg][see Rob Pike's talk on the topic]]
 
 
@@ -54,7 +56,7 @@ A goroutine
 
 - is a concurrent function execution
 - can be thought of as a very lightweight thread
-- has no ID (unlike a Unix process)
+- has no ID, unlike a Unix process ([[https://talks.golang.org/2014/go4gophers.slide#38][rationale]])
 
 The `main` function is itself a goroutine that is created when the programme starts.
 
