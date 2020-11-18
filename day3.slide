@@ -19,6 +19,8 @@ jcretel-infosec+golang-human-coders@protonmail.com
 - arguably Go's most fascinating aspect
 - very relevant in this era of multicores
 
+Disclaimer: cooking metaphors galore ahead!
+
 
 
 * Concurrency is not parallelism
@@ -66,9 +68,11 @@ It's common for programmes to have hundreds, or even thousands of goroutines.
 
 * The Go scheduler
 
-- the part of Go's runtime responsible for "juggling" goroutines
-- continuously attempts to switch between goroutines in order to maximise work
-- no need to understand how it works, at this stage of your Go learning
+It's the part of Go's runtime responsible for "juggling" goroutines in order to maximise work.
+
+No need to understand how the Go scheduler works, at this stage of your Go learning.
+
+Just think of the Go Scheduler and goroutines as a chef and his/her kitchen assistants.
 
 
 
@@ -89,6 +93,8 @@ It's common for programmes to have hundreds, or even thousands of goroutines.
 
 - `go` statements return _immediately_!
 
+: terminology: spawning goroutine vs. spawned goroutine
+
 
 
 * The golden rule
@@ -101,7 +107,7 @@ Otherwise, you would expose yourself to bugs and _goroutine_leaks_.
 
 
 
-* Exercise: first steps with goroutines
+* Exercise: concurrent coffee making
 
 Write two functions, `grindBeans` and `frothMilk`, that
 
@@ -110,20 +116,23 @@ Write two functions, `grindBeans` and `frothMilk`, that
 
 Call them concurrently in the `main` function.
 
+: Q: Which message will be printed first? We can't tell. Up to the scheduler.
 
 
-* Exercise: first steps with goroutines
+
+* Exercise: concurrent coffee making (first attempt)
 
 .play goroutines_without_waitgroup.go /^//START/,/^//END/
 
 Does the programme behave as you expected? Why or why not?
 
 
-* Exercise: first steps with goroutines
+
+* main does not wait!
 
 Nothing gets written to stdout because
 
-- `go` statements _immediately_ return control to `main`, and
+- `go` statements _immediately_ transfer control back to `main`, and
 - `main` terminates _before_ your two goroutines themselves terminate!
 
 We need a way to tell `main` to "wait" until the two goroutines terminate.
@@ -132,7 +141,7 @@ Any ideas?
 
 
 
-* Exercise: first steps with goroutines
+* Exercise: concurrent coffee making (with sleep)
 
 Sleep a bit at the end?
 
@@ -142,7 +151,7 @@ Kinda works, but not entirely satisfactory... Why?
 
 
 
-* Exercise: first steps with goroutines
+* Sleeping is not the answer
 
 How long should the sleep be, exactly? Impossible to know in advance.
 
@@ -157,4 +166,60 @@ We need another mechanism...
 
 * Wait groups
 
-TODO
+The [[https://golang.org/pkg/sync/#WaitGroup][standard library]] provides a mechanism for _orchestrating_ goroutines: wait groups.
+
+Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
+
+: e.g. if you're spawning a goroutine for each line of a file that you're reading
+
+
+
+* Declaring a wait group
+
+The zero value is readily usable:
+
+  wg := sync.WaitGroup{} // unnecessary
+
+  var wg sync.WaitGroup  // better
+
+
+
+* Operations on a wait group
+
+A wait group is little more than a glorified counter with _concurrency-safe_ operations.
+
+- `wg.Add(n)` increments the counter by n (positive).
+- `wg.Done()` decrements the counter by 1 (equivalent to `wg.Add(-1)`).
+- `wg.Wait()` blocks until the counter goes back to 0.
+
+
+
+* How to use a wait group
+
+Typically, you would call
+
+- `wg.Add(1)` _just_before_ spawning a goroutine;
+- `wg.Done()` at the very end of each spawned goroutine;
+- `wg.Wait()` in the spawning goroutine to wait for all spawned goroutines to terminate.
+
+Note that
+
+- Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the spawned goroutine!
+- The call to `wg.Wait` must happen _after_ all calls to `wg.Add`!
+- Calls to `wg.Done` can be _deferred_ at the very top of the spawned goroutines.
+
+
+
+* Exercise: concurrent coffee making (using a wait group)
+
+Use a wait group to make sure both `grindCoffeeBeans` and `frothMilk` have terminated when `main` terminates.
+
+
+
+* Exercise: concurrent coffee making (using a wait group)
+
+(implementations of `grindCoffeeBeans` and `frothMilk` are as before)
+
+.play goroutines_with_waitgroup.go /^//START/,/^//END/
+
+: don't forget the pair of parens at the end of each function literal!
