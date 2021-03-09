@@ -5,7 +5,7 @@
 * Go VSCode extension
 * Git
 * Wifi
-* https://github.com/jub0bs/human-coders-go-slides
+* https://github.com/jub0bs/intro-to-golang
 
 ---
 
