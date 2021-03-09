@@ -1,6 +1,6 @@
 ### Installation
 
-* Go v1.15.2
+* Go v1.16
 * Visual Studio Code
 * Go VSCode extension
 * Git
@@ -35,8 +35,8 @@
 * created at Google in 2009
 * ...by [Rob Pike, Robert Griesemer, Ken Thompson](https://res.cloudinary.com/practicaldev/image/fetch/s--opTYcTMa--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://cdn-images-1.medium.com/max/800/1%2A5O-YqwO94QUQ8OkNypcVdQ.png)
 * Go 1.0 released in 2012
-* Go 1.15.2 (latest release)
-* powers Docker, Kubernetes, and many more
+* Go 1.16 (latest release)
+* powers Docker, Kubernetes, Terraform, and many more
 
 ---
 
@@ -57,7 +57,7 @@
 * object-oriented, but no inheritance
 * built-in concurrency (channels, goroutines)
 * no operator overloading
-* no generics
+* no generics (yet!)
 
 ---
 
