@@ -355,20 +355,20 @@ func process(filenames []string) {
 ### Gotcha: `defer` in a loop
 
 ```go
-func foo() {
-  for i := range is {
-    if err := process(i); err != nil {
+func process(filenames []string) {
+  for _, filename := range resources {
+    if err := processOne(filename); err != nil {
       // deal with error
     }
   }
 }
-func process(i int) error {
-  r, err := obtainResource(i)
-  if err != nil {
-    // deal with error
-  }
-  defer r.Close()
-  // do something with r...
+func processOne(filename string) error {
+    file, err := os.Open(filename)
+    if err != nil {
+      // deal with error
+    }
+    defer file.Close()
+    // do something interesting with file...
 }
 ```
 
