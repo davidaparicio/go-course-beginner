@@ -689,7 +689,7 @@ func (t *Tree) Save(w io.Writer) error
 * only ask for the required behaviour from interface parameters
 
 ```go
-func (t *Tree) Save(rw ReadWriter) error // good?
+func (t *Tree) Save(rw io.ReadWriter) error // good?
 ```
 
 ---
@@ -700,7 +700,7 @@ func (t *Tree) Save(rw ReadWriter) error // good?
 * similar to DDD principle of "keeping ports small"
 
 ```go
-func (t *Tree) Save(w Writer) error // better!
+func (t *Tree) Save(w io.Writer) error // better!
 ```
 
 ---
