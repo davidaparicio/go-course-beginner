@@ -827,7 +827,7 @@ mu.Unlock()
 * Dave Cheney: https://dave.cheney.net
 * JBD/Rakyll: https://rakyll.org
 * Jack Lindamood: https://medium.com/@cep21
-* jubobs.com (shameless plug)
+* jub0bs.com (shameless plug)
 
 ---
 
