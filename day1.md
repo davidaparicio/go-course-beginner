@@ -5,7 +5,7 @@
 * Go VSCode extension
 * Git
 * Wifi
-* https://github.com/jub0bs/intro-to-golang
+* Slides: https://github.com/jub0bs/intro-to-golang
 
 ---
 
@@ -32,8 +32,9 @@
 
 ### Go's history
 
-* created at Google in 2009
+* created at Google in 2007
 * ...by [Rob Pike, Robert Griesemer, Ken Thompson](https://res.cloudinary.com/practicaldev/image/fetch/s--opTYcTMa--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://cdn-images-1.medium.com/max/800/1%2A5O-YqwO94QUQ8OkNypcVdQ.png)
+* open-sourced in 2009
 * Go 1.0 released in 2012
 * Go 1.16 (latest release)
 * powers Docker, Kubernetes, Terraform, and many more
@@ -47,6 +48,7 @@
 * fast compilation
 * garbage collector (fast & easy to tune)
 * pointers, but no pointer arithmetic
+* full Unicode support
 
 ---
 
@@ -55,7 +57,7 @@
 * multiple return values
 * first-class functions
 * object-oriented, but no inheritance
-* built-in concurrency (channels, goroutines)
+* built-in concurrency
 * no operator overloading
 * no generics (yet!)
 
@@ -65,19 +67,11 @@
 
 * BSD licence
 * an agenda of simplicity
+* stability of the language and its standard library
 * no centralised package repository
 * rich standard library
 * rich command-line interface (gofmt!)
-* vibrant community
-
----
-
-### Why learn Go now
-
-* built-in concurrency
-* slowly evolving language
-* dependency management (finally) solved
-* good serverless support (AWS, GCP, Azure)
+* a welcoming community
 
 ---
 
@@ -93,12 +87,10 @@
 
 ### Go playground limitations
 
-* a single, main package
+* mostly for a single main package
 * no networking
 * no command-line arguments
 * only standard-library imports
-* concurrency is weird...
-* no "undo" functionality (`^z`)
 
 ---
 
@@ -106,7 +98,7 @@
 
 ---
 
-### [Hello, World!](https://play.golang.org/p/xY2BPIIxBbk)
+### [Hello, World!](https://play.golang.org/p/7vin2BK8_A6)
 
 ```go
 package main
@@ -114,7 +106,7 @@ package main
 import "fmt"
 
 func main() {
-	fmt.Println("Hello, World!")
+	fmt.Println("Hello, 世界")
 }
 ```
 
@@ -127,6 +119,16 @@ func main() {
 * `main` function: program's entrypoint
 * import-declaration syntax
 * no semicolons needed to terminate statements
+* tabs, not spaces (by convention)
+
+---
+
+### Namecheck project: getting started
+
+* create a `namecheck` folder
+* open it in VS Code
+* create a `main.go` file in it
+* write a "Hello World" programme
 
 ---
 
@@ -139,28 +141,19 @@ $ ./main
 
 ---
 
-### Compiling and executing a Go program (2)
-
-```shell
-$ go build <path-to-source-code-directory>
-$ ./namecheck # for example
-```
-
----
-
-### Compiling and executing a Go program (3)
+### Executing a Go program in one step
 
 ```shell
 $ go run main.go
 ```
 
-equivalent to
+roughly equivalent to
 
 
 ```shell
 $ go build main.go
 $ ./main
-$ rm main
+$ rm ./main
 ```
 
 ---
@@ -183,7 +176,10 @@ continue    for           import    return      var
 ```txt
 false true nil iota
 ```
-* Types (more about that later)
+* Built-in types
+```txt
+bool int uint rune float64 string ...
+```
 * Built-in functions
 ```txt
 make    len     cap     new
@@ -213,7 +209,7 @@ var foo = "foo" // this is a comment
 
 ---
 
-## Imports
+## Packages
 
 ---
 
@@ -222,7 +218,7 @@ var foo = "foo" // this is a comment
 * globally unique
 * examples
   * `fmt`
-  * `io/ioutil`
+  * `net/http`
   * `github.com/jub0bs/missilelauncher`
 
 ---
@@ -232,12 +228,47 @@ var foo = "foo" // this is a comment
 * the last component of the package path
 * examples
   * `fmt`
-  * `ioutil`
+  * `http`
   * `missilelauncher`
-* picking a different name is possible:
+
+---
+
+### Normal imports
+
+```go
+import "github.com/jub0bs/missilelauncher"
+
+func main() {
+  missilelauncher.NukeThemAll()
+}
+```
+
+members of the package are accessible via the default package name
+
+---
+
+### Named imports
+
+* allows you to use a different name for the package locally
+* useful when the default package name is long
 ```go
 import ml "github.com/jub0bs/missilelauncher"
 ```
+* useful for resolving name collisions
+```
+import "math/rand"
+import crand "crypto/rand"
+```
+
+---
+
+### Blank imports
+
+```go
+import _ "github.com/lib/pq"
+```
+
+more on that later
 
 ---
 
@@ -269,16 +300,19 @@ import (
 
 ---
 
-### Elements of style
+### Package: exported and unexported
 
-* source files in UTF-8
-* indentation: tabs, not spaces
+* no encapsulation at the type level
+* only two access levels
+  * exported (public)
+  * unexported (package-private)
+* the case of an identifier's initial matters
+  * upper case: exported
+  * lower case: unexported
 
 ---
 
 # Variables
-
-In Go, a variable is an _addressable value_.
 
 ---
 
@@ -355,89 +389,78 @@ fmt.Printf("value: %d\n", i) // "value: 0"
   * the initial value doesn't matter
   * the default type of the initialising expression won't do
 
+---
+
+### Namecheck project: 
+
+* declare a `username` string variable
+* initialize it with your GitHub/Twitter username
+* use a function from the `fmt` package to print the message
+```txt
+Hello, <username>
+```
+* `fmt`'s documentation is available at https://golang.org/pkg/fmt/
 
 ---
 
-# Basic types
+## Pointers
+
+* In Go, a variable is an _addressable value_.
+* A pointer is a value that holds the address of a variable.
 
 ---
 
-### Booleans
+### Dereferencing a pointer
 
-* type `bool`
-* values: `false` or `true`
-* zero value: `false`
-* not: `!`
-* and: `&&`
-* or: `||`
+* `&`: address-of operator
+* `*`: dereference operator
+* https://play.golang.org/p/GUVuB8Ao6vU
 
 ---
 
-### Signed integers
+### Pointer types
 
-* `int` (size is platform-dependent)
-* `int8`
-* `int16`
-* `int32` (a.k.a. `rune`)
-* `int64`
+* `*T` denotes the type of a pointer to a variable of type `T`
+* https://play.golang.org/p/zHvpWOITgVm
 
 ---
 
-### Unsigned integers
+### Pointers are reference types
 
-* `uint` (size is platform-dependent)
-* `uint8` (a.k.a. `byte`)
-* `uint16`
-* `uint32`
-* `uint64`
-* `uintptr` (size is platform-dependent)
+* zero value: `nil`
+* Deferencing a `nil` pointer causes a _panic_ (unrecoverable failure).
+* https://play.golang.org/p/hj95etHEX3j
+
 
 ---
 
-### Floating-point numbers
-
-* `float32`
-* `float64`
-* `complex64`
-* `complex128`
+# Strings
 
 ---
 
-### Numeric operators
+### UTF-8
 
-* arithmetic: `+`, `-`, `*`, `/`, `%`
-* comparison: `==`, `!=`, `<`, `<=`, `>`, `>=`
-* bitwise (integers): `&`, `|`, `^`, `&^`, `<<`, `>>`
-* also compound operators: `+=`, etc.
-
----
-
-### Increment/decrement statements
-
-* only work with integer types
-* increment `i` by 1: `i++`
-* decrement `i` by 1: `i--`
-* no prefix inc/dec operators
-* `i++` is a statement, not an expression!
+* the most popular string encoding
+* Go strings are encoded in UTF-8
+* Go source files _must_ be UTF-8
+* each code point takes 1 to 4 bytes
+* a glyph/character can be composed of multiple code points
 
 ---
 
 ### Runes
 
-* `rune` is an alias for `int32`
-* represents a single Unicode code point
-* UTF-8 encoding (1 to 4 bytes per rune)
-* number of bytes in rune `r`:
-    ```go
-    utf8.RuneLen(r)
-    ```
+* `rune` is a type that represents a Unicode code point
+* interchangeable with `int32`
+* To get the number of bytes in a given rune, use the `unicode/utf8` package.
+* https://play.golang.org/p/G3LTF-HzfVb
 
 ---
 
 ### Rune literals
 
 * delimited by single quotes: `'a'`, `'汉'`
-* some escape sequences:
+* escape sequences:
   * `'\n'`
   * `'\uhhhh'`
   * `'\Uhhhhhhhh'`
@@ -457,14 +480,12 @@ fmt.Printf("value: %d\n", i) // "value: 0"
 
 ### String literals
 
-* delimited by double quotes...
-
+* delimited by double quotes
 ```go
 s := "Hello World!"
 ```
-
-* ...or backticks (_raw string_)
-
+* alternatively, backticks (_raw string_)
+* useful for multiline strings and string literals containing `"`
 ```go
 `json:"Name"`
 ```
@@ -630,21 +651,6 @@ const (
 )
 ```
 
----
-
-## Pointers
-
-* a value that holds the address of a variable
-* `*T` denotes the type of a pointer to a variable of type `T`
-* zero value: `nil`
-
----
-
-## Pointers (cont'd)
-
-* `&`: address-of operator
-* `*`: dereference operator
-* `nil` dereference: panic!
 
 ---
 

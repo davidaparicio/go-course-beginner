@@ -31,7 +31,7 @@
 
 * packages defined in subdirectories of a package
 * logical grouping of related functionalities
-* example: `io/ioutil`
+* example: `encoding/json`
 * completely isolated from superpackage
 
 ---
@@ -80,88 +80,14 @@ Package initialisation happens
 
 ---
 
-## Consuming a package
-
----
-
-### Normal import
-
-```
-import "fmt"
-```
-* using default package name
-
----
-
-### Named import
-
-```
-import "math/rand"
-import crand "crypto/rand"
-```
-* renaming a package to avoid conflicts
-
----
-
 ### Blank import
 
 ```
-import _ "sql/postgres"
+import _ "github.com/lib/pq"
 ```
 * import only for initialisation's side effects!
 * members of package are not accessible
-* used to register specific SQL drivers with `sql` package
-
----
-
-### dot import
-
-* all exported identifiers usable without qualification
-```
-import . "fmt"
-// ...
-Println("foo") // no 'fmt.' needed here
-```
-* seldom used
-
----
-
-### relative import
-
-```
-import "../twitter"
-```
-* relative to location on disk
-* expedient for quick & dirty prototype
-* avoid at all costs!
-
----
-
-### Access control
-
-* package: the unit of encapsulation
-* no encapsulation at the type level
-* only two access levels
-  * exported (public)
-  * unexported (package-private)
-
----
-
-### Exporting identifiers
-
-* the case of an identifier's initial matters
-  * upper case: exported
-  * lower case: unexported
-
----
-
-### Internal packages
-
-* packages named "internal" are special
-* an extra mechanism for encapsulation
-* only visible to
-  * the parent package
-  * the parent's subpackages
+* used to register specific SQL drivers with the `sql` package
 
 ---
 
@@ -210,27 +136,23 @@ func Checkers() []Checker {...}
 ### Don't panic
 
 * good libraries don't panic (after initialisation)
-* report failures to clients as `error`s
+* report anticipated failures to clients as `error`s
 
 ---
 
-## Organising packages
+### Organizing packages
 
----
-
-### Shape of package structure
-
-* flat & wide
-* _not_ tall & narrow
+![](pkg_shallow_and_wide.svg)
 
 ---
 
 ### Subpackages
 
-* more specific functionalities
+* contain more specific functionalities
 * no cycles allowed in dependency graph!
-* dependency arrows point upward
-* example: `sql` subpackages
+* tip: dependency arrows shouldn't point down
+
+![](dep_arrows_dont_point_down.svg)
 
 ---
 
@@ -241,7 +163,7 @@ func Checkers() []Checker {...}
 namecheck
 ├── cmd
 │   └── cli
-│       └── cli.go
+│       └── main.go
 ...
 ```
 * command-line argument: username
@@ -731,6 +653,15 @@ for {
 
 ## Project: turn your CLI tool into a server
 
+```
+namecheck
+├── cmd
+│   ├── cli
+│   │   └── main.go
+│   └── server
+│       └── main.go
+```
+
 See the documentation of the `http` package.
 
 ---
@@ -744,6 +675,12 @@ See the documentation of the `http` package.
 
 ---
 
+### Project: number of visits
+
+* keep a count of the number of requests served
+
+---
+
 ### Atomics
 
 * synchronized operations on fixed-sized integers
@@ -751,9 +688,135 @@ See the documentation of the `http` package.
 
 ---
 
-### Project: number of visits
+### Project: count of checks per username
 
-* keep a count of the number of requests served
+* keep track (in memory) of how many times a given username has been checked
+* ... we need some kind of dictionary or associative array...
+
+---
+
+## Maps
+
+---
+
+### Maps
+
+* collection of key-value pairs
+* a map of `K`s to `V`s has type `map[K]V`
+* the key type must be comparable
+* implemented as a hash table
+
+---
+
+### Maps are reference types
+
+* zero value: `nil`
+* accessing elements of a nil map: zero value of value type
+* attempting to add an entry to a nil map => panic!
+
+---
+
+### Maps are reference types (cont'd)
+
+* a function that takes a map argument gets a copy of the reference
+* the underlying hash table does not get copied
+
+---
+
+### Initializing a map
+
+```go
+m := make(map[string]int)
+```
+
+---
+
+### Map literals
+
+```go
+enToFr := map[string]string {
+  "one": "un",
+  "two": "deux",
+  "three": "trois", // mandatory comma
+}
+```
+
+---
+
+### Accessing the elements of a map
+
+* `v := m[k]`
+* key `k` needs not be in the map
+* ... in which case `v` will be the zero value for the value type!
+
+---
+
+### Testing for membership
+
+```go
+v := m[k] // then test that v is not the zero value?
+```
+
+---
+
+### Testing for membership
+
+```go
+v := m[k] // ambiguous!
+
+// solution
+v, ok := m[k]
+if ok {
+  // the key is present
+}
+```
+
+---
+
+### Ranging over a map
+
+```go
+for k, v := range m {
+  // do something with k and v
+}
+```
+* iteration order is nondeterministic!
+
+---
+
+### Ranging over a map in a deterministic order
+
+```go
+// create a slice of keys
+keys := make([]string, 0, len(m))
+for k := range m {
+  keys = append(keys, k)
+}
+
+// sort it
+sort.Strings(keys)
+
+// then range over the sorted slice of keys
+for k := range keys {
+  // do something with k and m[k]
+}
+```
+
+---
+
+### Sets
+
+* No native set type in Go!
+* Usually implement as `map[T]bool`
+* ... or `map[T]struct{}`
+
+---
+
+### Project: count of checks per username
+
+* keep track (in memory) of how many times a given username has been checked
+* use a `map[string]uint`
+* any issue?
 
 ---
 
@@ -765,28 +828,11 @@ See the documentation of the `http` package.
 
 ---
 
-### Mutex example: concurrency-safe map
+### Project: count of checks per username
 
-```
-var mu sync.Mutex
-m := map[string]int
-// ...
-// inside some goroutine
-s := "foo"
-mu.Lock()
-{
-  m[s]++
-}
-mu.Unlock()
-```
-
-* readability tip: enclose the critical section in braces to make it stand out
-
----
-
-### Project: number of visits
-
-* keep track of how many times each username has been checked
+* keep track (in memory) of how many times a given username has been checked
+* use a `map[string]uint`
+* use a `sync.Mutex` to prevent data races
 
 ---
 

@@ -430,9 +430,19 @@ When not too inconvenient, favor defining a dedicated named function:
 
 
 
-* Closing a channel
+* Semantics of close
 
-.image Untitled.svg
+.image close_semantics.svg _ 800
+
+
+* Semantics of a channel send
+
+.image send_semantics.svg 500 _
+
+
+* Semantics of a channel receive
+
+.image receive_semantics.svg 500 _
 
 
 * Exercise: ping-pong game with cancelation (via a done channel) TODO

@@ -158,124 +158,7 @@ for i, v := range s {
 ### Aliasing
 
 * multiple slices may use the same underlying array
-* careful...
-
----
-
-## Maps
-
----
-
-### Maps
-
-* collection of key-value pairs
-* a map of `K`s to `V`s has type `map[K]V`
-* the key type must be comparable
-* implemented as a hash table
-
----
-
-### Maps are reference types
-
-* zero value: `nil`
-* accessing elements of a nil map: zero value of value type
-* attempting to add an entry to a nil map => panic!
-
----
-
-### Maps are reference types (cont'd)
-
-* a function that takes a map argument gets a copy of the reference
-* the underlying hash table does not get copied
-
----
-
-### Allocating a map
-
-```go
-m := make(map[string]int)
-```
-
----
-
-### Map literals
-
-```go
-enToFr := map[string]string {
-  "one": "un",
-  "two": "deux",
-  "three": "trois", // mandatory comma
-}
-```
-
----
-
-### Accessing the elements of a map
-
-* `v := m[k]`
-* key `k` needs not be in the map
-* ... in which case `v` will be the zero value for the value type!
-
----
-
-### Testing for membership
-
-```go
-v := m[k] // then test that v is not the zero value?
-```
-
----
-
-### Testing for membership
-
-```go
-v := m[k] // ambiguous!
-
-// solution
-v, ok := m[k]
-if ok {
-  // the key is present
-}
-```
-
----
-
-### Ranging over a map
-
-```go
-for k, v := range m {
-  // do something with k and v
-}
-```
-* iteration order is nondeterministic!
-
----
-
-### Ranging over a map in a deterministic order
-
-```go
-// create a slice of keys
-keys := make([]string, 0, len(m))
-for k := range m {
-  keys = append(keys, k)
-}
-
-// sort it
-sort.Strings(keys)
-
-// then range over the sorted slice of keys
-for k := range keys {
-  // do something with k and m[k]
-}
-```
-
----
-
-### Sets
-
-* No native set type in Go!
-* Usually implement as `map[T]bool`
-* ... or `map[T]struct{}`
+* careful: don't hold on to a pointer to a slice element while appending to it
 
 ---
 
@@ -338,9 +221,9 @@ func IsAvailable(username string) (bool, error) {
 * Can you spot the problem?
 
 ```go
-func process(filenames []string) {
-  for _, filename := range resources {
-    file, err := os.Open(filename)
+func process(paths []string) {
+  for _, path := range paths {
+    file, err := os.Open(path)
     if err != nil {
       // deal with error
     }
@@ -355,15 +238,15 @@ func process(filenames []string) {
 ### Gotcha: `defer` in a loop
 
 ```go
-func process(filenames []string) {
-  for _, filename := range resources {
-    if err := processOne(filename); err != nil {
+func process(paths []string) {
+  for _, path := range paths {
+    if err := processOne(path); err != nil {
       // deal with error
     }
   }
 }
-func processOne(filename string) error {
-    file, err := os.Open(filename)
+func processOne(path string) error {
+    file, err := os.Open(path)
     if err != nil {
       // deal with error
     }
