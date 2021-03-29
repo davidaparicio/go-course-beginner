@@ -1,0 +1,446 @@
+Introduction to Go
+01 January 2021
+
+Julien Cretel
+jcretel-infosec@protonmail.com
+https://jub0bs.com
+@jub0bs
+
+* Setup
+
+- Go (>= 1.16)
+- Visual Studio Code
+- [[https://code.visualstudio.com/docs/languages/go][Go extension for Visual Studio Code]]
+- Git
+
+
+* About the course
+
+- interaction
+- regular breaks
+- learn the fundamentals
+- emphasis on practice over theory
+- long-running project
+
+: the source code of my solution will be available on GitHub
+
+
+
+* Namecheck project
+
+*Objectives*
+
+- Write a small CLI tool to check the validity and status of a username on multiple social networks.
+- Convert it into a HTTP server.
+- A forcing function for learning Go: we'll introduce new concepts as needed.
+
+*Business* *case*
+
+- Choose a brand name consistent across multiple platforms.
+- Username squatting 😈
+
+
+
+* Before we get started: Hello World
+
+.play -edit helloworld.go
+
+
+
+
+* A few words about Go
+
+
+
+* Go's mascot
+
+\... [[https://blog.golang.org/gopher][is a gopher]].
+
+.image https://blog.golang.org/gopher/gopher.png 400 _
+
+
+
+* Go's logo
+
+\... [[https://blog.golang.org/go-brand][is not the gopher!]]
+
+.image https://blog.golang.org/go-brand/logos.jpg 400 _
+
+
+
+* Genesis
+
+Go was created in 2007 at Google by Robert Griesemer, Rob Pike, and Ken Thompson.
+
+.image three_lads.jpeg
+
+
+
+* Genesis
+
+Robert, Rob, and Ken started working on Go (on 20% time) out of frustration with C++: language complexity, long build times, poor support for concurrency.
+
+.image https://imgs.xkcd.com/comics/compiling.png
+
+
+
+* History of the Go project
+
+- started in 2007
+- open-sourced in 2009
+- Go 1.0 released in 2012
+- ...
+- Go 1.16 released in 2021.
+
+
+
+* Go's object orientation
+
+Go allows you to declare custom types (and methods on them), which promote _abstraction_.
+
+Go has no concept of _inheritance_. Instead, it facilitates _composition_.
+
+Go interfaces enable _polymorphism_ and structural subtyping.
+
+Go packages enable _encapsulation_.
+
+
+
+* Go's functional orientation
+
+Functions are first-class citizens: they can
+
+- take other functions as parameters, and
+- return functions as results.
+
+Go also supports
+
+- anonymous functions (though no concise "lambda" notation), and
+- lexical closures.
+
+
+
+* Concurrency
+
+
+
+* Concurrency
+
+Concurrency is the art of composing a programme in terms of independently executing computations.
+
+Go has native support (i.e. in the language and runtime) for concurrency.
+
+Go's concurrency model is arguably one of the language's most fascinating aspects.
+
+
+
+* Concurrency
+
+Disclaimer: many cooking metaphors ahead!
+
+.image https://homemaking.com/wp-content/uploads/2020/04/cooking.jpg 400 _
+
+
+
+* Concurrency is not parallelism
+
+*Concurrency*
+
+- the art of composing a programme in terms of independenly executing computations
+- a quality of the programme's structure (happens at _write_ time)
+
+*Parallelism*
+
+- the act of executing code on multiple cores
+- a quality of the programme's execution (happens at _run_ time)
+
+Concurrency _enables_ parallelism.
+
+To dig deeper, [[https://www.youtube.com/watch?v=oV9rvDllKEg][Rob Pike's talk on the topic]].
+
+
+
+* Go's concurrency model
+
+Largely inspired by [[https://dl.acm.org/doi/10.1145/359576.359585][Tony Hoare's  _Communicating_Sequential_Processes_ (1978)]]
+
+Two fundamental mechanisms:
+
+- goroutines: lightweight threads
+- channels: typed pipes used to communicate and synchronize between goroutines
+
+.image busy_gophers.jpeg 300 _
+
+
+
+
+* Goroutines
+
+A goroutine is a concurrent function execution.
+
+Goroutines all execute in the same address space.
+
+A goroutine can be thought of as a very lightweight thread: it's common for programmes to have 1000s of goroutines, even on a single core.
+
+The `main` function is itself a goroutine that is created when the programme starts.
+
+Unlike a Unix process, a goroutine has no ID (see why [[https://talks.golang.org/2014/go4gophers.slide#38][here]]).
+
+
+
+
+* The Go scheduler
+
+The _Go_scheduler_ is the part of the Go runtime responsible for "juggling" goroutines in order to maximise work.
+
+No need to understand how the Go scheduler works, at this stage of your Go learning.
+
+Just think of the Go scheduler and goroutines as a chef and his/her kitchen assistants.
+
+.image https://homemaking.com/wp-content/uploads/2020/04/cooking.jpg 300 _
+
+
+
+* The go keyword
+
+The `go` keyword spawns a new goroutine: it causes the function call that follows it to get executed "in the background".
+
+  go grindCoffeeBeans()
+  go frothMilk()
+
+The `go` keyword is reminiscent of the ampersand operator (`&`) in Unix shells.
+
+  #!/usr/bin/env sh
+
+  grindCoffeeBeans &
+  frothMilk &
+
+`go` statements return _immediately_.
+
+The result(s) of the function call to which the `go` keyword is applied are lost.
+
+: terminology: spawning goroutine vs. spawned goroutine
+
+
+
+* The golden rule
+
+Before spawning a new goroutine, you must understand exactly under what conditions it will terminate.
+
+If you're careless and spawn goroutines willy-nilly, you expose yourself to bugs and _goroutine_leaks_.
+
+.image this_is_fine.png 300 _
+
+
+
+* Exercise: concurrent coffee making
+
+Write two functions, `grindCoffeeBeans` and `frothMilk`, that
+
+- take no parameters and return no results,
+- simply write an informative message to stdout.
+
+Call them concurrently in the `main` function.
+
+.image https://i.pinimg.com/originals/41/8b/9c/418b9cb037389f7c5b6783ced8a7156b.jpg 300 _
+
+: Q: Which message will be printed first? We can't tell. Up to the scheduler.
+
+
+
+* Exercise: concurrent coffee making (first attempt)
+
+.play -edit goroutines_without_waitgroup.go /^//START/,/^//END/
+
+Does the programme behave as you expected? Why or why not?
+
+
+
+* main does not wait!
+
+Nothing gets written to stdout because
+
+- the two `go` statements _immediately_ transfer control back to `main`, and
+- `main` terminates _before_ your two goroutines themselves terminate!
+
+We need a way to tell `main` to "wait" until the two goroutines terminate.
+
+Any ideas?
+
+
+
+* Exercise: concurrent coffee making (with sleep)
+
+Sleep a bit at the end?
+
+.play -edit goroutines_with_sleep.go /^//START/,/^//END/
+
+However, this solution is not entirely satisfactory. Why?
+
+
+
+* Sleeping is not the answer
+
+How long should the sleep be, exactly? Impossible to know in advance.
+
+- Wait too little: `main` terminates too quickly for all the other goroutines to terminate.
+- Wait too long: `main` ends up needlessly spinning and wasting time.
+
+.image https://drek4537l1klr.cloudfront.net/youngman/Figures/f0255-01.jpg 200 _
+
+Sleeping is simply not a reliable and efficient way of coordinating goroutines!
+
+We need another mechanism...
+
+
+
+* Wait groups
+
+The standard library's [[https://golang.org/pkg/sync/#WaitGroup][`sync` package]] provides a mechanism for _orchestrating_ goroutines: wait groups.
+
+Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
+
+: e.g. if you're spawning a goroutine for each line of a file that you're reading
+
+
+
+* Declaring a wait group
+
+The zero value is readily usable:
+
+  wg := sync.WaitGroup{} // unnecessary
+
+  var wg sync.WaitGroup  // better
+
+
+
+* Operations on a wait group
+
+A wait group is little more than a glorified counter with _concurrency-safe_ operations.
+
+- `wg.Add(n)` increments the counter by n (>0).
+- `wg.Done()` decrements the counter by 1. It's equivalent to `wg.Add(-1)`.
+- `wg.Wait()` blocks until the counter goes back to 0.
+
+
+
+* How to use a wait group
+
+Call `wg.Add(1)` _just_before_ spawning a goroutine.
+
+Call `wg.Done()` at the very end of each spawned goroutine (you can use `defer` for that).
+
+Call `wg.Wait()` in the spawning goroutine to wait for all spawned goroutines to terminate.
+
+
+
+* Exercise: concurrent coffee making (using a wait group)
+
+Use a wait group to make `main` wait until both `grindCoffeeBeans` and `frothMilk` have terminated before `main` itself can terminate.
+
+Tip: you can apply the `go` keyword to an anonymous function.
+
+.image https://i.pinimg.com/originals/41/8b/9c/418b9cb037389f7c5b6783ced8a7156b.jpg 300 _
+
+
+
+* Exercise: concurrent coffee making (using a wait group)
+
+(implementations of `grindCoffeeBeans` and `frothMilk` are as before)
+
+.play -edit goroutines_with_waitgroup.go /^//START/,/^//END/
+
+: don't forget the pair of parens at the end of each function literal!
+
+
+
+* How not to misuse wait groups
+
+Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the spawned goroutine.
+
+The call to `wg.Wait` must happen _after_ all calls to `wg.Add`.
+
+If a function needs a wait group declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to the function.
+
+.image https://blog.golang.org/gopher/plush.jpg 300 _
+
+
+
+* Closures running as goroutines: spot the bug
+
+Can you spot the bug in the following programme?
+
+.play -edit goroutine_func_quiz.go /^//START/,/^//END/
+
+: ask them first how they expect the programme to behave
+
+
+
+* Closures running as goroutines: explanation
+
+There is a _data_race_: a variable is being read and updated by different goroutines at the same time!
+
+More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture_ and read loop variable `i` as it's being updated by the loop.
+
+.play -edit goroutine_func_answer.go /^//START/,/^//END/
+
+Consequently, the programme is underministic: the results are unpredictable.
+
+
+
+* Detecting the data race
+
+We've identified the data race by inspection, but some static- and dynamic-analysis tools can help.
+
+*go*vet*
+
+This subcommand analyzes the code and can detect issues that the compiler does not.
+
+Try running `go` `vet` on the programme.
+
+*race*detector*
+
+The Go CLI provides a [[https://blog.golang.org/race-detector][race detector]], i.e. a tool that may (or may not) detect data races during execution.
+
+Try running the programme with the `-race` flag.
+
+
+
+* Fixing the data race
+
+Pass the value of the loop variable as an argument to the anonymous function.
+
+That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the loop variable.
+
+.play -edit goroutine_func_arg.go /^//START/,/^//END/
+
+To dig deeper, see the [[https://golang.org/doc/faq#closures_and_goroutines][Golang FAQ about this]].
+
+
+
+* Avoid running closures as goroutines
+
+When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may cause data races.
+
+When not too inconvenient, favor defining a dedicated named function:
+
+.play -edit goroutine_func_standalone.go /^//START/,/^//END/
+
+
+
+
+
+* Closing a channel
+
+.image Untitled.svg
+
+
+* Exercise: ping-pong game with cancelation (via a done channel) TODO
+
+.play -edit ping_pong_done.go /^//START/,/^//END/
+
+
+
+* Exercise: ping-pong game with cancelation with context TODO
+
+.play -edit ping_pong_ctx.go /^//START/,/^//END/

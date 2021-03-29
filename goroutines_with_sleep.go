@@ -3,7 +3,7 @@ package main
 // START OMIT
 import (
 	"fmt"
-	"time"
+	"time" // HL
 )
 
 func grindCoffeeBeans() {
