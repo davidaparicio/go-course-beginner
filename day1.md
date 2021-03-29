@@ -128,7 +128,11 @@ func main() {
 * create a `namecheck` folder
 * open it in VS Code
 * create a `main.go` file in it
-* write a "Hello World" programme
+```txt
+namecheck
+└── main.go
+```
+* write a "Hello World" programme in `main.go`
 
 ---
 
@@ -348,7 +352,7 @@ var (
 
 ---
 
-### Elements of style: variable naming
+### Good naming practices for variables
 
 * strive for conciseness
 * camel case (no underscores)
@@ -391,7 +395,7 @@ fmt.Printf("value: %d\n", i) // "value: 0"
 
 ---
 
-### Namecheck project: 
+### Namecheck project: exploring the doc
 
 * declare a `username` string variable
 * initialize it with your GitHub/Twitter username
@@ -572,19 +576,10 @@ type <name> <underlying_type>
 ### Constants
 
 * values fixed at compile time
-* `const <name> = <expression>`
+* `const <name> <type> = <expression>`
+* the type is optional
 * no function calls allowed on right-hand side
 * allow optimisations by the compiler
-* two categories of constants: typed and untyped
-
-
----
-
-### Typed constants
-
-```go
-const Monday int = 1
-```
 
 ---
 
@@ -633,28 +628,216 @@ const (
 
 * no native enumeration types
 * instead, named type based on `int`
-* not very typesafe
-* exercise: write a `Month` enum
+* unfortunately, not very typesafe...
+
+### Namecheck project: define a Status enum
+
+Define a `Status` enum consisting of values
+
+* `Unknown` (0)
+* `Active` (1)
+* `Suspended` (2)
+* `Available` (3)
+
+Solution: https://play.golang.org/p/gJeYGGYzplq
 
 ---
 
-### Enum pattern: example
+# Functions
 
-```go
-type Month int
-const (
-  _ Month = iota
-  January
-  February
-  //...
-  December
-)
+---
+
+### Basic declaration syntax
+
+```
+func CountWords(s string) int {
+  // define count variable
+  // ...
+  return count
+}
 ```
 
+---
+
+### Calling a function
+
+* usual syntax (parens)
+* all arguments must be specified
+  * no default parameter value
+  * no "named parameters"
+* https://play.golang.org/p/HPFK9tdABuc
 
 ---
 
-# Basic control-flow structures
+### Parameter evaluation
+
+* Go's evaluation strategy is call-by-value
+* functions receive a copy of their arguments
+* However, built-in types that are glorified pointers
+  * pointers, functions, slices, maps, channels
+  * known as "reference types"
+
+---
+
+### Namecheck project: validation
+
+* Define the following functions:
+```go
+func isLongEnough(username string) bool
+
+func isShortEnough(username string) bool
+
+func containsNoIllegalPattern(username string) bool
+```
+* For now, simply make them return `false`.
+* Call those function in the `main` function.
+
+---
+
+### A function can have multiple results
+
+```
+func CountWords(path string) (int, error) {
+  return 0, nil
+}
+```
+
+Multiple returns are central to Go's way of reporting errors.
+
+---
+
+### Named results
+
+```
+func CountWords(path string) (count int, err error) {
+  return // bare return
+}
+```
+* useful for
+  * clarifying the roles of results
+  * simplifying some implementations
+* best used sparingly
+
+---
+
+### Type factorisation in parameter list
+
+* the type of identically typed consecutive parameters can be factored out
+* an example from the `strings` package:
+```
+func Split(s, sep string) []string {
+  //...
+}
+```
+* also possible in result list (if named results are used)
+
+---
+
+### Variadic functions
+
+* function that accepts any number of trailing arguments
+```go
+func max(first int, rest ...int) int {
+  // ...
+}
+```
+* variadic parameter `rest` is a slice of `int`s
+* see also [`fmt.Println`](https://golang.org/pkg/fmt/#Println)
+
+---
+
+### Recursion
+
+* a function can call itself
+* useful for traversing a recursive data structure (e.g. a tree)
+* factorial function: https://play.golang.org/p/yvRytLgk12U
+
+---
+
+### Functions are first-class values
+
+* a function can be
+    * another function's parameter
+    * another function's result
+
+---
+
+### Function types
+
+```
+func CountWords(s string) int {
+  return 0
+}
+```
+* `CountWords` has type `func(string) int`.
+* https://play.golang.org/p/CZqTwe4bL98
+
+---
+
+### Anonymous functions
+
+```go
+f := func (i int) int {
+  return i + 1
+}
+```
+
+* no concise ("lambda") notation
+
+---
+
+### Functions are references types
+
+* zero value of a function: `nil`
+* calling a `nil` function causes a panic!
+* https://play.golang.org/p/h4Qx5I9BiMC
+
+---
+
+### Closures
+
+* functions can capture variables in their environment
+* example: [stateful function](https://play.golang.org/p/kcYOX2eGxWi)
+* convenient for launching goroutines
+
+---
+
+### Namecheck project: validation (Twitter)
+
+```go
+func isLongEnough(username string) bool {
+  // returns true if username is not empty
+}
+
+func isShortEnough(username string) bool {
+  // returns true if username contains 15 chars or fewer
+}
+
+func containsNoIllegalPattern(username string) bool {
+  // returns true if username does not contain "twitter"
+  // (and all case variations, incl. "TwItTEr", etc.)
+}
+```
+---
+
+### Namecheck project: validation (cont'd)
+
+* U the `regexp` package to implement the following
+```go
+func containsOnlyLegalChars(username string) (bool, error) {
+  // returns true if username matches ^[0-9A-Z_a-z]*$
+}
+```
+* Does the function's signature satisfy you?
+* Wouldn't you prefer
+```
+func containsOnlyLegalChars(username string) bool
+```
+?
+
+---
+
+# Conditional statements
 
 ---
 
@@ -752,7 +935,6 @@ default:
 }
 ```
 * favour a tagless switch to `if`/`else` chains
-* exercise: write a signum function
 
 ---
 
@@ -797,160 +979,6 @@ for <variables> := range <data-structure> {
 ```
 
 * `range` works with strings, arrays, slices, maps, channels.
-
----
-
-# Functions
-
----
-
-## Function declaration
-
-```
-func <name>(<param-list>) <result-list> {
-  // ...
-  return <result-values>
-}
-```
-
----
-
-### Multiple results
-
-```
-func CountWords(path string) (int, error) {
-  // ...
-}
-```
-
----
-
-### Named results
-
-```
-func CountWords(path string) (count int, err error) {
-  // ...
-  return // bare return
-}
-```
-* useful for
-  * clarifying the roles of results
-  * simplifying some implementations
-
----
-
-### Type factorisation in param list
-
-```
-func first(a, b int) int {
-  return a
-}
-```
-
----
-
-### Variadic functions
-
-* function that accepts any number of trailing arguments
-```go
-func max(first int, rest ...int) int {
-  // ...
-}
-```
-* variadic parameter `rest` is a slice of `int`s
-* see also [`fmt.Println`](https://golang.org/pkg/fmt/#Println)
-
----
-
-### Function call
-
-* usual syntax (parens)
-* all arguments must be specified
-  * no default parameter value
-  * no "named parameters"
-* calling a `nil` function: panic!
-
----
-
-### Parameter evaluation
-
-* call-by-value evaluation
-* "reference types"
-  * built-in types that are glorified pointers
-  * pointers, functions, slices, maps, channels
-
----
-
-### Recursion
-
-* a function can call itself
-* exercise: write a "factorial" function
-  ([solution](https://play.golang.org/p/yvRytLgk12U))
-
----
-
-### Functions are first-class values
-
-* a function can be
-    * another function's parameter
-    * another function's result
-
----
-
-### Function literals
-
-```go
-f := func (i int) int {
-  return i + 1
-}
-```
-
-(no lambdas)
-
----
-
-### Function result
-
-* The result of a function can itself be a function.
-* exercise: write a function that
-  * takes a `name` parameter (of type `string`)
-  * returns a function that prints "Hello, <name>"
-* [solution](https://play.golang.org/p/zQ67huh73x-)
-
----
-
-### Closures
-
-* functions can capture variables in their environment
-* example: [stateful function](https://play.golang.org/p/kcYOX2eGxWi)
-
----
-
-### Project: set up directory structure
-
-```txt
-namecheck
-└── main.go
-```
-
----
-
-### Project: validation (Twitter)
-
-```go
-func isLongEnough(username string) bool {
-  // returns true if username is not empty
-}
-
-func isShortEnough(username string) bool {
-  // returns true if username contains 15 chars or fewer
-}
-
-func containsNoIllegalPattern(username string) bool {
-  // returns true if username does not contain "twitter"
-  // (and all case variations, incl. "TwItTEr", etc.)
-}
-```
 
 ---
 
@@ -1021,24 +1049,23 @@ if err := fallibleFoo(); err != nil {
 
 * similar to Java's `throw`
 * signifies an _unrecoverable_ failure
-* Do _not_ use `panic` for "expected" and recoverable failures, e.g.
+* Do _not_ use `panic` for anticipated and recoverable failures, e.g.
   * a file couldn't be opened
   * a HTTP request failed
 
 ---
 
-## Project: validation (cont'd)
+### Namecheck project: validation (cont'd)
 
+* If the regexp isn't valid, panic a.s.a.p.
+* Change the signature of
 ```go
-func containsOnlyLegalChars(username string) ??? {
-  // returns true if username matches ^[0-9A-Z_a-z]*$
-}
+func containsOnlyLegalChars(username string) bool
 ```
-* Design question: what should the result list (`???`) be?
 
 ---
 
-## Project: validation (cont'd)
+## Namecheck project: validation (cont'd)
 
 ```go
 func IsValid(username string) bool {
@@ -1082,7 +1109,11 @@ namecheck
 ```go
 package main
 
-import "github.com/jub0bs/namecheck/twitter"
+import (
+  "fmt"
+
+  "github.com/<your-GitHub-username>/namecheck/twitter"
+)
 
 func main() {
   username := "jub0bs"
