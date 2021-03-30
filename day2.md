@@ -1,4 +1,55 @@
-# Composite types
+### Namechecker project: command-line arguments
+
+* modify the programme to pass usernames as command-line arguments
+* store the valid and invalid ones in separate collections
+* ... we need to learn about loops and slices first!
+
+---
+
+## `for` loops
+
+---
+
+### for loop with a condition
+
+* no `while` keyword in Go!
+```go
+for <condition> {
+  // ...
+}
+```
+
+---
+
+### `for` infinite loop
+
+```go
+for {
+  // ...
+}
+```
+
+---
+
+### C-style `for` loop
+
+```go
+for <init>; <condition>; <post> {
+  // ...
+}
+```
+
+---
+
+### `range`-based `for` loop
+
+```go
+for <variables> := range <data-structure> {
+  // ...
+}
+```
+
+* `range` works with strings, arrays, slices, maps, channels.
 
 ---
 
@@ -127,7 +178,6 @@ moreWords := []string {
 * `s1 := s[i:j]`
 * if `j` exceeds `cap(s)`, panic!
 * yields a different view into the same array
-* also: `s1 := s[i:j:k]` gives you more control over the resulting slice's capacity
 
 ---
 
@@ -162,11 +212,21 @@ for i, v := range s {
 
 ---
 
-### Project: availability check
+### Namechecker project: command-line arguments
 
+* modify the programme to pass usernames as command-line arguments
+* store the valid and invalid ones in separate collections
+
+---
+
+### Namecheck project: availability
+
+* study the examples in the `http` package's doc
+* implement the following function (results omitted)
 ```go
 func IsAvailable(username string) ???
 ```
+* discuss the type(s) of the results it should return
 
 ---
 

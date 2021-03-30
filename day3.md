@@ -17,11 +17,6 @@
 * possibly multiple source files (see stdlib)
 * all source files go in a folder matching the package name
 * at most one package per folder!
-
----
-
-### Composition of a package (cont'd)
-
 * package members accessible to all source files
 * however, each file must import what it needs
 
@@ -42,64 +37,6 @@
 * otherwise, compilation error
 * key design decision enabling fast compilation!
 
----
-
-### `init` functions
-
-* special function
-* executed at package initialisation
-* cannot be called in a program
-
----
-
-### Recommendation: avoid side effects in init
-
-Within an `init` function, avoid
-* reading/writing files
-* network communications
-* etc.
-
-(Why?)
-
----
-
-### Lifecycle of packages
-
-* consumed packages are imported
-* package-level const and vars are initialised
-* package's `init` function(s) are executed
-
----
-
-### Lifecycle of packages (cont'd)
-
-Package initialisation happens
-* in a single goroutine
-* sequentially
-* one package at a time
-
----
-
-### Blank import
-
-```
-import _ "github.com/lib/pq"
-```
-* import only for initialisation's side effects!
-* members of package are not accessible
-* used to register specific SQL drivers with the `sql` package
-
----
-
-### Project: list available checkers
-
-```
-func Checkers() []Checker {...}
-```
-
----
-
-## Designing packages
 
 ---
 
@@ -166,8 +103,7 @@ namecheck
 │       └── main.go
 ...
 ```
-* command-line argument: username
-* check on each social network sequentially
+* check validity and availability on each social network sequentially
 * user experience?
 
 ---

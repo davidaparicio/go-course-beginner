@@ -114,10 +114,12 @@ func main() {
 
 ### Hello, World!
 
-* all source files start with a package clause
-* `main` package: defines an executable program
-* `main` function: program's entrypoint
+* all source files start with a package declaration
 * import-declaration syntax
+* `main` package: defines an executable program
+* `main` function
+  * program's entrypoint
+  * command-line arguments: `os.Args`
 * no semicolons needed to terminate statements
 * tabs, not spaces (by convention)
 
@@ -935,50 +937,6 @@ default:
 }
 ```
 * favour a tagless switch to `if`/`else` chains
-
----
-
-### `for` loop
-
-```go
-for <condition> {
-  // ...
-}
-```
-
-* no `while` keyword in Go!
-
----
-
-### `for` infinite loop
-
-```go
-for {
-  // ...
-}
-```
-
----
-
-### C-style `for` loop
-
-```go
-for <init>; <condition>; <post> {
-  // ...
-}
-```
-
----
-
-### `range`-based `for` loop
-
-```go
-for <variables> := range <data-structure> {
-  // ...
-}
-```
-
-* `range` works with strings, arrays, slices, maps, channels.
 
 ---
 
