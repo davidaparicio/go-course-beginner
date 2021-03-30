@@ -18,7 +18,7 @@
 
 ---
 
-### Project: username checker
+### Namecheck project: username checker
 
 * checking a username on social networks
   * validity
@@ -215,7 +215,7 @@ var foo = "foo" // this is a comment
 
 ---
 
-## Packages
+# Packages
 
 ---
 
@@ -322,14 +322,14 @@ import (
 
 ---
 
-## Local variables must be used
+### Local variables must be used
 
 * A variable declared within a function _must_ be used.
 * Otherwise, compilation error!
 
 ---
 
-## Variable declaration
+### Variable declaration
 
 ```go
 var <name> <type> = <expression>
@@ -409,7 +409,7 @@ Hello, <username>
 
 ---
 
-## Pointers
+### Pointers
 
 * In Go, a variable is an _addressable value_.
 * A pointer is a value that holds the address of a variable.
@@ -632,6 +632,8 @@ const (
 * instead, named type based on `int`
 * unfortunately, not very typesafe...
 
+---
+
 ### Namecheck project: define a Status enum
 
 Define a `Status` enum consisting of values
@@ -683,7 +685,8 @@ func CountWords(s string) int {
 
 ### Namecheck project: validation
 
-* Define the following functions:
+Define the following functions:
+
 ```go
 func isLongEnough(username string) bool
 
@@ -691,12 +694,13 @@ func isShortEnough(username string) bool
 
 func containsNoIllegalPattern(username string) bool
 ```
+
 * For now, simply make them return `false`.
 * Call those function in the `main` function.
 
 ---
 
-### A function can have multiple results
+### Multiple results
 
 ```
 func CountWords(path string) (int, error) {
@@ -1023,7 +1027,7 @@ func containsOnlyLegalChars(username string) bool
 
 ---
 
-## Namecheck project: validation (cont'd)
+### Namecheck project: validation (cont'd)
 
 ```go
 func IsValid(username string) bool {
@@ -1033,7 +1037,101 @@ func IsValid(username string) bool {
 
 ---
 
-## Project: create a `twitter` package
+# Designing packages
+
+---
+
+### Two kinds of packages
+
+* main package
+  * defines an executable
+  * name of enclosing directory is arbitrary
+* library package
+  * name of enclosing directory must match package name
+
+---
+
+### Composition of a package
+
+* possibly multiple source files (see stdlib)
+* all source files go in a folder matching the package name
+* at most one package per folder!
+* package members accessible to all source files
+* however, each file must import what it needs
+
+---
+
+### Constraints on dependency graph
+
+* no dependency cycle allowed
+* otherwise, compilation error
+* key design decision enabling fast compilation!
+
+---
+
+### Naming packages
+
+* a well designed package starts with its name
+* lowercase, alphanumeric
+* a clue to the functionality provided
+* concise, but unambiguous
+* favour nouns over verbs
+
+---
+
+### Designing a package
+
+* a focused set of related features
+* strive for cohesion
+* keep conceptual surface area small
+
+---
+
+### Naming identifiers
+
+* avoid stutter
+* some exceptions from stdlib
+  * `regexp.Regexp`
+  * `time.Time`
+* naming factory methods
+  * single-type package: `New`
+  * multiple-type package: `NewFoo`
+
+---
+
+### Subpackages
+
+* packages defined in subdirectories of a package
+* allows grouping of related functionalities
+* contain more specific functionalities than superpackage
+* example: `encoding/json`
+* completely isolated from superpackage
+
+---
+
+### Subpackages (cont'd)
+
+* tip: dependency arrows shouldn't point down
+
+![](dep_arrows_dont_point_down.svg)
+
+---
+
+### Organizing packages
+
+![](pkg_shallow_and_wide.svg)
+
+
+---
+
+### Don't panic
+
+* good libraries don't panic (after initialisation)
+* report anticipated failures to clients as `error` values
+
+---
+
+### Namecheck project: `twitter` package
 
 ```txt
 namecheck
@@ -1042,9 +1140,11 @@ namecheck
     └── twitter.go
 ```
 
+* try using the `twitter` package in your main to check the validity of usernames
+
 ---
 
-## Project: initialise a module
+### Namcheck project: initialise a module
 
 ```shell
 $ go mod init github.com/<your-GitHub-username>/namecheck
@@ -1058,29 +1158,6 @@ namecheck
 ├── main.go
 └── twitter
     └── twitter.go
-```
-
----
-
-## Project: import twitter package in main
-
-```go
-package main
-
-import (
-  "fmt"
-
-  "github.com/<your-GitHub-username>/namecheck/twitter"
-)
-
-func main() {
-  username := "jub0bs"
-  fmt.Printf(
-    "%s is valid on Twitter: %t\n,
-    username,
-    twitter.IsValid(username),
-  )
-}
 ```
 
 ---
@@ -1178,7 +1255,7 @@ $ go test -run=<regexp-for-test-method-names>
 
 ---
 
-### Project: validation (cont'd)
+### Namecheckt project: validation (cont'd)
 
 Write tests for `IsValid` in `twitter_test.go`
 
@@ -1201,14 +1278,15 @@ $ go tool cover --html="coverage.out"
 
 ---
 
-## Project: create a `github` package
+### Namecheck project: `github` package
 
-* adapt it from package `twitter`
-* different rules!
+* create a `github` package
+* adapt it from the `twitter` package
+* different validation rules!
 
 ---
 
-### Project: validation (GitHub)
+### Namecheck project: validation (GitHub)
 
 ```go
 func isLongEnough(username string) bool {
@@ -1226,7 +1304,7 @@ func containsOnlyLegalChars(username string) ??? {
 
 ---
 
-### Project: validation (GitHub) cont'd
+### Namecheck project: validation (GitHub) cont'd
 
 ```go
 func containsNoIllegalPattern(username string) bool {
@@ -1244,10 +1322,10 @@ func containsNoIllegalSuffix(username string) bool {
 
 ---
 
-## Project: validation (GitHub) (cont'd)
+### Namecheck project: validation (GitHub) (cont'd)
 
 ```go
 func IsValid(username string) bool {
-  // returns true if all predicates above return true
+  // returns true if all six predicates return true
 }
 ```
