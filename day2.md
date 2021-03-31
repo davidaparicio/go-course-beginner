@@ -336,6 +336,7 @@ func foo() error {
   // ...
   defer badIfThisFails() // but error is lost!
   // ...
+  return err
 }
 ```
 
@@ -353,6 +354,7 @@ func foo() (err error) {
       err = err1
   }()
   // ...
+  return
 }
 ```
 
@@ -659,94 +661,6 @@ func (t *Tree) Save(rw io.ReadWriter) error // good?
 ```go
 func (t *Tree) Save(w io.Writer) error // better!
 ```
-
----
-
-### Wrapping errors
-
-* error-translation idiom
-* present a high-level error...
-* ... but allow programmatic access to lower-level cause
-* standardised in Go 1.13: see https://golang.org/pkg/errors/
-
----
-
-### Namecheck project: wrap low-level http error into custom error type
-
-* augment `ErrUnknownAvailability` with a `Cause error` field
-* make it satisfy the following interface
-
-```go
-type wrapper interface {
-  Unwrap() error
-}
-```
-
----
-
-### Asserting on behaviour
-
-* given an interface value, you can ask whether
-  the concrete type also satisfy another interface
-
-```go
-type Barista interface {
-  PrepareCoffee()
-}
-type Cashier interface {
-  ProcessPayment()
-}
-```
-
----
-
-### Asserting on behaviour (cont'd)
-
-```go
-// ...definition of a Ray type that
-// satisfies the Barista interface...
-var b Barista = &Ray{}
-b.PrepareCoffee()
-c, ok := b.(Cashier) // is b also a Cashier?
-if ok {
-  c.ProcessPayment()
-}
-```
-
----
-
-## Namecheck project: figure out why twitter.IsAvailable failed
-
-* in `main.go`
-
-```go
-available, err := tw.IsAvailable("babar")
-err, ok := err.(wrapper) // does err satisfy wrapper?
-if ok {
-  cause := err.Unwrap()
-  // inspect cause...
-}
-```
-
----
-
-### Type switch
-
-```go
-func do(i interface{}) {
-  switch v := i.(type) { // what's the type of i?
-  case int:
-    //...
-  case string:
-    //...
-  default:
-    fmt.Printf("I don't know about type %T!\n", v)
-  }
-}
-```
-
-* strong coupling with the concrete types :(
-* avoid type switches on types you don't own
 
 ---
 

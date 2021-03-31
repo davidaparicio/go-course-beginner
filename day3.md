@@ -406,6 +406,32 @@ for {
 
 ---
 
+### Namecheck project: define a Result type
+
+(in the `main` package)
+
+```go
+type Result struct {
+  Username string
+  Platform string
+  Valid bool
+  Available bool
+  Error error
+}
+```
+---
+
+### Namecheck project: use channels
+
+* in `main`, create a channel of `Result`
+* at the end of each goroutine
+  * create a `Result` value
+  * send it to the channel
+* in `main`, range over that channel in `main`
+  and aggregate the results (e.g. in a slice)
+
+---
+
 ### Directional channels
 
 * send-only channel of `T`s has type
@@ -434,13 +460,13 @@ chan<- T
 * can be useful for signaling that some unambiguous event took place!
 
 ```go
-ch := make(chan struct{})
+quit := make(chan struct{})
 ```
 
 and from another goroutine:
 
 ```go
-ch <- struct{}{}
+quit <- struct{}{}
 ```
 
 ---
@@ -483,6 +509,21 @@ for {
 
 ---
 
+### Example: ping pong
+
+* https://play.golang.org/p/0tN8oMLyN1W
+* Can you spot the bug?
+
+---
+
+### Namecheck project: fail early
+
+* report normal results and errors in separate channels
+* use `select` to receive from both channels
+* terminate the programme as soon as an error is received
+
+---
+
 ### Concurrency patterns
 
 * we're only scratching the surface of what's possible
@@ -510,7 +551,7 @@ See the documentation of the `http` package.
 
 ### Communicating by sharing memory
 
-* why? performance, simplicity
+* pros: more efficient, sometimes simpler
 * two alternatives to channels
   * atomics
   * mutexes
@@ -667,6 +708,10 @@ for k := range keys {
 * "mutual exclusion"
 * allows you to acquire/release a lock on a variable
 * see `sync` package
+* cons (compared to channels)
+  * less composable
+  * more dangerous (deadlock)
+  * encourages global state
 
 ---
 
