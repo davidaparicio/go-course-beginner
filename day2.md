@@ -233,8 +233,8 @@ for i, v := range s {
 func IsAvailable(username string) (bool, error)
 ```
 * simply send a GET to `https://github.com/<username>`
-  * 200 => unavailable
-  * otherwise, available
+  * 404 => available
+  * otherwise, unavailable
 
 ---
 
