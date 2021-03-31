@@ -677,7 +677,7 @@ func CountWords(s string) int {
 
 * Go's evaluation strategy is call-by-value
 * functions receive a copy of their arguments
-* However, built-in types that are glorified pointers
+* However, built-in types are glorified pointers
   * pointers, functions, slices, maps, channels
   * known as "reference types"
 
@@ -828,18 +828,21 @@ func containsNoIllegalPattern(username string) bool {
 
 ### Namecheck project: validation (cont'd)
 
-* U the `regexp` package to implement the following
+Use the `regexp` package to implement the following
+
 ```go
 func containsOnlyLegalChars(username string) (bool, error) {
   // returns true if username matches ^[0-9A-Z_a-z]*$
 }
 ```
-* Does the function's signature satisfy you?
-* Wouldn't you prefer
-```
+
+Does the function's signature satisfy you?
+
+Wouldn't you prefer the following?
+
+```go
 func containsOnlyLegalChars(username string) bool
 ```
-?
 
 ---
 

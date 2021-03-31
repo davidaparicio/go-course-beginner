@@ -137,7 +137,7 @@ for i, v := range arr {
 
 ---
 
-### Allocating a slice
+### Initializing a slice
 
 ```go
 s := make([]string, l)    // l: length
@@ -181,6 +181,12 @@ moreWords := []string {
 
 ---
 
+### Namechecker project: command-line argument
+
+* modify the programme to pass one username as the 1st command-line argument
+
+---
+
 ### Ranging over a slice
 
 ```go
@@ -221,12 +227,14 @@ for i, v := range s {
 
 ### Namecheck project: availability
 
-* study the examples in the `http` package's doc
-* implement the following function (results omitted)
+* study https://golang.org/pkg/net/http/#pkg-overview
+* implement the following function in the `github` package
 ```go
-func IsAvailable(username string) ???
+func IsAvailable(username string) (bool, error)
 ```
-* discuss the type(s) of the results it should return
+* simply send a GET to `https://github.com/<username>`
+  * 200 => unavailable
+  * otherwise, available
 
 ---
 
@@ -351,7 +359,7 @@ func foo() (err error) {
 
 ---
 
-### Project: write tests for `IsAvailable`
+### Namecheck project: write tests for `IsAvailable`
 
 * any issue?
 
@@ -363,7 +371,7 @@ Live demo in Playground
 
 ---
 
-## Project: custom Twitter & GitHub types
+## Namecheck project: custom Twitter & GitHub types
 
 * in package `twitter`, declare a `Twitter` struct type
 * in package `github`, declare a `GitHub` struct type
@@ -376,7 +384,7 @@ Live demo in Playground
 
 ---
 
-### Project: declare methods on custom types
+### Namecheck project: declare methods on custom types
 
 * turn `IsValid` into a method
 * turn `IsAvailable` into a method
@@ -409,15 +417,20 @@ Live demo in Playground
 
 ### Interface satisfaction
 
-* easy: declare the right methods on the concrete type
+* simply declare the methods required by the interface on the concrete type
 * verified at compile time
 * implicit!
 * compare to Java, PHP, C#, etc.
 
-```go
-class PokerHand implements Comparable<? super PokerHand> // Java
-class Template implements iTemplate                      // PHP
-class BoomerangCollection : IEnumerable                  // C#
+```
+// Java
+class PokerHand implements Comparable<? super PokerHand>
+
+// PHP
+class Template implements iTemplate
+
+// C#
+class BoomerangCollection : IEnumerable
 ```
 ---
 
@@ -488,7 +501,7 @@ type Stringer interface {
 
 ---
 
-## Project: satisfy `fmt.Stringer`
+## Namecheck project: satisfy `fmt.Stringer`
 
 * Do `twitter.Twitter` and `github.GitHub` satisfy it?
 * If not, make it so!
@@ -506,7 +519,7 @@ type error interface {
 
 ---
 
-## Project: define a custom error type
+## Namecheck project: define a custom error type
 
 ```go
 type ErrUnknownAvailability struct {
@@ -565,7 +578,7 @@ type Writer interface {
 
 ---
 
-### Project: define `Validator` interface
+### Namecheck project: define `Validator` interface
 
 ```go
 type Validator interface {
@@ -579,7 +592,7 @@ type Validator interface {
 
 ---
 
-### Project: define `Availabler` interface
+### Namecheck project: define `Availabler` interface
 
 ```go
 type Availabler interface {
@@ -592,7 +605,7 @@ type Availabler interface {
 
 ---
 
-## Project: define `Checker` interface
+## Namecheck project: define `Checker` interface
 
 * ...by composition of
   * a `fmt.Stringer`
@@ -657,7 +670,7 @@ func (t *Tree) Save(w io.Writer) error // better!
 
 ---
 
-### Project: wrap low-level http error into custom error type
+### Namecheck project: wrap low-level http error into custom error type
 
 * augment `ErrUnknownAvailability` with a `Cause error` field
 * make it satisfy the following interface
@@ -701,7 +714,7 @@ if ok {
 
 ---
 
-## Project: figure out why twitter.IsAvailable failed
+## Namecheck project: figure out why twitter.IsAvailable failed
 
 * in `main.go`
 
@@ -736,26 +749,31 @@ func do(i interface{}) {
 
 ---
 
-## Mocking
+## Test doubles
 
-* Interfaces are great for mocking!
+* Interfaces are great for mocking, stubbing, faking, etc.
 * You can define an interface for a concrete type you don't own!
 
 ---
 
-## Project: mock the HTTP client
+## Namecheck project: test doubles
 
-* modify your code in order to mock the HTTP client
-  * define a `Client` interface that `&http.Client` satisfies
-  * add a `client` field to your `Twitter` and `GitHub` types
-  * ...
+* Define a `Client` interface that `&http.Client` satisfies
+* create a `stub` package
+* Declare
+```go
+type clientFunc func(url string) (*http.Response, error)
+```
+* Make `clientFunc` satisfy your `Client` interface
 
 ---
 
-### Project: list available checkers
+## Namecheck project: test doubles (cont'd)
 
-* in `namecheck.go`, define
-
+* Define the following functions in `stub`
 ```go
-func Checkers() []Checker {...}
+ClientWiththError(err error) namecheck.Client
+ClientWithStatusCode(code int) namecheck.Client
 ```
+* Add a field of type `Client` to your `Twitter` and `GitHub` struct types
+* Adjust your `main` and your tests for `IsAvailable`
