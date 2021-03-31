@@ -202,6 +202,7 @@ for i, v := range s {
 * use the built-in function `append`
 * `s = append(s, elem)`
 * built-in `append` copies elements to a larger underlying array if capacity has been reached
+* https://play.golang.org/p/dXwZYnoB_Qj
 
 ---
 
