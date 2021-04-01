@@ -1,5 +1,5 @@
 
-### Project: CLI username checker
+### Namecheck project: CLI username checker
 
 * write an executable
 ```
@@ -146,6 +146,7 @@ func printTenIntsConcurrently() {
 ```
 
 * Do you get the output you expect?
+* Why / why not?
 
 ---
 
@@ -167,6 +168,13 @@ func printTenIntsConcurrently() {
 ```
 
 * race condition!
+
+---
+
+### Gotcha: goroutine & func
+
+* `go vet` warns you about the capture of the loop variable
+* also, try running the programme with `-race`
 
 ---
 
@@ -214,9 +222,10 @@ func printConcurrently(i int, wg *sync.WaitGroup) {
 
 ---
 
-### Project: add concurrency
+### Namecheck project: add concurrency
 
-Rather than sending requests sequentially, send them concurrently.
+* Rather than sending requests sequentially, send them concurrently.
+* Does user experience improve?
 
 ---
 
@@ -253,17 +262,17 @@ var tasks chan task
 
 ---
 
-### Creating channels
-
-* `ch := make(chan T, c)`
-* `c`: optional capacity (defaults to zero)
-
----
-
 ### Channels are reference types
 
 * reference type
 * zero value: `nil`
+
+---
+
+### Initializing channels
+
+* `ch := make(chan T, c)`
+* `c`: optional capacity (defaults to zero)
 
 ---
 
@@ -285,7 +294,7 @@ var tasks chan task
 
 ### Channel capacity: metaphor
 
-[passe-plats](https://i.skyrock.net/1885/75341885/pics/2950151991_2_3.jpg)
+![passe-plats](https://i.skyrock.net/1885/75341885/pics/2950151991_2_3.jpg)
 
 ---
 
@@ -302,23 +311,28 @@ var tasks chan task
 
 * a (non-`nil`) channel starts its life as open
 * a channel can be closed: `close(ch)`
+* a closed channel cannot be re-opened
 * useful operation when ranging over a channel
 
 ---
 
-### Closing a channel (cont'd)
+### Close semantics
 
-* a closed channel cannot be re-opened
-* attempting to close a closed channel: panic!
+![](channel_close_light.svg)
 
 ---
 
-### Closing a channel (cont'd)
+### Closing doesn't drain the channel
 
 * closing a channel does not drain it from the elements it contains
-* channels are not resources
-  * only close them if the program requires it
-  * otherwise, simply let them get GC'd
+* restaurant metaphor: end of service doesn't mean pushing all the patrons out!
+
+---
+
+### Channels are not resources
+
+* only close them if the program requires it
+* otherwise, simply let them get GC'd
 
 ---
 
@@ -333,12 +347,7 @@ ch <- v
 
 ### Send semantics
 
-* ...depend on the state of `ch`:
-  * nil: blocking
-  * open
-    * not at capacity: adds `v` to `ch`
-    * at capacity: blocking
-  * closed: panic!
+![](channel_send_light.svg)
 
 ---
 
@@ -357,12 +366,7 @@ v := <-ch
 
 ### Receive semantics
 
-* ...depend on the state of `ch`:
-  * nil: blocking
-  * not empty: yields an element from `ch`
-  * empty:
-    * open: blocks
-    * closed: yields the zero value of the element type
+![](channel_receive_light.svg)
 
 ---
 
@@ -534,7 +538,9 @@ for {
 
 ---
 
-## Project: turn your CLI tool into a server
+### Namecheck project: turn your CLI tool into a server
+
+Create another `main.go` under `cmd/server`
 
 ```
 namecheck
@@ -544,8 +550,36 @@ namecheck
 │   └── server
 │       └── main.go
 ```
+---
 
-See the documentation of the `http` package.
+### Namecheck project: turn your CLI tool into a server
+
+* Start from https://golang.org/pkg/net/http/#example_ListenAndServe
+* Adapt the code from the CLI executable to your server
+* Use `/check` endpoint
+* Optional: return a proper JSON response
+* see https://golang.org/pkg/encoding/json/
+
+---
+
+### Namecheck project: modules and vendoring
+
+* Now use 3rd-party dependency gorilla/mux for routing
+* run the following at the root of the project
+```go
+go mod vendor
+```
+* a `vendor` directory is created and contains a copy of your dependencies
+* you can track that directory with your VCS for reproducible, network-free builds
+
+---
+
+### Namecheck project: request timeouts
+
+* add query param `simulateLatency=1` to Twitter endpoint
+* one requests out of five becomes slow
+* use a custom client with a timeout of 3 seconds
+* see https://golang.org/pkg/net/http/#Client
 
 ---
 
@@ -558,7 +592,7 @@ See the documentation of the `http` package.
 
 ---
 
-### Project: number of visits
+### Namecheck project: number of visits
 
 * keep a count of the number of requests served
 
@@ -571,7 +605,7 @@ See the documentation of the `http` package.
 
 ---
 
-### Project: count of checks per username
+### Namecheck project: count of checks per username
 
 * keep track (in memory) of how many times a given username has been checked
 * ... we need some kind of dictionary or associative array...
@@ -695,7 +729,7 @@ for k := range keys {
 
 ---
 
-### Project: count of checks per username
+### Namecheck project: count of checks per username
 
 * keep track (in memory) of how many times a given username has been checked
 * use a `map[string]uint`
@@ -715,7 +749,7 @@ for k := range keys {
 
 ---
 
-### Project: count of checks per username
+### Namecheck project: count of checks per username
 
 * keep track (in memory) of how many times a given username has been checked
 * use a `map[string]uint`
