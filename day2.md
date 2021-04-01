@@ -209,6 +209,9 @@ for i, v := range s {
 ### Appending another slice to a slice
 
 * `s = append(s, s1...)`
+* the `...` operator
+  * explodes a slice
+  * allows you to pass it where a variadic argument is expected
 
 ---
 
@@ -553,7 +556,6 @@ type Interface interface {
     Swap(i, j int)
 }
 ```
-* analogous to Java's `Comparable` interface
 
 ---
 

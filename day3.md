@@ -74,12 +74,16 @@ go peelPotatoes()
 Before launching a goroutine,
 you must understand exactly under what conditions it will terminate.
 
+(Otherwise, you risk _leaking_ goroutines.)
+
 ---
 
 ### Exercise
 
-Define two functions, `prepareSoufflé` and `peelPotatoes`,
-and call them concurrently in `main`.
+* Define two functions, `prepareSoufflé` and `peelPotatoes` that simply print
+something to stdout.
+* Call them concurrently in `main`.
+* What happens? Why?
 
 ---
 
@@ -243,6 +247,7 @@ func printConcurrently(i int, wg *sync.WaitGroup) {
 ### Channel type
 
 * a channel of `T`s has type `chan T`
+* the element type can be arbitrary
 * channel of channels possible:
 
 ```go
@@ -253,9 +258,12 @@ var chandler chan chan man
 
 ### Channel: naming conventions
 
-* "ch" (alone or as suffix)
+* "ch" (alone or as suffix) or "c" suffix
+* example:
+```go
+var errc chan error
+```
 * plural of element type:
-
 ```go
 var tasks chan task
 ```
@@ -446,6 +454,7 @@ chan<- T
 ```
 <-chan T
 ```
+* assignability: see https://play.golang.org/p/aRdNg3B7z6J
 
 ---
 
