@@ -555,7 +555,7 @@ func cancellablePrint(quit chan struct{})
 
 ### `context` package
 
-* for cancellation and timeouts
+* for terminating goroutines via cancellation and/or timeouts
 * uses a `<-chan struct{}` to broadcast a cancellation signal to multiple goroutines
 * more on this in the second training
 
