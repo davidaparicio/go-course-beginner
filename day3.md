@@ -468,25 +468,7 @@ chan<- T
 
 ---
 
-### `chan struct{}`
-
-* can be useful for signaling that some unambiguous event took place!
-
-```go
-quit := make(chan struct{})
-```
-
-and from another goroutine:
-
-```go
-quit <- struct{}{}
-```
-
----
-
-### `select` key word
-
-* analogous to a switch in which the first case that is "ready" gets executed
+### `select` construct
 
 ```
 select {
@@ -499,13 +481,33 @@ default:
 }
 ```
 
-* `default` case
-  * is optional
-  * executes if none of the other cases is ready
+* analogous to a switch but for concurrency
+* each normal case is a channel send or receive
+
+---
+
+### `select` construct (cont'd)
+
+```
+select {
+case v := <-ch1:
+  // do something with v
+case ch2 <- 42:
+  // ...
+default:
+  // ...
+}
+```
+
+* the default case is optional
+* the first normal case that doesn't block gets executed
+* if none of the normal cases are ready, the default case (if any) gets executed
 
 ---
 
 ### Event loop
+
+`select` is often used within a loop:
 
 ```
 for {
@@ -522,10 +524,62 @@ for {
 
 ---
 
+### `chan struct{}`
+
+```go
+quit := make(chan struct{})
+```
+* can be useful for signaling that some unambiguous event took place!
+* in one goroutine
+```go
+<-quit
+```
+* in another goroutine:
+```go
+close(quit) // or quit <- struct{}{}
+```
+
+---
+
+### Exercise (in playground)
+
+* write a function
+```go
+func cancellablePrint(quit chan struct{})
+```
+* it should print incrementing integers every 200ms
+* it should terminates when the channel is closed
+* solution: https://play.golang.org/p/mQ8wCiKdNde
+
+---
+
+### `context` package
+
+* for cancellation and timeouts
+* uses a `<-chan struct{}` to broadcast a cancellation signal to multiple goroutines
+* more on this in the second training
+
+---
+
 ### Example: ping pong
 
 * https://play.golang.org/p/0tN8oMLyN1W
 * Can you spot the bug?
+* How would you fix it?
+
+---
+
+### Example: ping pong (fixed?)
+
+* use a `chan struct{}` to signal termination
+* https://play.golang.org/p/ay-LBADdP9v
+* one goroutine may still leak... where?
+
+---
+
+### Example: ping pong (fixed!)
+
+* https://play.golang.org/p/0xfHum4NzzS
 
 ---
 
@@ -768,20 +822,7 @@ for k := range keys {
 
 ### What we haven't covered
 
-* useful third-party libraries
-* `context` package
-* compiler options
-* micro-benchmarks
-* concurrency patterns
-
----
-
-### What we haven't covered (cont'd)
-
-* escape analysis
-* profiling
-* mechanics of the garbage collector
-* mechanics of the Go scheduler
+https://www.humancoders.com/formations/go-avance
 
 ---
 
