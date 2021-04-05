@@ -274,7 +274,10 @@ import crand "crypto/rand"
 import _ "github.com/lib/pq"
 ```
 
-more on that later
+* no members of the package become accessible
+* only useful for the side effects of package initialization
+* used in the so-called "registration pattern" as implemented by the `sql` and `image`packages
+* avoid, if possible
 
 ---
 
@@ -292,7 +295,7 @@ import (
 
 ---
 
-### Elements of style: organising imports
+### Organising imports: best practices
 
 ```go
 import (
@@ -621,7 +624,7 @@ const (
 )
 ```
 
-* RHS expression is implicitly reused within the constant block
+* The right-hand-side expression is implicitly reused within the constant block
 * `iota` evaluates to `0`, then `1`, then `2`, etc.
 
 ---
@@ -1072,6 +1075,14 @@ func IsValid(username string) bool {
 
 ---
 
+### Designing a package
+
+* a focused set of related features
+* strive for cohesion
+* keep conceptual surface area small
+
+---
+
 ### Naming packages
 
 * a well designed package starts with its name
@@ -1079,14 +1090,6 @@ func IsValid(username string) bool {
 * a clue to the functionality provided
 * concise, but unambiguous
 * favour nouns over verbs
-
----
-
-### Designing a package
-
-* a focused set of related features
-* strive for cohesion
-* keep conceptual surface area small
 
 ---
 
@@ -1129,7 +1132,7 @@ func IsValid(username string) bool {
 
 ### Don't panic
 
-* good libraries don't panic (after initialisation)
+* good libraries don't panic (after initialization)
 * report anticipated failures to clients as `error` values
 
 ---
@@ -1214,7 +1217,7 @@ determined by package clause
 
 ---
 
-### Test functions: example
+### Test functions: example (white-box testing)
 
 ```go
 func TestUsernameTooLong(t *testing.T) {

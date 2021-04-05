@@ -677,7 +677,7 @@ func (t *Tree) Save(w io.Writer) error // better!
 
 * Define a `Client` interface that `&http.Client` satisfies
 * create a `stub` package
-* Declare
+* In it, declare
 ```go
 type clientFunc func(url string) (*http.Response, error)
 ```
@@ -690,7 +690,7 @@ type clientFunc func(url string) (*http.Response, error)
 * Define the following functions in `stub`
 ```go
 ClientWiththError(err error) namecheck.Client
-ClientWithStatusCode(code int) namecheck.Client
+ClientWithStatusCodeAndBody(code int, body string) namecheck.Client
 ```
 * Add a field of type `Client` to your `Twitter` and `GitHub` struct types
 * Adjust your `main` and your tests for `IsAvailable`

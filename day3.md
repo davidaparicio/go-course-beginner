@@ -286,14 +286,9 @@ var tasks chan task
 
 ### Channel capacity
 
-* a channel has
-  * a length: `len(ch)` (seldom used)
-  * a capacity: `cap(ch)`
-
----
-
-### Channel capacity (cont'd)
-
+* a channel's _capacity_ is
+  * fixed at compile time
+  * nonnegative
 * a channel of
   * zero capacity is called an _unbuffered channel_
   * positive capacity is called a _buffered channel_
@@ -302,7 +297,10 @@ var tasks chan task
 
 ### Channel capacity: metaphor
 
-![passe-plats](https://i.skyrock.net/1885/75341885/pics/2950151991_2_3.jpg)
+* think of a channel as a kitchen serving hatch in a restaurant
+* the channel's capacity represents the number of plates that can fit on the platform
+
+![passe-plats](https://josephdmcnamee.files.wordpress.com/2012/01/serving-hatch1.jpg)
 
 ---
 
@@ -579,15 +577,17 @@ func cancellablePrint(quit chan struct{})
 
 ### Example: ping pong (fixed!)
 
-* https://play.golang.org/p/0xfHum4NzzS
+* https://play.golang.org/p/JJheYrICFNA
 
 ---
 
 ### Namecheck project: fail early
 
+* remove the `Error` field from the `Result` type
 * report normal results and errors in separate channels
 * use `select` to receive from both channels
 * terminate the programme as soon as an error is received
+* hint: choose channel capacity wisely
 
 ---
 
@@ -637,15 +637,6 @@ go mod vendor
 
 ---
 
-### Namecheck project: request timeouts
-
-* add query param `simulateLatency=1` to Twitter endpoint
-* one requests out of five becomes slow
-* use a custom client with a timeout of 3 seconds
-* see https://golang.org/pkg/net/http/#Client
-
----
-
 ### Communicating by sharing memory
 
 * pros: more efficient, sometimes simpler
@@ -658,6 +649,7 @@ go mod vendor
 ### Namecheck project: number of visits
 
 * keep a count of the number of requests served
+* create a `/count` endpoint that returns the number of visits
 
 ---
 
@@ -796,6 +788,7 @@ for k := range keys {
 
 * keep track (in memory) of how many times a given username has been checked
 * use a `map[string]uint`
+* create a `/details` endpoint that returns a JSON representation of the map
 * any issue?
 
 ---
@@ -817,6 +810,7 @@ for k := range keys {
 * keep track (in memory) of how many times a given username has been checked
 * use a `map[string]uint`
 * use a `sync.Mutex` to prevent data races
+* create a `/details` endpoint that returns a JSON representation of the map
 
 ---
 
