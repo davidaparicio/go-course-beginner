@@ -130,7 +130,9 @@ Concurrency is the art of composing a programme in terms of independently execut
 
 Go has native support (i.e. in the language and runtime) for concurrency.
 
-Go's concurrency model is arguably one of the language's most fascinating aspects.
+Go's concurrency model is arguably one of the language's strengths, but can be difficult to learn and master.
+
+: hence being relegated to the end of many learning resources
 
 
 
@@ -154,9 +156,10 @@ Disclaimer: many cooking metaphors ahead!
 - the act of executing code on multiple cores
 - a quality of the programme's execution (happens at _run_ time)
 
-Concurrency _enables_ parallelism.
+Concurrency _enables_ parallelism. See also
 
-To dig deeper, [[https://www.youtube.com/watch?v=oV9rvDllKEg][Rob Pike's talk on the topic]].
+- [[https://www.youtube.com/watch?v=oV9rvDllKEg][Rob Pike - Concurrency is not Parallelism (2012)]].
+- [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=3m42s][Rob Pike - Go proverbs (Gopherfest 2015)]]
 
 
 
@@ -173,19 +176,23 @@ Two fundamental mechanisms:
 
 
 
-
 * Goroutines
 
 A goroutine is a concurrent function execution.
 
-Goroutines all execute in the same address space.
-
-A goroutine can be thought of as a very lightweight thread: it's common for programmes to have 1000s of goroutines, even on a single core.
+It can be thought of as a very lightweight thread: it's common for programmes to have 1000s of goroutines, even on a single core.
 
 The `main` function is itself a goroutine that is created when the programme starts.
 
-Unlike a Unix process, a goroutine has no ID (see why [[https://talks.golang.org/2014/go4gophers.slide#38][here]]).
 
+
+* Goroutines execute in the same address space
+
+For example, a goroutine can pass a pointer to another goroutine, and the latter can dereference that pointer without causing an access violation.
+
+[[https://golang.org/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid data races!
+
+(A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location at the same time.)
 
 
 
@@ -208,6 +215,25 @@ The `go` keyword spawns a new goroutine: it causes the function call that follow
   go grindCoffeeBeans()
   go frothMilk()
 
+`go` statements return _immediately_.
+
+The result(s) of the function call to which the `go` keyword is applied are lost.
+
+Launching an anonymous function as a goroutine is common:
+
+  go func() {
+    fmt.Println("Grinding coffee beans...")
+  }()
+
+: just don't forget to invoke it!
+: terminology: spawning goroutine vs. spawned goroutine
+
+
+
+* Goroutines vs. Unix processes
+
+It's useful to compare goroutines to Unix processes...
+
 The `go` keyword is reminiscent of the ampersand operator (`&`) in Unix shells.
 
   #!/usr/bin/env sh
@@ -215,11 +241,9 @@ The `go` keyword is reminiscent of the ampersand operator (`&`) in Unix shells.
   grindCoffeeBeans &
   frothMilk &
 
-`go` statements return _immediately_.
+However, unlike a Unix process, a goroutine has no concept of an ID (see why [[https://talks.golang.org/2014/go4gophers.slide#38][here]]).
 
-The result(s) of the function call to which the `go` keyword is applied are lost.
-
-: terminology: spawning goroutine vs. spawned goroutine
+Therefore, a goroutine cannot readily be _killed_.
 
 
 
@@ -227,7 +251,7 @@ The result(s) of the function call to which the `go` keyword is applied are lost
 
 Before spawning a new goroutine, you must understand exactly under what conditions it will terminate.
 
-If you're careless and spawn goroutines willy-nilly, you expose yourself to bugs and _goroutine_leaks_.
+If you're careless and spawn goroutines willy-nilly, you expose yourself to correctness and performance bugs (_goroutine_leaks_).
 
 .image this_is_fine.png 300 _
 
@@ -277,6 +301,8 @@ Sleep a bit at the end?
 
 However, this solution is not entirely satisfactory. Why?
 
+: inefficient at best, nondeterministic at worst
+
 
 
 * Sleeping is not the answer
@@ -291,6 +317,8 @@ How long should the sleep be, exactly? Impossible to know in advance.
 Sleeping is simply not a reliable and efficient way of coordinating goroutines!
 
 We need another mechanism...
+
+: there are legitimate use cases for `time.Sleep` in a Go programme, but...
 
 
 
@@ -328,7 +356,7 @@ A wait group is little more than a glorified counter with _concurrency-safe_ ope
 
 Call `wg.Add(1)` _just_before_ spawning a goroutine.
 
-Call `wg.Done()` at the very end of each spawned goroutine (you can use `defer` for that).
+Call `wg.Done()` _at_the_very_end_ of each spawned goroutine (use `defer`!).
 
 Call `wg.Wait()` in the spawning goroutine to wait for all spawned goroutines to terminate.
 
@@ -351,6 +379,8 @@ Tip: you can apply the `go` keyword to an anonymous function.
 .play -edit goroutines_with_waitgroup.go /^//START/,/^//END/
 
 : don't forget the pair of parens at the end of each function literal!
+: What happens if I remove a wg.Done()? deadlock
+: What happens if I remove a wg.Add(1)? only one of the two goroutine will likely have time execute
 
 
 
@@ -358,11 +388,13 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the spawned goroutine.
 
-The call to `wg.Wait` must happen _after_ all calls to `wg.Add`.
+The call to `wg.Wait` must happen _after_ all calls to `wg.Add` (otherwise: data race).
 
 If a function needs a wait group declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to the function.
 
 .image https://blog.golang.org/gopher/plush.jpg 300 _
+
+: if wg.Add concurrent with wg.Wait, data race: https://play.golang.org/p/PPlY-M7yfYh
 
 
 
@@ -400,9 +432,11 @@ Try running `go` `vet` on the programme.
 
 *race*detector*
 
-The Go CLI provides a [[https://blog.golang.org/race-detector][race detector]], i.e. a tool that may (or may not) detect data races during execution.
+The Go CLI provides a [[https://blog.golang.org/race-detector][race detector]], i.e. a tool that can detect data races during execution.
 
 Try running the programme with the `-race` flag.
+
+Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][not guaranteed to catch all data races]].
 
 
 
@@ -414,19 +448,280 @@ That way, by virtue of Go's call-by-value evaluation strategy, the function only
 
 .play -edit goroutine_func_arg.go /^//START/,/^//END/
 
-To dig deeper, see the [[https://golang.org/doc/faq#closures_and_goroutines][Golang FAQ about this]].
+
+
+* Fixing the data race
+
+An alternative solution consists in redeclaring the variable inside the loop.
+
+.play -edit goroutine_func_redecl.go /^//START/,/^//END/
+
+See also the [[https://golang.org/doc/faq#closures_and_goroutines][Golang FAQ about this]].
 
 
 
-* Avoid running closures as goroutines
+* Be careful when running closures as goroutines
 
 When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may cause data races.
 
-When not too inconvenient, favor defining a dedicated named function:
+Defining a dedicated named function can help:
 
 .play -edit goroutine_func_standalone.go /^//START/,/^//END/
 
 
+
+* Namecheck project: check concurrently
+
+Rather than checking the username on each platform sequentially, do so concurrently.
+
+Does the user experience improve?
+
+
+
+* Namecheck project: aggregate the results (how?)
+
+What if, instead of simply printing the results, we wanted to somehow aggregated them?
+
+Remember: the result(s) of the function call to which the `go` keyword is applied are lost.
+
+We need a way to communicate between goroutines...
+
+
+
+* Channels
+
+
+
+* Don't communicate by sharing memory; share memory by communicating.
+
+Because goroutines all execute in the same address space, we need to be careful about data access from multiple goroutines.
+
+We could use locks to synchronize goroutine access to the shared memory...
+
+\... but Go encourages a different approach, in which shared values are passed around on _channels_.
+
+See also
+
+- [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=2m42s][Rob Pike - Go proverbs (Gopherfest 2015)]]
+- [[https://golang.org/doc/effective_go#sharing][Effective Go (Share by communicating)]]
+
+
+
+* Channels are typed
+
+Channels are typed conduits that allow goroutines to synchronize and exchange information.
+
+The element type of a channel is arbitrary.
+
+A channel whose element type is `T` has type `chan`T`.
+
+  var ch chan string // channel of strings
+
+
+
+* Popular naming choices for channels
+
+"c" or "ch", on its own or as a suffix (with or without camelcase):
+
+  var c chan int
+  var ch chan string
+  var errc chan error
+  var taskCh chan Task
+
+Plural of the channel's element type:
+
+  var tasks chan Task
+
+
+
+* Channels are first-class values
+
+You can pass a channel to a function:
+
+  func Aggregate(results chan Result) Result { /* ... */ }
+
+You can return a channel from a function:
+
+  func Generate(upTo int) chan int { /* ... */ }
+
+You can store a channel in a struct type:
+
+  type Request struct {
+      fn func() int  // The operation to perform.
+      c  chan bool    // The channel to return the result.
+  }
+
+Channels are comparable.
+
+
+
+
+* Initializing a channel
+
+Channels are reference types; their zero value is `nil`.
+
+To initialize a channel, use built-in function `make` with two arguments:
+
+- the first argument corresponds to the type of the channel;
+- the second argument is an (optional) `int` corresponding to the channel's desired (non-negative) _capacity_.
+
+  c1 := make(chan string) // equivalent to make(chan string, 0)
+  c2 := make(chan string, c)
+
+A channel's capacity cannot be changed after initialization.
+
+A freshly initialized channel starts its life in an "open" state, but can later be _closed_.
+
+: The specified capacity (if any) must be non-negative; otherwise, you'll get a compilation error or, worse, a panic.
+
+
+
+* Channel capacity
+
+A channel's capacity corresponds to the size of its _buffer_.
+
+Choosing it wisely is important, as it usually affects the correctness and/or the performance of your programme.
+
+Built-in function `cap` can be used to query a channel's capacity:
+
+  c := make(chan string, 20)
+  fmt.Println(cap(c)) // 20
+
+Some terminology:
+
+- A channel of zero capacity is called an _unbuffered_channel_.
+- A channel of positive capacity is called a _buffered_channel_.
+
+: The number of elements queued in a channel's buffer can also be queried via built-in function `len`, but is rarely useful. Why?
+: if more than one goroutine interact with the channel, len(ch) is stale as soon as queried
+: increasing buffer size may help reduce pressure on the Go scheduler
+
+
+
+* A kitchen serving-hatch as a metaphor
+
+Think of goroutines as cooks and waiters on either side of a serving hatch, which represents a channel.
+
+The channel's capacity corresponds to the number of plates that can fit on the serving hatch's platform at any one time.
+
+.image https://josephdmcnamee.files.wordpress.com/2012/01/serving-hatch1.jpg 350 _
+
+: what does a channel of capacity 0 correspond to?
+: the analogy is imperfect because channels are FIFO and waiters don't necessarily pick up plates in the order in which they arrived
+
+
+
+* Operations on a channel
+
+Channels support the following operations:
+
+- _sending_ a value to a channel,
+- _receiving_ a value from a channel,
+- _closing_ a channel (that hasn't been closed yet).
+
+You can also _range_ over a channel, which consists in continually receiving values from it until the channel gets closed.
+
+All those operations are *concurrency-safe*.
+
+: _Channel_communications_ is a general term for describing both channel sends and receives.
+: we'll see why closing a channel is useful soon
+
+
+
+* Sending to a channel
+
+The syntax of a _channel_send_ consists in the channel in question, followed by a left-pointing arrow (`<-`), followed by the value to send.
+
+  ch := make(chan string)
+  // ...
+  v := "superimportant message"
+  ch <- v
+
+The `gofmt` tool will adds a space on either side of the arrow; don't fight it.
+
+A channel send is a statement, not an expression.
+
+
+
+* Semantics of a channel send
+
+.image send_semantics.svg 400 _
+
+Note: buffered channels accept a limited number of values without a corresponding receive for those values.
+
+
+* Receiving from a channel
+
+The syntax of a _channel_receive_ consists in a left-pointing arrow (`<-`), followed by the channel in question.
+
+  ch := make(chan string)
+  // ...
+  <-ch
+
+The `gofmt` tool removes any whitespace between the arrow the channel; don't fight it.
+
+A channel receive is an expression: you can store the received value in a variable, or pass it to a function.
+
+  v := <-ch
+  fmt.Println(<-ch)
+
+The value received is only a copy of the value that was sent to the channel.
+
+
+
+* Semantics of a channel receive
+
+.image receive_semantics.svg 400 _
+
+Note: the value received from a channel by a goroutine is only accessible to that goroutine; it is removed from the channel for all the other goroutines.
+
+
+
+* Exercise
+
+.play -edit deadlock_example.go /^//START/,/^//END/
+
+This programme deadlocks. Can you guess why? How would you fix it?
+
+Add sends and receives to fix ideas. Discuss.
+
+
+
+* Receive ambiguity
+
+As shown by the diagram on the previous slide, when a channel is closed and empty, receiving from that channel yields the zero value of the channel's element type...
+
+.image https://blog.golang.org/gopher/plush.jpg 300 _
+
+How can we tell whether the value we're receiving is from a closed channel or whether someone really sent a zero value of the element's type to the channel?
+
+
+
+* Dispelling the ambiguity
+
+There is a special form of channel receive that yields an additional boolean value (named "ok", by convention):
+
+   v, ok := <-ch
+
+
+The value of `ok` is
+
+- `true` if the value received was delivered by a successful send operation to the channel, or
+- `false` if it is a zero value generated because the channel is closed and empty.
+
+
+
+* Closing a channel
+
+A freshly initialized channel starts its life in an "open" state.
+
+  ch := make(chan string) // ch is open (until closed) 
+
+You can close a channel to indicate that no more values are to be added to it:
+
+  close(ch)
+
+Closing a channel is definitive; a closed channel cannot be "re-opened".
 
 
 
@@ -434,15 +729,92 @@ When not too inconvenient, favor defining a dedicated named function:
 
 .image close_semantics.svg _ 800
 
+Note:
 
-* Semantics of a channel send
+- Closing the nil channel causes a panic.
+- Closing an already closed channel causes a panic
 
-.image send_semantics.svg 500 _
 
 
-* Semantics of a channel receive
 
-.image receive_semantics.svg 500 _
+* How is closing a channel useful?
+
+*Terminating*a*range*operation*
+
+If you range over a channel anywhere in your code, that range expression will block until you close the channel.
+
+*Broadcasting*a*signal*
+ 
+Because closing a channel unblocks all receives from that channel, it can be used to broadcast a signal to multiple goroutines! 
+
+In fact, the [[https://golang.org/pkg/context/][`context` package]] is [[https://vimeo.com/115309491#t=10m][based on this idea]].
+
+
+
+* Do not systematically close channels
+
+Channels are not resources; closing a channel is not a way to reclaim or clean up resources (memory, etc.).
+
+Channels will get garbage-collected like any other variable once they become unreachable.
+
+You only need to close a channel if the semantics of your programme demand it.
+
+
+
+
+* Closing a channel doesn't drain it
+
+Think of a restaurant as a channel.
+
+- Announcing the end of service doesn't mean pushing all the patrons out; they can finish their meal before leaving.
+- Similarly, closing a channel doesn't amount to flushing it out; some goroutine(s) can still consume those elements.
+
+.image https://rew-online.com/wp-content/uploads/2019/10/restaurantCLOSED.jpg 300 _
+
+
+
+
+
+
+
+
+* Ranging over a channel
+
+Ranging over a channel amounts to iteratively receiving from it:
+
+  for v := range ch {
+    // do something with v
+  }
+
+Note: only iteration variable is permitted.
+
+The code above is an exact equivalent to the following:
+
+  for {
+    v, ok := <-ch
+    if !ok {
+      break
+    }
+    // do something with v
+  }
+
+
+
+* Ranging over a channel blocks until the channel is closed
+
+Important: the `for` statement will block until the channel is closed!
+
+.play -edit range_blocks_until_channel_closed.go /^//START/,/^//END/
+
+
+
+* Reminder: channels are reference types
+
+Operating on a copy `cb` of a channel `ca` affects the same underlying data structure as if you operated on channel `ca` directly.
+
+.play -edit channels_are_references.go /^//START/,/^//END/
+
+If that weren't the case, passing channels to functions wouldn't be very useful.
 
 
 * Exercise: ping-pong game with cancelation (via a done channel) TODO
