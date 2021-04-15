@@ -1,4 +1,4 @@
-Introduction to Go
+Formation Go
 01 January 2021
 
 Julien Cretel
@@ -39,6 +39,7 @@ https://jub0bs.com
 - Choose a brand name consistent across multiple platforms.
 - Username squatting 😈
 
+: mention Newsweaver's rebranding to Poppulo, missed claiming @Poppulo on Twitter
 
 
 * Before we get started: Hello World
@@ -116,7 +117,48 @@ Functions are first-class citizens: they can
 Go also supports
 
 - anonymous functions (though no concise "lambda" notation), and
-- lexical closures.
+- lexical closures (functions can capture variables from the scope they're declared in).
+
+
+
+* Keywords
+
+  break       default       func      interface   select
+  case        defer         go        map         struct
+  chan        else          goto      package     switch
+  const       fallthrough   if        range       type
+  continue    for           import    return      var
+
+Which ones are new to you? Which ones seem to be missing?
+
+
+
+* Namecheck project: validation of Twitter usernames
+
+A prospective username is accepted by Twitter if it
+
+- does not contain "twitter" and all case variations thereof (e.g. "TwItTEr"),
+- contains between 4 and 15 alphanumeric or underscore characters.
+
+Write a function that implements the first rule:
+
+  func containsNoIllegalPattern(username string) bool {
+    // returns true if username does not contain "twitter"
+    // (and all case variations, incl. "TwItTEr", etc.)
+  }
+
+Hint: keep it simple!
+
+
+* Namecheck project: validation of Twitter usernames
+
+Use the `regexp` package to write a function that implements the second rule:
+
+  func containsOnlyLegalChars(username string) (bool, error) {
+    // returns true if username matches ^[0-9A-Z_a-z]{4,15}$
+  }
+
+Does the function's signature satisfy you? What would you prefer? Why? How would you do it?
 
 
 
@@ -148,15 +190,25 @@ Disclaimer: many cooking metaphors ahead!
 
 *Concurrency*
 
-- the art of composing a programme in terms of independenly executing computations
-- a quality of the programme's structure (happens at _write_ time)
+- the art of structuring a programme in terms of independenly executing computations
+- a property of the programme's code
 
 *Parallelism*
 
-- the act of executing code on multiple cores
-- a quality of the programme's execution (happens at _run_ time)
+- the simultaneous execution of multiple things on multiple cores
+- a property of the running program
 
-Concurrency _enables_ parallelism. See also
+
+
+* Parallelism is not the goal of concurrency
+
+Concurrency _enables_ parallelism, but parallelism isn't the goal.
+
+It's valuable to write concurrent code even while being ignorant of whether that code will eventually run in parallel.
+
+And if good concurrent code does run in parallel, we should get graceful performance improvement for free as the number of cores increase.
+
+See also
 
 - [[https://www.youtube.com/watch?v=oV9rvDllKEg][Rob Pike - Concurrency is not Parallelism (2012)]].
 - [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=3m42s][Rob Pike - Go proverbs (Gopherfest 2015)]]
@@ -184,6 +236,10 @@ It can be thought of as a very lightweight thread: it's common for programmes to
 
 The `main` function is itself a goroutine that is created when the programme starts.
 
+Each goroutine gets its own stack, which starts small and grows/shrinks as required.
+
+.image https://blog.golang.org/store/gophers.jpg 400 _
+
 
 
 * Goroutines execute in the same address space
@@ -198,13 +254,13 @@ For example, a goroutine can pass a pointer to another goroutine, and the latter
 
 * The Go scheduler
 
-The _Go_scheduler_ is the part of the Go runtime responsible for "juggling" goroutines in order to maximise work.
+The _Go_scheduler_ is a part of the Go runtime that automatically multiplexes goroutines onto operating-systems threads and manages their scheduling for us.
 
-No need to understand how the Go scheduler works, at this stage of your Go learning.
+It continually observes the run-time behavior of goroutines and decides to suspends them when they block and then resumes them when they become unblocked.
 
-Just think of the Go scheduler and goroutines as a chef and his/her kitchen assistants.
+No need for you to think about it; just picture the Go scheduler and goroutines as a chef and his/her kitchen assistants.
 
-.image https://homemaking.com/wp-content/uploads/2020/04/cooking.jpg 300 _
+.image https://homemaking.com/wp-content/uploads/2020/04/cooking.jpg 250 _
 
 
 
@@ -328,7 +384,7 @@ The standard library's [[https://golang.org/pkg/sync/#WaitGroup][`sync` package]
 
 Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
 
-: e.g. if you're spawning a goroutine for each line of a file that you're reading
+: e.g. if you're spawning a goroutine for each line of a file that you're reading, or for each element received from a channel
 
 
 
@@ -348,7 +404,7 @@ A wait group is little more than a glorified counter with _concurrency-safe_ ope
 
 - `wg.Add(n)` increments the counter by n (>0).
 - `wg.Done()` decrements the counter by 1. It's equivalent to `wg.Add(-1)`.
-- `wg.Wait()` blocks until the counter goes back to 0.
+- `wg.Wait()` blocks until the counter goes back to 0; it acts as a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]].
 
 
 
@@ -405,6 +461,7 @@ Can you spot the bug in the following programme?
 .play -edit goroutine_func_quiz.go /^//START/,/^//END/
 
 : ask them first how they expect the programme to behave
+: sometimes prints 10, not 9! because loop variable goes beyond bound before loop can end
 
 
 
@@ -516,6 +573,8 @@ The element type of a channel is arbitrary.
 A channel whose element type is `T` has type `chan`T`.
 
   var ch chan string // channel of strings
+
+: channels only exist within the confines of your programme; they can't be used to communicate between different processes, be they written in Go.
 
 
 
@@ -715,7 +774,7 @@ The value of `ok` is
 
 A freshly initialized channel starts its life in an "open" state.
 
-  ch := make(chan string) // ch is open (until closed) 
+  ch := make(chan string) // ch is open (until closed)
 
 You can close a channel to indicate that no more values are to be added to it:
 
@@ -744,8 +803,8 @@ Note:
 If you range over a channel anywhere in your code, that range expression will block until you close the channel.
 
 *Broadcasting*a*signal*
- 
-Because closing a channel unblocks all receives from that channel, it can be used to broadcast a signal to multiple goroutines! 
+
+Because closing a channel unblocks all receives from that channel, it can be used to broadcast a signal to multiple goroutines!
 
 In fact, the [[https://golang.org/pkg/context/][`context` package]] is [[https://vimeo.com/115309491#t=10m][based on this idea]].
 
@@ -817,12 +876,326 @@ Operating on a copy `cb` of a channel `ca` affects the same underlying data stru
 If that weren't the case, passing channels to functions wouldn't be very useful.
 
 
-* Exercise: ping-pong game with cancelation (via a done channel) TODO
 
-.play -edit ping_pong_done.go /^//START/,/^//END/
+* Namecheck project: gather the results via a channel
+
+1. In `main`, declare some `Result` type.
+2. In `main`, initialize a `chan`Result`, and make sure it is accessible to the spawned goroutines.
+3. In each spawned goroutine, create a `Result` value and send it to the channel.
+4. In `main`, range over that channel and store the results in a slice.
+5. In `main`, Print the resulting slice.
+
+.image https://blog.golang.org/store/gophers.jpg 400 _
+
+: type Result struct { Username string Platform string Valid bool Available bool Error error }
+: the channel allows us to serialize access to the slice (local mutable state)
 
 
 
-* Exercise: ping-pong game with cancelation with context TODO
+* Channel directions
 
-.play -edit ping_pong_ctx.go /^//START/,/^//END/
+You can mark a channel as _send-only_ or _receive-only_ by adding the optional `<-` operator on the right or left (respectively) of the `chan` keyword.
+
+This is particularly useful for locally restricting the operations possible on a channel parameter within a function:
+
+  func produce(c chan<- string) {} // c is send-only within produce
+  func consume(c <-chan string) {} // c is receive-only within consume
+
+You can pass a bidirectional channel wherever a unidirectional channel is expected.
+
+The compiler disallows
+
+- receiving from a send-only channel, and
+- sending to or closing a receive-only channel.
+
+
+
+* Channel directions: example
+
+.play -edit channel_dir.go /^//START/,/^//END/
+
+
+
+* Why use unidirectional channels
+
+Unidirectional channels are great for
+
+- clarifying the role of a channel within a function,
+- increasing your confidence in the correctness of your code.
+
+Use them liberally, wherever possible.
+
+However, in cases where a function [[https://talks.golang.org/2012/10things.slide#10][legitimately needs to both send to and receive from a channel]], a bidirectional channel is needed.
+
+
+
+* Namecheck project: use unidirectional channels
+
+Review the functions that accept a channel parameter, and determine whether a channel direction could have been specified.
+
+.image https://blog.golang.org/gopher/plush.jpg 400 _
+
+
+
+* Select statement
+
+A `select` statement is multiway concurrent control switch.
+
+  select {
+  case v, ok:= <-ch1:
+    // do something with v and ok
+  case ch2 <- 42:
+    // ...
+  default:
+    // ...
+  }
+
+- Each of the "normal" (non-default) cases correspond to a channel communication (send or receive).
+- The first normal case that can proceed gets selected.
+- If more than one normal cases can proceed, one of them is chosen in a uniform pseudo-random fashion.
+- If no normal case can proceed, the default case (if any) gets selected; otherwise, the `select` statement blocks.
+
+
+
+* For-select loop
+
+`select` is often used in conjunction with `for` to form an "event loop":
+
+  for someCondition {
+    select {
+    case v, ok := <-results:
+      // ...
+    case  err, ok := <-errc:
+      // ...
+    }
+  }
+
+
+
+* Namecheck project: fail early
+
+1. Remove the `Error` field from your `Result` type
+2. Modify your code to report normal results and errors through separate channels.
+3. Use a `select` statement to receive from both channels.
+4. Terminate the programme as soon as one error is received
+
+Hint: choose channel capacity wisely.
+
+.image https://blog.golang.org/gopher/plush.jpg 300 _
+
+
+* Canceling goroutines
+
+Spawning goroutines is easy, but making sure they terminate sometimes requires more effort. One common recipe for canceling a goroutine consists of
+
+- a `select` statement
+- a channel of type `<-chan`struct{}` (commonly named "quit" or "done")
+
+  func cancellable(quit <-chan struct{}) {
+    for {
+        select {
+        case <-quit:
+          return
+        default:
+          // do something, and maybe sleep a bit
+        }
+    }
+  }
+
+If function `cancellable` is launched as a goroutine, another goroutine can get it to terminate by sending to or closing the `quit` channel. Why?
+
+
+
+* Exercise: render a function cancellable
+
+.play -edit uncancellable.go /^//START/,/^//END/
+
+Function `printInts` only terminates when the whole program does.
+
+Modify `printInts` to make it cancellable from `main`. Cancel the goroutine after one second.
+
+You can do this exercise in the [[https://play.golang.org/p/ANQV_mTOriS][Go Playground]].
+
+
+
+* Exercise: render a function cancellable (solution)
+
+.play -edit cancellable.go /^//START/,/^//END/
+
+This solution is available on the [[https://play.golang.org/p/xlT_rE5B43n][Go Playground]].
+
+: mention that closing the channel broadcasts a signal to all goroutines that receive from it
+
+
+
+* Canceling goroutines with context
+
+The `context` package exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
+
+`Context`'s cancellation mechanism is based on the same quit-channel trick; the channel is accessible via `Context`'s `Done` method:
+
+  func cancellable(ctx context.Context) {
+    for {
+        select {
+        case <-ctx.Done():
+          return
+        default:
+          // do something, and maybe sleep a bit
+        }
+    }
+  }
+
+By convention, the `context.Context` parameter (if any) is always first.
+
+
+
+* Exercise: cancelling a goroutine with context.Context
+
+Browse the documentation of the `context`, and modify the code from the previous exercise to use a `context.Context` rather than a `quit` channel.
+
+You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Playground]].
+
+
+
+* Exercise: ping-pong and goroutine leaks
+
+This [[https://play.golang.org/p/R4_2kBHF3gy][Go Playground]] models a ping-pong game.
+
+Unfortunately, a goroutine systematically leaks.
+
+Explain why and how you would you fix it.
+
+: two goroutines exchanging one value over and over
+: valid use case of a bidirectional channel
+: pointer element to reduce memory footprint
+: show that deadlock if you never throw the ball on the table
+: one player terminates while the other is left holding the ball
+: one possibility: buffer size of 1, but no guarantee that the same player will play twice in a row
+: non-blocking send by adding a select statement
+
+
+
+* Namecheck project: turn your CLI tool into a Web server
+
+Create a `server` folder under `cmd` and copy `cmd/cli/main.go` to `cmd/server/main.go`.
+
+  namecheck
+  ├── cmd
+  │   ├── cli
+  │   │   └── main.go
+  │   └── server
+  │       └── main.go
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
+  ├── go.mod
+  ├── namecheck.go
+  └── twitter
+      ├── twitter.go
+      └── twitter_test.go
+
+
+
+* Namecheck project: turn your CLI tool into a Web server
+
+1. Start from [[https://golang.org/pkg/net/http/#example_ListenAndServe][https://golang.org/pkg/net/http/#example_ListenAndServe]].
+2. Adapt the code from the CLI executable to your server
+3. Define a `/check` route that accepts a username to test as a query parameter.
+4. Return JSON in the HTTP response (see [[https://golang.org/pkg/encoding/json/][encoding/json]]); make sure the content type is correct.
+
+
+
+* Namecheck project: use a third-party package for routing
+
+We'll use [[https://github.com/gorilla/mux][gorilla/mux]], a popular alternative to `net/http` for defining routes.
+
+To download the dependency, run the following command at the root of your project:
+
+  go get github.com/gorilla/mux
+
+Doing so will also update your `go.mod` file and create a `go.sum` file.
+
+Import `gorilla/mux` in your server's `main.go` and redefine your route with it.
+
+: we don't really need mux here; nothing fancy; just for practice
+
+
+
+* Communicating by sharing memory
+
+Go encourages you to use channels to communicate between goroutines.
+
+However, sometimes, sharing memory is simpler and/or performant.
+
+We'll cover two facilities for sharing memory:
+
+- synchronized operations on fixed-sized integers, provided by the [[https://golang.org/pkg/sync/atomic/][`sync/atomic` package]],
+- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://golang.org/pkg/sync/][`sync` package]].
+
+
+
+* Namecheck project: number of visits
+
+This a motivating exercise for atomics.
+
+Keep an in-memory count of the number of requests served by our `/check` route.
+
+- Declare an integer variable named `visits` at the level of the `main` package.
+- Increment `visits` at each invokation of `/check` handler.
+- Create an additional route `/count` that returns the total number of visits.
+
+Discuss.
+
+
+
+* The need for atomic operations
+
+Our server is concurrent: it handles each incoming request in a separate goroutine.
+
+However, unsafely incrementing an integer from multiple goroutines yields unpredictable results: some updates typically get lost.
+
+.play -edit plusplus_isnt_atomic.go /^//START/,/^//END/
+
+
+
+* Namecheck project: number of visits
+
+By unsafely writing to and reading from our `visits` variable from multiple goroutines, we've created a data race and are likely to lose updates to `visits`.
+
+Consult the documentation of the [[https://golang.org/pkg/sync/atomic/][`sync/atomic` package]] and fix the data race.
+
+.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
+
+: Check whether the race detector can detect it.
+
+
+
+* Namecheck project: count of checks per username
+
+This a motivating exercise for mutual exclusions.
+
+Keep track (in memory) of how many times each username has been checked.
+
+- What data structure seems appropriate?
+- Create an additional `/frequency` route that returns a JSON representation of the data structure in question.
+
+Discuss.
+
+
+* TODO
+
+map is not concurrency-safe
+can't use sync/atomics because only applies to fixed-sized integers.
+
+
+
+* What we haven't covered
+
+We're nearing the end of the course.
+
+You've learned a lot, but there is [[https://www.humancoders.com/formations/go-avance][more]]!
+
+.image https://blog.golang.org/store/gophers.jpg 400 _
+
+
+* Open discussion
