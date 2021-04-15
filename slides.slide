@@ -137,7 +137,7 @@ Which ones are new to you? Which ones seem to be missing?
 
 A prospective username is accepted by Twitter if it
 
-- does not contain "twitter" and all case variations thereof (e.g. "TwItTEr"),
+- does not contain any case-insensitive match of "twitter" (e.g. "TwItTEr"),
 - contains between 4 and 15 alphanumeric or underscore characters.
 
 Write a function that implements the first rule:
