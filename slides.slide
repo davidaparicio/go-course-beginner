@@ -6,21 +6,34 @@ jcretel-infosec@protonmail.com
 https://jub0bs.com
 @jub0bs
 
-* Setup
+* Setup TODO
 
-- Go (>= 1.16)
-- Visual Studio Code
-- [[https://code.visualstudio.com/docs/languages/go][Go extension for Visual Studio Code]]
+Make sure you have the latest version of Go (1.16.2) installed by running
+
+  go version
+
+To figure out where your Go distribution is installed, run
+
+  go env GOROOT
+
+Visual Studio Code
+
+[[https://code.visualstudio.com/docs/languages/go][Go extension for Visual Studio Code]]
+
+embarks a number of utilities such as `goimports` and `gofmt`.
+
 - Git
 
 
-* About the course
+* What to expect from the course TODO
 
 - interaction
 - regular breaks
 - learn the fundamentals
 - emphasis on practice over theory
 - long-running project
+- gophers
+- cooking analogies
 
 : the source code of my solution will be available on GitHub
 
@@ -30,26 +43,59 @@ https://jub0bs.com
 
 *Objectives*
 
-- Write a small CLI tool to check the validity and status of a username on multiple social networks.
-- Convert it into a HTTP server.
-- A forcing function for learning Go: we'll introduce new concepts as needed.
+Write a small CLI tool (and then a server) to check the validity and status of a username on multiple social networks: Twitter, GitHub, etc.
+
+A forcing function for learning Go: we'll introduce new concepts as needed.
 
 *Business* *case*
 
-- Choose a brand name consistent across multiple platforms.
-- Username squatting 😈
+- Ability to choose a brand name consistent across multiple platforms.
+- Username squatting!
+
+.image https://raw.githubusercontent.com/nielsing/yar/master/images/yargopher3.png 150 _
 
 : mention Newsweaver's rebranding to Poppulo, missed claiming @Poppulo on Twitter
 
 
-* Before we get started: Hello World
 
-.play -edit helloworld.go
-
+* Go's history
 
 
 
-* A few words about Go
+* Genesis
+
+Go was created in 2007 at Google (on 20% time) by Robert Griesemer, Rob Pike, and Ken Thompson.
+
+.image three_lads.jpeg
+
+
+
+* Genesis
+
+Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][largely out of frustration with C++]]: language complexity, long build times, poor support for concurrency, etc.
+
+.image https://imgs.xkcd.com/comics/compiling.png
+
+: Griesemer: V8 JS engine, Hot Spot JVM
+: Pike: predecessors to Go (Newsqueak), Plan 9, Unicode
+: Thompson: recipient of Turing Award, UNIX (with Dennis Ritchie), Unicode (with Pike), Plan 9 (with Pike)
+
+
+
+* History of the Go project
+
+- started in 2007
+- open-sourced in 2009
+- Go 1.0 released in 2012
+- The go compiler (`gc`) becomes self-hosted in 2015.
+- ...
+- Go 1.16 released in 2021.
+
+
+
+* What you should know about Go
+: answer some questions you may have straight away
+: manage your expectations
 
 
 
@@ -59,6 +105,7 @@ https://jub0bs.com
 
 .image https://blog.golang.org/gopher/gopher.png 400 _
 
+: more popular than the language's logo
 
 
 * Go's logo
@@ -67,75 +114,457 @@ https://jub0bs.com
 
 .image https://blog.golang.org/go-brand/logos.jpg 400 _
 
-
-
-* Genesis
-
-Go was created in 2007 at Google by Robert Griesemer, Rob Pike, and Ken Thompson.
-
-.image three_lads.jpeg
+: Lapins Crétins vibe!
 
 
 
-* Genesis
+* Go versus the C programming language
 
-Robert, Rob, and Ken started working on Go (on 20% time) out of frustration with C++: language complexity, long build times, poor support for concurrency.
+Go is clearly reminiscent of C, but Go is different from C in many notable ways:
 
-.image https://imgs.xkcd.com/comics/compiling.png
+- strong typing
+- fast compilation
+- garbage collection
+- memory safety
+- full Unicode support
+- concurrency primitives
+- sensible `switch` behavior
+- first-class functions
+- multiple function results
+- principled error handling
 
-
-
-* History of the Go project
-
-- started in 2007
-- open-sourced in 2009
-- Go 1.0 released in 2012
-- ...
-- Go 1.16 released in 2021.
-
-
-
-* Go's object orientation
-
-Go allows you to declare custom types (and methods on them), which promote _abstraction_.
-
-Go has no concept of _inheritance_. Instead, it facilitates _composition_.
-
-Go interfaces enable _polymorphism_ and structural subtyping.
-
-Go packages enable _encapsulation_.
+: memory safety: pointers, but no pointer arithmetic)
+: mention heap-overflow vuln discovered in curl
 
 
 
-* Go's functional orientation
+* Go is object-oriented... with a twist!
 
-Functions are first-class citizens: they can
+The ability to define custom types (methods on them) promote _abstraction_.
 
-- take other functions as parameters, and
-- return functions as results.
+Go's interfaces (and, soon, generics) enable _polymorphism_.
 
-Go also supports
+Go's packages enable _encapsulation_.
 
-- anonymous functions (though no concise "lambda" notation), and
-- lexical closures (functions can capture variables from the scope they're declared in).
+Go has no concept of _inheritance_, but facilitates _composition_ instead.
+
+.image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 300 _
+
+
+
+* Object orientation without inheritance
+
+Can a language without inheritance be described as object-oriented? Sure!
+
+.image https://i.redd.it/2dpp8t6mk7641.png 200 _
+
+See also
+
+- [[https://www.infoworld.com/article/2073649/why-extends-is-evil.html][Allen Holub - Why extends is evil (InfoWorld 2003)]]
+- [[https://www.quora.com/What-does-Alan-Kay-think-about-inheritance-in-object-oriented-programming][What does Alan Kay think about inheritance in object-oriented programming? (Quora)]]
+- [[https://golang.org/doc/faq#Is_Go_an_object-oriented_language][Is Go an object-oriented language? (golang.org FAQ)]]
+
+: James Gosling (Java): "I'd leave classes out."
+: No concept of inheritance in Alan Kay's Simula... a Web of objects
+
+
+
+* Functions are first-class citizens
+
+In Go, functions can
+
+- take other functions as parameters,
+- return functions as results,
+- be stored in variables,
+- be stored in struct fields.
+
+However, despite having anonymous functions, Go has no concise "lambda" notation.
+
+
+
+* Go development pays well
+
+See the results of the [[https://insights.stackoverflow.com/survey/2020#technology-what-languages-are-associated-with-the-highest-salaries-worldwide-global][Stack Overflow's 2020 Developer Survey]].
+
+.image https://blog.golang.org/gophergala/fancygopher.jpg 400 _
+
+
+
+* First steps in Go
+
+
+
+* The Go Playground
+
+The Go Playground ([[https://play.golang.org][play.golang.org]]) is a Web app that lets you write and run
+a small Go program from your browser. Features include:
+
+- permalinks (convenient for sharing code snippets)
+- automatic formating
+- automatic imports (from the core library)
+- basic static analysis with `go`vet`
+- [[https://play.golang.org/p/lEDjyvhttIB][limited support for modules and multiple packages]]
+- downloading of the program source (^S or ⌘+S)
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/computer/gamer.svg 150 _
+
+: It's a good place to experiment and fix ideas about the language and its core library.
+
+
+
+* Some limitations of the Go Playground
+
+As the name indicates, the Playground isn't meant for anything extensive.
+
+Limitations include:
+
+- single executable
+- no networking allowed
+- no command-line arguments
+- poor support for third-party packages
+
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
+: In this course, we'll only use the Playground to solve simple exercises.
+: An alternative with more features, incl. syntax highlighting: https://goplay.space/
+
+
+
+* Hello, World!
+
+.play -edit helloworld.go
+
+You can play with this program [[https://play.golang.org/p/7vin2BK8_A6][in the Go Playground]].
+
+.image https://blog.golang.org/gopher/plush.jpg 300 _
+
+: we can already draw some observations from this piece of code
+
+
+
+* Observations about our Hello-World program
+
+.play -edit helloworld.go
+
+All source file starts with a _package_clause_,
+i.e. the `package` keyword followed by the package's name: `package`main`
+
+A package named `main` produces an executable program (as opposed to a library).
+
+Imports specify _package_paths_ in double quotes.
+
+
+
+* More observations about our Hello-World program
+
+.play -edit helloworld.go
+
+The `main` function of a `main` package is the program's entrypoint;
+it takes no parameters and returns no results.
+
+Go's grammar uses semicolons as statement terminators, but those semicolons do not appear in the source; [[https://golang.org/doc/effective_go#semicolons][they're added by the compiler]]. As a result, you're not free to break lines wherever you want.
+
+The formater uses tabs (not spaces) for indentation.
+
+: cmd args: os.Args
+: guillemets doubles
+
+
+
+* Namecheck project: a starting point
+
+1. Create a folder named `namecheck`.
+2. Create a file named `main.go` file at the root of the `namecheck` folder.
+
+  namecheck
+  └── main.go
+
+3. Write a "Hello World" programme in main.go
+4. Compile it by running the following command, which creates an executable
+(named `main` on *nix systems or `main.exe` on Windows):
+
+  go build main.go
+
+5. Execute the executable.
+
+
+
+* Compiling and executing a program in one fell swoop
+
+If you just want to run the program without keeping the executable, run
+
+  go run main.go
+
+which is roughly equivalent (on *nix systems) to
+
+  go build main.go
+  ./main
+  rm main
+
+.image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 300 _
+
+
+
+* Cross-compilation
+
+By default, the compiler will produce an executable targeting your operating system and architecture.
+
+However, you can cross-compile to a different operating system and architecture using the `GOOS` and `GOARCH` environment variables:
+
+  GOOS=windows GOARCH=amd64 go build main.go
+
+.image https://blog.golang.org/store/gophers.jpg 300 _
 
 
 
 * Keywords
 
-  break       default       func      interface   select
-  case        defer         go        map         struct
-  chan        else          goto      package     switch
-  const       fallthrough   if        range       type
-  continue    for           import    return      var
+  break           default           func          interface       select
+  case            defer             go            map             struct
+  chan            else              goto          package         switch
+  const           fallthrough       if            range           type
+  continue        for               import        return          var
 
-Which ones are new to you? Which ones seem to be missing?
+Discuss. Which keywords are new to you? Which one(s) seem to be missing?
+
+.image https://blog.golang.org/5years/gophers5th.jpg 300 _
+
+
+
+* Keywords
+
+*chan* and *select* are related to _channels_, which are typed conduits used for communication between goroutines, Go's lightweight threads.
+
+*defer* allows you to unconditionnaly execute some code at the end of a function call; convenient for cleaning up, reclaiming resources, etc.
+
+*fallthrough* can be used to override `switch` cases' normal behavior, which consists in automatically breaking at the end (without the need for an explicit `break` statement).
+
+*go* is used to spawn goroutines.
+
+*goto* is present in the language but best avoided for most projects.
+
+*range*, used in conjunction with `for`, allows you to iterate over various data structures.
+
+No `while` keyword in Go! All loops are done with the `for` keyword.
+
+: defer: a cleaner alternative to try-catch-finally
+
+
+
+* Predeclared names
+
+Go also comes with several predeclared names accessible from anywhere in your code:
+
+*Constants*
+
+  false true nil iota
+
+*Built-in*types*
+
+  bool int rune uint byte float64 string
+  struct map chan
+  interface error
+
+*Built-in*functions*
+
+  make    len     cap     new
+  append  copy    delete
+  panic   recover
+
+(None of those lists is exhaustive.)
+
+
+
+* Comments
+
+End-of-line comments start with a double slash and extend to the end of the line:
+
+  var foo = "foo" // this is a comment
+
+Multiline comments are delimited by `/*` and `*/` and do not nest:
+
+  /*
+    this is
+    a multiline comment
+  */
+
+The documentation of a package is written as comments in the package's source file(s).
+
+: won't talk too much about documentation in this first course
+
+
+
+* Packages
+
+
+
+* Package path and package name
+
+A package is identified by its _path_, which must be globally unique.
+
+  fmt
+  net/http
+  github.com/jub0bs/missilelauncher
+
+The _default_name_ of a package typically corresponds to the last component of its path:
+
+  fmt
+  http
+  missilelauncher
+
+Compiling a package whose default name is `main` produces an executable
+(and a library otherwise).
+
+: first two are part of core library; third one is third-party
+: "usually": the exception is for a package whose enclosing folder doesn't mach the package name; best avoided
+: also, with versions of modules after v1, it's the second last path component: "rsc.io/quote/v3" => quote
+
+
+
+* Package: the unit of compilation
+
+A package is composed of one or more source files that are compiled together.
+
+All of a package's source files (and no other!) must
+
+- be in the same folder (e.g. foo),
+- start with the same package clause (e.g. `package`foo`).
+
+Each source file of a package must import the packages it consumes.
+
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
+
+: imports are not "shared" across source files.
+
+
+* Exercise: a closer look at the fmt package with go list
+
+`go`list` allows you to ask questions about packages at the command line.
+
+Run the following command in your shell to list the production source files that make up the `fmt` package:
+
+  go list -f '{{ join .GoFiles "\n" }}' fmt
+
+Run the following command in your shell to determine where the `fmt` package lives
+on your machine, and check the contents of the folder:
+
+  go list -f '{{ .Dir }}' fmt
+
+Note that the folder also contains test files.
+
+
+
+* Exercise: a closer look at the fmt package
+
+Check out the online documentation of the 
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+
+
+* Package: the unit of encapsulation
+
+In Go, the package (not the type!) is the unit of encapsulation.
+
+There are only two access levels: a package-level identifier is either
+
+- _exported_ (i.e. accessible from another package), or
+- _unexported_ (i.e. only accessible within its own package).
+
+Whether a package-level identifier is exported depends on the case of its first letter:
+
+  package foo
+
+  var Bar = "Bar"                   // starts with an uppercase B:   exported by package foo
+  type Baz struct { /* ... */ }     // starts with an uppercase B:   exported by package foo
+  const qux = 42                    // starts with a lowercase q:  unexported by package foo
+  func quux() { /* ... */ }         // starts with a lowercase q:  unexported by package foo
+
+
+
+* Importing packages
+
+A package can be imported in different ways:
+
+- normal import
+- named import
+- blank import
+- dot import
+- relative import
+
+We won't mention relative imports again because they are best avoided.
+
+.image https://blog.golang.org/store/gophers.jpg 200 _
+
+
+
+* Normal imports
+
+This is the most common form of import.
+
+You used a normal import in your Hello-World program:
+
+.play -edit helloworld.go
+
+To access an identifier exported by a different package (`fmt`, here), you must qualify it using the default package name as prefix (`fmt.Println`).
+
+Importing a package without consuming it causes a compilation error!
+
+
+
+* Named imports
+
+Named imports allows you to use the imported package under a different name.
+
+A named import is handy when you perceive the default package name as inappropriate:
+
+  import ml "github.com/jub0bs/missilelauncher"
+
+But named imports are especially useful
+
+- when your code imports multiple packages whose default names collide:
+
+  import "math/rand"
+  import crand "crypto/rand"
+
+- when your code uses multiple major versions of a _module_ within the same file:
+
+  import "github.com/jub0bs/missilelauncher"
+  import mlv2 "github.com/jub0bs/missilelauncher/v2"
+
+: more on this later
+
+
+
+* Blank imports TODO
+
+Blank imports are sometimes useful; see the `database/sql` and `image` packages.
+
+To import a package solely for its side-effects (initialization), use the blank identifier as explicit package name:
+
+https://golang.org/ref/spec#Package_initialization
+
+
+* Dot imports
+
+A dot import allows you to access all the exported identifiers of the imported package without the need to qualify them:
+
+.play -edit helloworld_dot.go
+
+Dot imports can be convenient in test code, but are otherwise best avoided because
+
+- they pollute the namespace of your source file,
+- they obscure the provenance of identifiers.
+
+: similar to Java's static imports
+
+
+* Functions
 
 
 
 * Namecheck project: validation of Twitter usernames
 
-A prospective username is accepted by Twitter if it
+A prospective username is valid on Twitter if it
 
 - does not contain any case-insensitive match of "twitter" (e.g. "TwItTEr"),
 - contains between 4 and 15 alphanumeric or underscore characters.
@@ -158,7 +587,49 @@ Use the `regexp` package to write a function that implements the second rule:
     // returns true if username matches ^[0-9A-Z_a-z]{4,15}$
   }
 
-Does the function's signature satisfy you? What would you prefer? Why? How would you do it?
+Does the function's signature satisfy you?
+
+What would you prefer? Why?
+
+How would you do it?
+
+
+
+* Namecheck project: validation of GitHub usernames
+
+Create a `github` package (you can copy the `twitter` package to get started quickly):
+
+  namecheck
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
+  ├── go.mod
+  ├── main.go
+  └── twitter
+      ├── twitter.go
+      └── twitter_test.go
+
+A prospective username is valid on GitHub if it
+
+- contains between 3 and 39 alphanumeric or hyphen characters,
+- doesn't start or end (or both) with a hyphen,
+- doesn't contain two hyphens in a row.
+
+
+
+* Namecheck project: validation of GitHub usernames
+
+Write a function named `IsValid` that returns true if its parameter is a valid username on GitHub, and false otherwise:
+
+  func IsValid(username string) bool {
+    // returns true if username is valid on GitHub
+  }
+
+Adapt the test cases in `github_test.go` and make them pass.
+
+Keep writing test cases until you're satisfied with their code coverage.
+
+.image https://blog.golang.org/store/gophers.jpg 300 _
 
 
 
@@ -380,7 +851,7 @@ We need another mechanism...
 
 * Wait groups
 
-The standard library's [[https://golang.org/pkg/sync/#WaitGroup][`sync` package]] provides a mechanism for _orchestrating_ goroutines: wait groups.
+The core library's [[https://golang.org/pkg/sync/#WaitGroup][`sync` package]] provides a mechanism for _orchestrating_ goroutines: wait groups.
 
 Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
 
@@ -390,11 +861,13 @@ Wait groups are particularly useful when the number of goroutines to spawn is no
 
 * Declaring a wait group
 
-The zero value is readily usable:
+Because the zero value of `sync.WaitGroup` is readily usable, you can simply write
 
-  wg := sync.WaitGroup{} // unnecessary
+  var wg sync.WaitGroup
 
-  var wg sync.WaitGroup  // better
+Alternatively, if you want a `*sync.WaitGroup`, write
+
+  wg := new(sync.WaitGroup)     // equivalent to &sync.WaitGroup{}
 
 
 
@@ -591,6 +1064,8 @@ Plural of the channel's element type:
 
   var tasks chan Task
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
 
 
 * Channels are first-class values
@@ -659,9 +1134,11 @@ Some terminology:
 
 * A kitchen serving-hatch as a metaphor
 
-Think of goroutines as cooks and waiters on either side of a serving hatch, which represents a channel.
+Think of goroutines as cooks and waiters on either side of a serving hatch,
+which represents a channel.
 
-The channel's capacity corresponds to the number of plates that can fit on the serving hatch's platform at any one time.
+The channel's capacity corresponds to the number of plates that can fit
+on the serving hatch's platform at any one time.
 
 .image https://josephdmcnamee.files.wordpress.com/2012/01/serving-hatch1.jpg 350 _
 
@@ -689,7 +1166,8 @@ All those operations are *concurrency-safe*.
 
 * Sending to a channel
 
-The syntax of a _channel_send_ consists in the channel in question, followed by a left-pointing arrow (`<-`), followed by the value to send.
+The syntax of a _channel_send_ consists in the name of the channel in question
+followed by a left-pointing arrow (`<-`) followed by the value to send.
 
   ch := make(chan string)
   // ...
@@ -711,7 +1189,7 @@ Note: buffered channels accept a limited number of values without a correspondin
 
 * Receiving from a channel
 
-The syntax of a _channel_receive_ consists in a left-pointing arrow (`<-`), followed by the channel in question.
+The syntax of a _channel_receive_ consists in a left-pointing arrow (`<-`) followed by the channel in question.
 
   ch := make(chan string)
   // ...
@@ -719,7 +1197,8 @@ The syntax of a _channel_receive_ consists in a left-pointing arrow (`<-`), foll
 
 The `gofmt` tool removes any whitespace between the arrow the channel; don't fight it.
 
-A channel receive is an expression: you can store the received value in a variable, or pass it to a function.
+A channel receive is an expression: you can store the received value in a variable,
+or pass it to a function.
 
   v := <-ch
   fmt.Println(<-ch)
@@ -807,6 +1286,8 @@ If you range over a channel anywhere in your code, that range expression will bl
 Because closing a channel unblocks all receives from that channel, it can be used to broadcast a signal to multiple goroutines!
 
 In fact, the [[https://golang.org/pkg/context/][`context` package]] is [[https://vimeo.com/115309491#t=10m][based on this idea]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/go-grpc-web.svg 200 _
 
 
 
