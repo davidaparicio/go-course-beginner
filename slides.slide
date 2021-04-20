@@ -335,7 +335,7 @@ Discuss. Which keywords are new to you? Which one(s) seem to be missing?
 
 *chan* and *select* are related to _channels_, which are typed conduits used for communication between goroutines, Go's lightweight threads.
 
-*defer* allows you to unconditionnaly execute some code at the end of a function call; convenient for cleaning up, reclaiming resources, etc.
+*defer* allows you to unconditionnaly execute some code at the end of a function call.
 
 *fallthrough* can be used to override `switch` cases' normal behavior, which consists in automatically breaking at the end (without the need for an explicit `break` statement).
 
@@ -562,6 +562,65 @@ Dot imports can be convenient in test code, but are otherwise best avoided becau
 
 
 
+* Calling a function
+
+To call a function, specify *all* the required arguments by *position* within parentheses
+after the name of the function, using commas as delimiters:
+
+.play -edit function_call.go /^//START/,/^//END/
+
+[[https://docs.python.org/3/glossary.html#term-argument][Unlike Python]] (and others), Go doesn't allow you
+
+- to specify arguments by keyword or name,
+- to specify a default value for a parameter of your function.
+
+
+* Evaluation strategy: call by value
+
+Go's [[https://en.wikipedia.org/wiki/Evaluation_strategy][evaluation strategy]] is [[https://en.wikipedia.org/wiki/Evaluation_strategy#Call_by_value][_call_by_value_]], without any exception.
+
+Each argument expression is eagerly evaluated, and the result is bound to the corresponding parameter variable within the function.
+
+In brief, functions only operate on *copies* of their arguments:
+
+.play -edit call_by_value.go /^//START/,/^//END/
+
+
+
+* Evaluation strategy: call by sharing?
+
+However, because some types (strings, slices, maps, channels, functions)
+are composed of a pointer to some hidden data structure in memory.
+
+[[https://en.wikipedia.org/wiki/Evaluation_strategy#Call_by_sharing][_Call_by_sharing_]] is perhaps a more appropriate term than _call_by_value_ to describe
+what happens when values of such types are passed to a function.
+
+.play -edit call_by_sharing.go /^//START/,/^//END/
+
+
+* Function declaration
+
+Here is a simple example of a named function:
+
+  func CountWords(s string) int {
+    return len(strings.Fields(s))
+  }
+
+A function can return multiple results (whose types must be specified within parens):
+
+  func CountWordsInFile(path string) (int, error) {
+    var count int
+    // ...
+    return count, nil
+  }
+
+Multiple function results are key to error reporting in Go!
+
+There's no function overloading in Go: no two functions within the same scope
+can have the same name but different signatures.
+
+
+
 * Namecheck project: validation of Twitter usernames
 
 A prospective username is valid on Twitter if it
@@ -576,22 +635,168 @@ Write a function that implements the first rule:
     // (and all case variations, incl. "TwItTEr", etc.)
   }
 
-Hint: keep it simple!
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: hint: keep it simple
+
+
+* Named results
+
+You can name (either all or none of) your function's results:
+
+  func CountWordsInFile(path string) (count int, err error) {
+    // ...
+    return
+  }
+
+Note the "naked" return: often, what to return is implied from the list of named results.
+
+The code above is roughly equivalent to the following:
+
+  func CountWordsInFile(path string) (int, error) {
+    var count int
+    var err error
+    // ... 
+    return count, err
+  }
+
+Named results can be useful for documenting the results' roles and simplifying some implementations, but use them sparingly.
+
+
+
+
+* Variadic functions
+
+You can declare a function that accepts an arbitrary number of identically typed parameters:
+
+.play -edit function_variadic.go /^//START/,/^//END/
+
+
+The variadic argument (`rest`, here) is a _slice_ and must be the last to appear in the parameter list.
+
+You've already used a variadic function... Which one? Check it its signature in the doc.
+
+
+
+* Type factorization in parameter and result lists
+
+The type of identically typed consecutive parameters can be factored out:
+
+  func Split(s, sep string) []string { // see the strings package
+
+Similarly, the type of identically typed consecutive results can be factored out:
+
+.play -edit function_factored_type_in_result_list.go /^//START/,/^//END/
+
+
+
+* Recursion
+
+Go supports recursion: a function can call itself (directly or indirectly).
+
+.play -edit recursion.go /^//START/,/^//END/
+
+Recursion is useful for traversing recursive data structures, such as trees.
+
+Because call stacks grow and shrink as needed, unless you have a bug somewhere,
+you're less likely to cause a stack overflow by recursing than in other languages.
+
+
+
+* Functions are first-class values
+
+Functions can [[https://golang.org/pkg/net/http/#HandleFunc][take other functions as parameters]], [[https://play.golang.org/p/LfT4e0lPmNV][return functions as results]], be stored in variables, etc.
+
+.play -edit function_nil.go /^//START/,/^//END/
+
+Each function has a type.
+
+Function types are *not* comparable.
+
+The zero value of function types is `nil`.
+
+Be careful: calling a `nil` function causes a panic!
+
+: function-typed results can also be useful for cleaning up; see Mat Ryer's talk
+
+
+
+* Anonymous functions and lexical closures
+
+Go supports anonymous functions but lacks a concise "lambda" notation:
+
+  incr := func (i int) int { return i + 1 }
+
+An anonymous functions can _capture_ variables that are accessible to it:
+
+.play -edit function_closure.go /^//START/,/^//END/
+
+Anonymous functions are often conveniently used in conjunction with the `go` keyword to launch goroutines.
+
+
+
+* And one more thing: defer
+
+*defer* allows you to unconditionnaly execute some code at the end of a function call.
+
+It's particularly useful for cleaning up, reclaiming resources, etc.
+
+More about `defer` later in the course!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 300 _
+
 
 
 * Namecheck project: validation of Twitter usernames
 
 Use the `regexp` package to write a function that implements the second rule:
 
-  func containsOnlyLegalChars(username string) (bool, error) {
-    // returns true if username matches ^[0-9A-Z_a-z]{4,15}$
+  func looksGood(username string) (bool, error) {
+    // returns true iff username matches regexp ^[0-9A-Z_a-z]{4,15}$ and some (?) error
   }
 
 Does the function's signature satisfy you?
 
-What would you prefer? Why?
+What signature would you prefer? Why?
 
-How would you do it?
+How would you achieve that?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/adventure/hiking.svg 200 _
+
+: transition: we need to learn about error handling in Go, and for that we need to learn about if and switch statements
+
+
+
+* If and switch statements
+
+
+
+* If statements
+
+.play -edit if_simple.go /^//START/,/^//END/
+
+The condition must be of type `bool` and needs not be enclosed in parens.
+However, braces around the body are mandatory.
+
+A short variable declaration can precede the condition:
+
+.play -edit if_short_variable_decl.go /^//START/,/^//END/
+
+The scope of such variables is restricted to the if(-else) statement.
+
+: mandatory braces: no dangling-else problem like in C, JS, etc.
+: short-var-decl: useful for error handling
+
+
+* If-else statements TODO
+
+
+
+Braces around the `else` body are also mandatory.
+
+`else` is one of the least popular keyword in Go!
+
+A long if-else chain is considered non-idiomatic, and can be advantageously replaced by a _tagless_ `switch`.
 
 
 
