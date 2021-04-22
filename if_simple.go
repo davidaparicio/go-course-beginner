@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 // START OMIT
 func main() {
-	const gandalfWisdom = "Fool of a Took!"
-	if strings.Contains(strings.ToLower(gandalfWisdom), "fool") {
-		fmt.Println(`Gandalf said "fool"`)
+	const r = 'Z'
+	if 'A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' { // HL
+		fmt.Printf("%q is alphabetical ASCII\n", r)
 	}
 }
 

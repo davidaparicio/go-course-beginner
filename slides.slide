@@ -301,7 +301,9 @@ which is roughly equivalent (on *nix systems) to
   ./main
   rm main
 
-.image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 300 _
+Don't use `go`run` in production, though.
+
+.image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 200 _
 
 
 
@@ -454,7 +456,7 @@ Note that the folder also contains test files.
 
 
 
-* Exercise: a closer look at the fmt package
+* Exercise: a closer look at the fmt package TODO
 
 Check out the online documentation of the 
 
@@ -705,7 +707,8 @@ you're less likely to cause a stack overflow by recursing than in other language
 
 * Functions are first-class values
 
-Functions can [[https://golang.org/pkg/net/http/#HandleFunc][take other functions as parameters]], [[https://play.golang.org/p/LfT4e0lPmNV][return functions as results]], be stored in variables, etc.
+Functions can [[https://golang.org/pkg/net/http/#HandleFunc][take other functions as parameters]], [[https://play.golang.org/p/LfT4e0lPmNV][return functions as results]],
+be stored in variables, etc.
 
 .play -edit function_nil.go /^//START/,/^//END/
 
@@ -773,12 +776,12 @@ How would you achieve that?
 
 * If statements
 
-.play -edit if_simple.go /^//START/,/^//END/
-
 The condition must be of type `bool` and needs not be enclosed in parens.
 However, braces around the body are mandatory.
 
-A short variable declaration can precede the condition:
+.play -edit if_simple.go /^//START/,/^//END/
+
+A short-variable-declaration statement can precede the condition:
 
 .play -edit if_short_variable_decl.go /^//START/,/^//END/
 
@@ -788,15 +791,246 @@ The scope of such variables is restricted to the if(-else) statement.
 : short-var-decl: useful for error handling
 
 
-* If-else statements TODO
 
-
+* If-else statements
 
 Braces around the `else` body are also mandatory.
 
+.play -edit if_else.go /^//START/,/^//END/
+
 `else` is one of the least popular keyword in Go!
 
-A long if-else chain is considered non-idiomatic, and can be advantageously replaced by a _tagless_ `switch`.
+If-else chains are considered non-idiomatic, and can often be advantageously replaced by a _tagless_ `switch`.
+
+
+
+* Switch statement
+
+The switch expression (whose type must be comparable) is evaluated once.
+
+The case expressions (not necessarily constants), are evaluated left-to-right and top-to-bottom and tested for equality against the case expression until a match is found.
+
+The first match's case gets executed. Otherwise, the default case (if any) gets executed.
+
+.play -edit switch.go /^//START/,/^//END/
+
+No need for the `break` keyword at the end of cases! Use `fallthrough`, if needed.
+
+: A short-variable-declaration statement can precede the switch condition.
+: The default clause can occur at any place among the the normal cases.
+
+
+
+* Tagless switch
+
+You can omit the switch expression, which is equivalent to using `true`:
+
+.play -edit tagless_switch.go /^//START/,/^//END/
+
+This form of `switch` statement is preferred to a long if-else chain.
+
+
+
+* Type switch
+
+A _type_switch_ allows you to switch on an interface value and change the logic on the basis of the concrete type stored inside it:
+
+.play -edit type_switch.go /^//START/,/^//END/
+
+Use type switches sparingly. More on that when we cover interfaces.
+
+
+
+* Error handling
+
+
+
+* Errors are values
+
+There are no exceptions in Go! Anticipated failures are reported as [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=16m13s]["normal" values]] of the built-in interface type `error`.
+
+A function that can fail returns an additional `error` result (the last one, by convention):
+
+  func Get(url string) (resp *Response, err error) // example from the http package
+
+A non-nil `error` result indicates that the function failed; hence this error-check idiom:
+
+  resp, err := http.Get("https://jub0bs.com")
+  if err != nil {
+    fmt.Fprintln(os.Stderr, "failure to GET jub0bs.com:", err)
+    return
+  }
+  // do something interesting with resp
+
+: mention that a boolean result can be used if the function can fails for a single unambiguous cause
+
+: compare with other languages
+:   C: error codes, in-band, no multiple return values; write more to a volatile location in memory
+:   Java/Scala: exceptions, or Option, Either or some Result type (more functional)
+
+
+
+* Don't ignore errors 
+
+Few errors should be ignored. You can deviate from this general rule in some cases,
+particularly with `fmt.Println` and friends.
+
+You simply cannot assume success of a fallible function and the soundness
+of its other results (if any) if you don't check the error it returns!
+
+Error handling in Go is very explicit; it can be perceived as repetitive and tedious,
+but that's actually [[https://changelog.com/gotime/16#transcript-68][a strength of the language]]. You will grow to love it!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
+
+: for some functions, a non-nil error may indicate only a partial failure (e.g. Read)
+
+
+
+* Line of sight
+
+Always deal with the failure case first.
+
+Don't do this:
+
+  v, err := fallibleFunction()
+  if err == nil {
+    // success; do something interesting with v
+  } else {
+    // failure: handle error
+  }
+
+Do this instead:
+
+  v, err := fallibleFunction()
+  if err != nil {
+    // failure: handle error and perhaps return early
+  }
+  // success; do something interesting with v
+
+
+
+* Line of sight (cont'd)
+
+This idiom greatly contributes to the readability of Go code.
+
+By avoiding the `else` keyword and eliminating error cases as they arise,
+
+- you [[https://golang.org/doc/effective_go#if][keep the "happy path" on the left]],
+- you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]] (your code reads like columns of a broadsheet newspaper),
+- you [[https://talks.golang.org/2013/bestpractices.slide#3][reduce the cognitive load]] required to read and understand your code.
+
+See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer's blog post on this topic]].
+
+.image https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg 200 _
+
+
+
+* Different ways of handling errors
+
+- bubble it up to the caller
+- log it or print it to stderr
+- compare it to some sentinel error value (e.g. `io.EOF`)
+- inspect its underlying cause
+- wrap it in a higher-level error
+
+Which approach to favor is highly context-dependent.
+
+However you choose to handle an error, handle it only once!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
+
+: bubble it up: you lose context
+: I've seen people logging the error at every stage of the call stack! => duplicate entries in logs, confusing
+
+
+
+* Creating error values
+
+`errors.New` allows you to create a simple error value:
+
+	err := errors.New("namecheck: failure to check availability of 'jub0bs' on Twitter")
+
+\... but `fmt.Errorf` is more flexible:
+
+	username := "jub0bs"
+	platform := "Twitter"
+	err := fmt.Errorf("namecheck: failure to check availability of %q on %s", username, platform)
+
+By convention, error messages
+
+- are of the form "<package-name>: <human-readable-error-message>",
+- should be lowercase,
+- should not contain linebreaks.
+
+You can also create your own error types (i.e. types that satisfy the `error` interface).
+
+: more on custom error types later
+
+
+
+* Panic
+
+A panic is a runtime event that indicates a truly exceptional and unrecoverable failure.
+
+It can be triggered by a runtime error (such as calling a `nil` function) or some direct or indirect call to built-in function `panic`.
+
+A panic stops the programme's normal execution, runs deferred function calls as it unwinds the stack, prints an error message and goroutine traces, and exit the program with a non-zero status:
+
+.play -edit panic.go /^//START/,/^//END/
+
+Panics can (but rarely, if ever, should) be [[https://blog.golang.org/defer-panic-and-recover][_recovered_]].
+
+: recover: if you consume a third-party package that panic willy-nilly
+
+
+
+* Don't panic willy-nilly in your code
+
+Do not panic in your functions for anticipated and recoverable failures:
+
+- a file couldn't be opened
+- a HTTP request failed
+- the connection to the database dropped
+
+In idiomatic Go, such failures are instead reported to the caller as `error` values.
+
+However, panicking during the initialization of your package is legitimate
+if some programming error renders the package unusable.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
+
+* Namecheck project: fail early if the regexp is unusable
+
+Use what you've learned to change the signature of your `looksGood` function to
+
+  func looksGood(username string) bool {
+    // returns true iff username matches regexp ^[0-9A-Z_a-z]{4,15}$
+  }
+
+Fail early if the regular expression doesn't compile.
+
+.image https://i.redd.it/48emz1dvfz441.png 200 _
+
+
+
+* Namecheck project: validation of Twitter usernames
+
+Write a function named `IsValid` that returns true if its parameter is a valid username on Twitter, and false otherwise:
+
+  func IsValid(username string) bool {
+    // returns true if username is valid on Twitter
+  }
+
+Write a few "tests" for `IsValid` in the `main` function.
+
+All the code we've written in `main.go` so far is specific to Twitter, which is a bit messy.
+
+It would be preferable to create a dedicated library package for each of the supported platforms (Twitter, GitHub, etc.)
+
+Let's learn how to create a library package and import it in our `main` package.
 
 
 
@@ -1151,7 +1385,7 @@ More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture
 
 .play -edit goroutine_func_answer.go /^//START/,/^//END/
 
-Consequently, the programme is underministic: the results are unpredictable.
+Consequently, the programme is undeterministic: the results are unpredictable.
 
 
 

@@ -2,17 +2,16 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"os"
+	"math"
 )
 
 // START OMIT
 func main() {
-	if _, err := http.Get("https://gouglé.com/search?q=gandalf"); err != nil {
-		fmt.Fprintf(os.Stderr, "failure to query Gouglé about Gandalf")
-		return
+	var x, n, limit float64 = 3, 3, 20
+	if v := math.Pow(x, n); v < limit { // HL
+		fmt.Println(v)
 	}
-	fmt.Println("successfully queried Gouglé about Gandalf")
+	fmt.Println(limit)
 }
 
 // END OMIT
