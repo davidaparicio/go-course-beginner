@@ -396,7 +396,7 @@ The documentation of a package is written as comments in the package's source fi
 
 
 
-* Packages
+* Consuming packages
 
 
 
@@ -439,6 +439,7 @@ Each source file of a package must import the packages it consumes.
 : imports are not "shared" across source files.
 
 
+
 * Exercise: a closer look at the fmt package with go list
 
 `go`list` allows you to ask questions about packages at the command line.
@@ -456,9 +457,16 @@ Note that the folder also contains test files.
 
 
 
-* Exercise: a closer look at the fmt package TODO
+* Exercise: a closer look at the fmt package
 
-Check out the online documentation of the 
+Consult the documentation of the `fmt` package.
+
+The documentation is available offline via the `go`doc` subcommand:
+
+  go doc fmt
+  go doc fmt Println
+
+It's also available online at [[https://golang.org/pkg/fmt][https://golang.org/pkg/fmt/]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
 
@@ -537,13 +545,22 @@ But named imports are especially useful
 
 
 
-* Blank imports TODO
+* Blank imports
 
-Blank imports are sometimes useful; see the `database/sql` and `image` packages.
+A blank import uses the blank identifier as package name:
 
-To import a package solely for its side-effects (initialization), use the blank identifier as explicit package name:
+  import _ "github.com/go-sql-driver/mysql"
 
-https://golang.org/ref/spec#Package_initialization
+A blank import makes none of the imported package's members available in the importing package.
+
+The sole reason for using a blank import to import a package is the side effects carried out during [[https://golang.org/ref/spec#Package_initialization][the package's initialization]].
+
+Blank imports are used in the so-called _registration_pattern_ in packages such as `database/sql` and `image`.
+
+Use that pattern if you have to, but do not emulate it in your own code.
+
+: difficult to understand, based on shared global state
+
 
 
 * Dot imports
@@ -558,6 +575,7 @@ Dot imports can be convenient in test code, but are otherwise best avoided becau
 - they obscure the provenance of identifiers.
 
 : similar to Java's static imports
+
 
 
 * Functions
@@ -658,7 +676,7 @@ The code above is roughly equivalent to the following:
   func CountWordsInFile(path string) (int, error) {
     var count int
     var err error
-    // ... 
+    // ...
     return count, err
   }
 
@@ -806,7 +824,7 @@ If-else chains are considered non-idiomatic, and can often be advantageously rep
 
 * Switch statement
 
-The switch expression (whose type must be comparable) is evaluated once.
+The switch expression, whose type must be comparable, is evaluated once.
 
 The case expressions (not necessarily constants), are evaluated left-to-right and top-to-bottom and tested for equality against the case expression until a match is found.
 
@@ -870,7 +888,7 @@ A non-nil `error` result indicates that the function failed; hence this error-ch
 
 
 
-* Don't ignore errors 
+* Don't ignore errors
 
 Few errors should be ignored. You can deviate from this general rule in some cases,
 particularly with `fmt.Println` and friends.
@@ -908,6 +926,8 @@ Do this instead:
   }
   // success; do something interesting with v
 
+: Narrow code is better than deeply nested code!
+
 
 
 * Line of sight (cont'd)
@@ -918,11 +938,13 @@ By avoiding the `else` keyword and eliminating error cases as they arise,
 
 - you [[https://golang.org/doc/effective_go#if][keep the "happy path" on the left]],
 - you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]] (your code reads like columns of a broadsheet newspaper),
-- you [[https://talks.golang.org/2013/bestpractices.slide#3][reduce the cognitive load]] required to read and understand your code.
+- you [[https://www.youtube.com/watch?v=yd_rtwYaXps&t=33m30s][reduce the cognitive load]] required to read and understand your code.
 
 See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer's blog post on this topic]].
 
 .image https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg 200 _
+
+: also about cognitive load: https://talks.golang.org/2013/bestpractices.slide#3
 
 
 
@@ -934,7 +956,7 @@ See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat R
 - inspect its underlying cause
 - wrap it in a higher-level error
 
-Which approach to favor is highly context-dependent.
+Which approach to favor is highly context-dependent. Discuss.
 
 However you choose to handle an error, handle it only once!
 
@@ -971,7 +993,7 @@ You can also create your own error types (i.e. types that satisfy the `error` in
 
 * Panic
 
-A panic is a runtime event that indicates a truly exceptional and unrecoverable failure.
+A panic is a runtime event that indicates an exceptional and fatal failure.
 
 It can be triggered by a runtime error (such as calling a `nil` function) or some direct or indirect call to built-in function `panic`.
 
@@ -987,7 +1009,7 @@ Panics can (but rarely, if ever, should) be [[https://blog.golang.org/defer-pani
 
 * Don't panic willy-nilly in your code
 
-Do not panic in your functions for anticipated and recoverable failures:
+Do not panic in your functions for anticipated and mundane failures:
 
 - a file couldn't be opened
 - a HTTP request failed
@@ -1034,6 +1056,454 @@ Let's learn how to create a library package and import it in our `main` package.
 
 
 
+* Designing and organizing packages
+
+
+
+* Two kinds of packages
+
+*Library*packages*
+
+- A library package produces a library meant to be imported in other packages.
+- The package name *must*not* be "main".
+- The name of the enclosing folder should match the package name.
+
+*Main*packages*
+
+- A main package produces an executable.
+- The package name *must* be "main".
+- The package *must* declare a `main` function without any parameters or results.
+- The name of the enclosing folder is arbitrary.
+- If a project produces several executables, put each of the main packages in a subfolder of a folder named "cmd" located at the root of your project.
+
+: only should, because _test package exception and also not enforced by tooling, but otherwise confusing
+: in most cases, the last segment of the package path should match the package name as declared in package clause
+
+
+
+* Namecheck project: create a cmd folder
+
+1. Create a folder named "cmd" at the root of your project.
+
+2. Create subfolders named "cli" and "server".
+
+3. Move your `main.go` file to `cmd/cli/`:
+
+  namecheck
+  └── cmd
+      ├── cli
+      │    └── main.go
+      └── server
+
+4. From the root of your project, check that `main.go` still compiles:
+
+  go run cmd/cli/main.go
+
+Later in the course, we'll create another executable under `cmd/server/`.
+
+
+
+* Source files of a package
+
+A package is composed of one to several source files.
+
+All of a package's source files must be placed in the same folder.
+
+Source files from different packages cannot be in the same folder!
+
+All package members are accessible to all of the package's source files.
+
+Each source file must import the packages that it needs.
+
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
+
+
+
+* Designing a package
+
+*Naming*a*package*
+
+[[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=5m45s][A well-designed package starts with its name]]. The name of a package should be
+
+- lowercase alphanumeric (no underscores!),
+- concise ("net", not "network") but descriptive (avoid "util", "helpers", "common"),
+- a noun rather than a verb,
+- a clue to its purpose (rather than its content).
+
+*Strive*for*cohesion*
+
+A package should provide a focused set of related features. Let the name guide you!
+
+*Keep*the*conceptual*surface*area*small*
+
+Don't export identifiers by default; be deliberate about what you export.
+
+: concise: fmt, not format; strconv, not stringconversion
+
+
+
+* Good naming practices for package identifiers
+
+Remember: exported identifiers will be prefixed by their package name in client code.
+
+Avoid _stutter_, if possible. (Any counterexamples in the core library?)
+
+  twitter.Twitter // not great
+  twitter.Checker // much better
+
+Avoid redundancy in factory functions:
+
+  twitter.NewTwitter // redundant
+  twitter.New        // much better
+
+Only choose more specific factory-function names if the package exports multiple types,
+such as `Encoder` and `Decoder` in the `encoding/json` package:
+
+  json.NewEncoder
+  json.NewDecoder
+
+: exceptions: regexp.Regexp, time.Time
+
+
+
+* Subpackages
+
+Subpackages of a package are simply packages located in subfolders of that package.
+
+They allow grouping of functionalities related to but more specific than those provided by their superpackage.
+
+.image encoding_core_lib.png 150 _
+
+A package doesn't have any special relationship with its subpackages:
+
+- if package `foo/bar` depends on package `foo`, `foo/bar` must import `foo`;
+- `foo/bar` does not have access to identifiers not exported by `foo`;
+- `foo` does not have access to identifiers not exported by `foo/bar`.
+
+
+
+* No dependency cycles allowed by the compiler
+
+For example, package `foo` cannot import package `bar` if `bar` itself imports `foo`.
+
+.image dependency_cycle.svg 150 _
+
+Imports form a _directed_acyclic_graph_, like the graph of commits in a Git repository.
+
+This design decision by the Go team is a key enabler of fast compilation.
+
+.image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 200 _
+
+: ex: the core library can be compiled in 10s on a modern machine
+
+
+
+* Avoiding dependency cycles with subpackages
+
+
+
+* Flat is better
+
+Favor a shallow (and possibly wide) package hierarchy to a deep and narrow one.
+
+
+* Keep cool: don't panic
+
+Good packages do not panic, at least not
+
+- after proper initialization, and
+- if they're used as was intended by the package author(s).
+
+Exported functions should communicate anticipated failures to client code as values of the `error` type, not as panics.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/dandy/umbrella.svg 200 _
+
+
+
+* Namecheck project: twitter package
+
+1. Create a folder named "twitter" at the root of your project.
+
+2. Create a "twitter.go" file in there:
+
+  namecheck
+  ├── cmd
+  │   ├── cli
+  │   │    └── main.go
+  │   └── server
+  └── twitter
+      └── twitter.go
+
+3. Add the appropriate package clause in `twitter.go`.
+
+4. Move all the Twitter-specific stuff from `main.go` to `twitter.go`.
+
+5. Try importing package `twitter` in your `main` package. Any issues?
+
+
+
+* Modules
+
+Go's solution to dependency management is known as the _module_system_.
+
+A _module_ is set of packages that are versioned together.
+
+You *must* initialize a module at the root of your project in order to manage dependencies (incl. packages within the same project).
+
+A module is identified by its _path_, which
+
+- takes the form of a schemeless URI where the module will be made available,
+- acts as prefix for package import paths within the module.
+
+The `go`mod` subcommand allows you to interact with the module system. You can initialize a module by running a command of the form
+
+   go mod init <your-module-path>
+
+: one module per project, initialized at the
+
+
+
+* Namecheck project: initialize a module
+
+At the root of your project, initialize a module:
+
+  go mod init github.com/YOUR_GITHUB_USERNAME/namecheck
+
+A go.mod file will be created at the root of your project:
+
+  namecheck
+  ├── cmd
+  │   ├── cli
+  │   │    └── main.go
+  │   └── server
+  ├── go.mod
+  └── twitter
+      └── twitter.go
+
+Inspect its contents. Then import and use the `twitter` package in your `main` package:
+
+  import github.com/YOUR_GITHUB_USERNAME/namecheck/twitter
+
+Now that we have a `twitter` package, let's learn how to write unit tests for it.
+
+
+
+* Testing
+
+
+
+* First-party support for testing
+
+Testing plays a key role in the Go ecosystem, and is supported out of the box.
+
+The [[https://golang.org/pkg/testing/][`testing` package]] allows you to test your packages through
+
+- unit tests or integration tests
+- example tests (executable examples that end up in the package's documentation),
+- micro-benchmarks (laser-focused performance tests for CPU-bound functions).
+
+You can run tests by invoking the `go`test` subcommand.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+: batteries included: compare to other languages, where testing is an afterthought
+
+
+
+* Test files
+
+In Go, a package's test files
+
+- are placed in the same folder as the package's production source files,
+- must be suffixed with `_test`.
+
+For instance, to write tests for your package `foo`, composed here of a single source file named `foo.go`, you would create a file named `foo_test.go` in the `foo` folder alongside the `foo.go` file:
+
+  foo
+  ├── foo.go
+  └── foo_test.go
+
+Respect these location and naming conventions, or you won't be able to run your tests.
+
+Test files are otherwise regular source files in which you write _test_functions_.
+
+: differs from other languages, where tests are located in a mirrored structure of the production code
+
+
+
+* White-box testing and black-box testing
+
+You have two options in the name used in the package clause of your test files for package `foo`: `foo` or `foo_test`. This choice determines your testing approach.
+
+*White-box*testing*
+
+You can declare file `foo_test.go` to be part of package `foo`:
+
+  // foo_test.go
+  package foo
+
+Your tests then have access to all members (incl. unexported ones) of package `foo`.
+
+*Black-box*testing*
+
+Alternatively, you can declare file `foo_test.go` to be part of package `foo_test`:
+
+  // foo_test.go
+  package foo_test
+
+Your tests then only have access to the exported members of package `foo`.
+
+
+
+* White or black box?
+
+White-box testing is the approach favored in the core library. It is convenient,
+but can lead to prohibitive coupling between tests and implementation details.
+
+.image https://memegenerator.net/img/instances/85409288/is-white-box-testing-preferable-no-quicker-easier-more-seductive.jpg 300 _
+
+Black-box testing is an approach favored by [[https://changelog.com/gotime/173#transcript-153][many Gophers]]: it keeps you honest,
+as a package author, by forcing you to test your packages through their public API.
+It can also be useful to avoid dependency cycles.
+
+
+
+* Test functions
+
+A test function is a regular Go function, but its name and signature must adhere
+to a strict convention:
+
+- It must be prefixed by `Test` and the following character must be uppercase.
+- It takes a single parameter of type `*testing.T` and returns no results.
+
+Respect this convention, or your test functions will be ignored by `go`test`.
+
+Methods such as `Errorf` on the `testing.T` type allow you to signal a test failure via an informative message.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+
+
+* Your first test function for the twitter package
+
+The following example uses black-box testing:
+
+  package twitter_test
+
+  // omitted import declaration of your twitter package
+
+  func TestUsernameTooLong(t *testing.T) {
+    username := "obviously_longer_than_15_chars"
+    want := false
+    got := twitter.IsValid(username)
+    if got != want {
+      t.Errorf("twitter.IsValid(%s): got %t; want %t", username, got, want)
+    }
+  }
+
+The message format used here ("got ...; want ...") is widely used.
+
+
+
+* Running tests
+
+From within a package's folder, you can execute its tests by running
+
+ go test
+
+Passing tests are not mentioned in the output; use the `-v` flag to change that:
+
+  go test -v
+
+To execute the tests for a package and all of its subpackages, run
+
+  go test ./...
+
+You can also selectively run some test functions by specifying a regexp, e.g.:
+
+  go test -run='TestUsernameToo*'
+
+
+
+* Namecheck project: test twitter's IsValid function
+
+Create a file named `twitter_test.go` in the `twitter` folder.
+
+  namecheck
+  ├── go.mod
+  ├── main.go
+  └── twitter
+      ├── twitter.go
+      └── twitter_test.go
+
+Follow the black-box approach: use `twitter_test` as the package name.
+
+Write a few test functions to cover all the possible cases.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+
+
+* Table-driven subtests
+
+If multiple test functions unduly duplicate the testing logic for different test cases,
+you can gather those test cases under a single test function and run them as _subtests_:
+
+  func TestIsValid(t *testing.T) {
+    cases := []struct{
+      label string
+      username string
+      want bool
+    }{
+      {label: "too long", username: "obviously_longer_than_15_chars"},
+      {label: "too short", username: "foo"},
+    }
+    for c := range cases {
+      t.Run(c.label, func(t *testing.T) {
+        got := twitter.IsValid(c.username)
+        if got != c.want {
+          t.Errorf("twitter.IsValid(%s): got %t; want %t", c.username, got, c.want)
+        }
+      })
+    }
+  }
+
+: in composite literals (slices, maps, arrays), Go allows you to omit the inner type name
+
+
+
+* Code coverage
+
+To determine how much of your package's production code is covered by its tests, run
+
+  go test -cover
+
+To generate a more detailed (machine-readable) coverage report, first run
+
+  go test -coverprofile="coverage.out"
+
+Then, for a shell-based breakdown of the coverage by package function, run
+
+  go tool cover --func="coverage.out"
+
+Alternatively, for a browser-based breakdown of the coverage by statement, run
+
+  go tool cover --html="coverage.out"
+
+What would a low coverage say about your tests? What about a high coverage? Discuss.
+
+
+
+* Namecheck project: code coverage of twitter package
+
+Inspect the code coverage of your `twitter` package.
+
+Write enough good test cases to reach a code coverage that satisfies you.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/standing.svg 200 _
+
+
+
 * Namecheck project: validation of GitHub usernames
 
 Create a `github` package (you can copy the `twitter` package to get started quickly):
@@ -1066,9 +1536,131 @@ Write a function named `IsValid` that returns true if its parameter is a valid u
 
 Adapt the test cases in `github_test.go` and make them pass.
 
-Keep writing test cases until you're satisfied with their code coverage.
+Keep writing test cases until you're satisfied with the overall code coverage.
 
 .image https://blog.golang.org/store/gophers.jpg 300 _
+
+
+
+* Maps
+
+A map is a built-in type that represent a collection of key-value pairs.
+
+The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
+
+The key type *must* be comparable:
+
+.play -edit incomparable_key_type.go /^//START/,/^//END/
+
+.image https://golangforall.com/assets/dvoe.svg 150 _
+
+: implemented as a hash table
+
+
+
+* Maps are reference types
+
+A function that takes a parameter of some map type only gets a copy of a reference
+to the underlying data structure (hash table).
+
+The zero value of map types is `nil`.
+
+Map types are not comparable.
+
+.play -edit map_reference.go /^//START/,/^//END/
+
+
+
+* Creating map values
+
+Invoke built-in function `make` with the desired map type to initialize an empty map:
+
+.play -edit map_make.go /^//START/,/^//END/
+
+Alternatively, you can create and populate a map with a _map_literal_:
+
+.play -edit map_literal.go /^//START/,/^//END/
+
+The trailing comma is mandatory, here.
+
+
+
+* Accessing a value associated with a key in a map
+
+`m[k]` yields the value corresponding to a key `k` in a map `m`. `m[k]` is *not* addressable!
+
+If the key is absent from the map or if the map is `nil`, the zero value of the map's value type is returned.
+
+To determine whether the key is value is present in the map, you can declare an additional variable (commonly named "ok") of boolean type.
+
+.play -edit map_access.go /^//START/,/^//END/
+
+: yields the actual value: you can operate on m[k] directly (e.g. m[k]++ if map value type is integer)
+
+
+
+* Storing a key-value pair in a map
+
+Associating a key `k` with a value `v` in a map `m` is simple:
+
+  m[k] = v
+
+If the key was already present in the map, the value associated with it prior is lost.
+
+Attempts to store a value in a `nil` map cause a panic!
+
+.play -edit map_store.go /^//START/,/^//END/
+
+
+
+* Removing a key-value pair from a map
+
+To remove a key `k` and its value from a map `m`, use built-in function `delete`:
+
+  delete(m, k)
+
+If the map is `nil` or if the key is already absent from the map, deleting the key from the map is a no-op.
+
+.play -edit map_delete.go /^//START/,/^//END/
+
+
+
+* Ranging over a map
+
+You can iterate over a map using `for` and `range`:
+
+.play -edit map_range.go /^//START/,/^//END/
+
+At each iteration, the variables yielded by the `range` expression hold copies of
+the key and value.
+
+The iteration order on a map is undeterministic! (Run the snippet a few times.)
+
+
+
+
+* Ranging over a map in a deterministic order
+
+To range over a map in a certain order, you must
+
+- create a slice of keys,
+- sort them in the desired order,
+- access the map values as you range over that slice.
+
+.play -edit map_range_deterministic.go /^//START/,/^//END/
+
+
+* Implementing a set using a map
+
+Go provides no native set types, but you can by with map types.
+
+You can implement a set of `string` as a map[string]bool:
+
+.play -edit map_set_bool.go /^//START/,/^//END/
+
+A more memory-efficient alternative is to use a `map[string]struct{}`:
+
+.play -edit map_set_nothing.go /^//START/,/^//END/
 
 
 
@@ -1192,7 +1784,7 @@ Launching an anonymous function as a goroutine is common:
   }()
 
 : just don't forget to invoke it!
-: terminology: spawning goroutine vs. spawned goroutine
+: goroutine terminology: spawning/spawned, parent/child
 
 
 
@@ -1324,9 +1916,9 @@ A wait group is little more than a glorified counter with _concurrency-safe_ ope
 
 Call `wg.Add(1)` _just_before_ spawning a goroutine.
 
-Call `wg.Done()` _at_the_very_end_ of each spawned goroutine (use `defer`!).
+Call `wg.Done()` _at_the_very_end_ of each child goroutine (use `defer`!).
 
-Call `wg.Wait()` in the spawning goroutine to wait for all spawned goroutines to terminate.
+Call `wg.Wait()` in the spawning goroutine to wait for all child goroutines to terminate.
 
 
 
@@ -1354,7 +1946,7 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 * How not to misuse wait groups
 
-Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the spawned goroutine.
+Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the child goroutine.
 
 The call to `wg.Wait` must happen _after_ all calls to `wg.Add` (otherwise: data race).
 
@@ -1413,7 +2005,7 @@ Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-
 
 Pass the value of the loop variable as an argument to the anonymous function.
 
-That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the loop variable.
+That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the loop variable's value at the time of the iteration of interest.
 
 .play -edit goroutine_func_arg.go /^//START/,/^//END/
 
@@ -1425,7 +2017,11 @@ An alternative solution consists in redeclaring the variable inside the loop.
 
 .play -edit goroutine_func_redecl.go /^//START/,/^//END/
 
+This approach has merit for long anonymous functions because the fix is colocated with the start of the `go` statement (reduced cognitive load).
+
 See also the [[https://golang.org/doc/faq#closures_and_goroutines][Golang FAQ about this]].
+
+: kind of awkward to pass them as parameters further down if the anonymous function is long
 
 
 
@@ -1800,8 +2396,8 @@ If that weren't the case, passing channels to functions wouldn't be very useful.
 * Namecheck project: gather the results via a channel
 
 1. In `main`, declare some `Result` type.
-2. In `main`, initialize a `chan`Result`, and make sure it is accessible to the spawned goroutines.
-3. In each spawned goroutine, create a `Result` value and send it to the channel.
+2. In `main`, initialize a `chan`Result`, and make sure it is accessible to the child goroutines.
+3. In each child goroutine, create a `Result` value and send it to the channel.
 4. In `main`, range over that channel and store the results in a slice.
 5. In `main`, Print the resulting slice.
 
