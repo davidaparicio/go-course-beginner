@@ -64,9 +64,13 @@ A forcing function for learning Go: we'll introduce new concepts as needed.
 
 * Genesis
 
-Go was created in 2007 at Google (on 20% time) by Robert Griesemer, Rob Pike, and Ken Thompson.
+Go was created in 2007 at Google by Robert Griesemer, Rob Pike, and Ken Thompson.
 
-.image three_lads.jpeg
+.image https://contentlab.io/wp-content/uploads/2020/04/image001.png.webp _ 800
+
+: Griesemer: V8 JS engine, Hot Spot JVM
+: Pike: predecessors to Go (Newsqueak), Plan 9, Unicode
+: Thompson: recipient of Turing Award, UNIX (with Dennis Ritchie), Unicode (with Pike), Plan 9 (with Pike)
 
 
 
@@ -75,10 +79,6 @@ Go was created in 2007 at Google (on 20% time) by Robert Griesemer, Rob Pike, an
 Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][largely out of frustration with C++]]: language complexity, long build times, poor support for concurrency, etc.
 
 .image https://imgs.xkcd.com/comics/compiling.png
-
-: Griesemer: V8 JS engine, Hot Spot JVM
-: Pike: predecessors to Go (Newsqueak), Plan 9, Unicode
-: Thompson: recipient of Turing Award, UNIX (with Dennis Ritchie), Unicode (with Pike), Plan 9 (with Pike)
 
 
 
@@ -1200,11 +1200,21 @@ This design decision by the Go team is a key enabler of fast compilation.
 
 * Avoiding dependency cycles with subpackages
 
+A rule of thumb is that a superpackage doesn't depend on any of its subpackages.
+
+For example, here is a partial view of the `encoding` package and its subpackages:
+
+.image dep_arrows_dont_point_down.svg _ 1000
+
+Note that no dependency arrows points down.
 
 
 * Flat is better
 
-Favor a shallow (and possibly wide) package hierarchy to a deep and narrow one.
+To a deep and narrow package hierarchy, prefer a shallow and possibly wide one:
+
+.image pkg_shallow_and_wide.svg 400 _
+
 
 
 * Keep cool: don't panic
@@ -1726,7 +1736,7 @@ Two fundamental mechanisms:
 - goroutines: lightweight threads
 - channels: typed pipes used to communicate and synchronize between goroutines
 
-.image busy_gophers.jpeg 300 _
+.image https://i.stack.imgur.com/QjsGt.png 200 _
 
 
 
@@ -1740,7 +1750,7 @@ The `main` function is itself a goroutine that is created when the programme sta
 
 Each goroutine gets its own stack, which starts small and grows/shrinks as required.
 
-.image https://blog.golang.org/store/gophers.jpg 400 _
+.image https://blog.golang.org/store/gophers.jpg 300 _
 
 
 
@@ -1811,7 +1821,7 @@ Before spawning a new goroutine, you must understand exactly under what conditio
 
 If you're careless and spawn goroutines willy-nilly, you expose yourself to correctness and performance bugs (_goroutine_leaks_).
 
-.image this_is_fine.png 300 _
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
 
 
 
