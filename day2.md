@@ -567,6 +567,7 @@ type Reader interface {
 }
 ```
 * source of `[]byte`
+* reads the data in the supplied buffer, returns how many bytes were read, and any error that may have occurred
 * satisfied by `*os.File`, and many others
 
 ---
@@ -579,7 +580,21 @@ type Writer interface {
 }
 ```
 * sink of `[]byte`
+* writes the data in the supplied buffer, returns how many bytes were written, and any error that may have occurred
 * satisfied by `*os.File`, and many others
+
+---
+
+### `http.Handler`
+
+```go
+type Handler interface {
+  ServerHTTP(w http.ResponseWriter, r *http.Request)
+}
+```
+
+* A `http.Handler` responds to a HTTP request.
+* We won't manipulate this type directly, but we _will_ write HTTP handlers :)
 
 ---
 
