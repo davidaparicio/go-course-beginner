@@ -7,13 +7,13 @@ import (
 // START OMIT
 func main() {
 	i := 41
-	increment(i)
-	fmt.Println("variable i at the end of 'main':", i)
+	incr(i)
+	fmt.Printf("main: i = %d; &i = %p\n", i, &i)
 }
 
-func increment(i int) {
+func incr(i int) {
 	i++
-	fmt.Println("variable i at the end of 'increment':", i)
+	fmt.Printf("incr: i = %d; &i = %p\n", i, &i)
 }
 
 // END OMIT

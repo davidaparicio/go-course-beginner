@@ -8,7 +8,7 @@ https://jub0bs.com
 
 * Setup TODO
 
-Make sure you have the latest version of Go (1.16.2) installed by running
+Make sure you have the latest version of Go (1.16.4) installed by running
 
   go version
 
@@ -126,16 +126,20 @@ Go is clearly reminiscent of C, but Go is different from C in many notable ways:
 - fast compilation
 - garbage collection
 - memory safety
+- packages
 - full Unicode support
 - concurrency primitives
 - sensible `switch` behavior
 - first-class functions
 - multiple function results
-- principled error handling
+- no semi-colons
 
-: memory safety: pointers, but no pointer arithmetic)
+: compiled, but type inference, so feels like a dynamic language
+: memory safety: pointers, but no pointer arithmetic; no dangling pointers; no uninitialized variables
 : mention heap-overflow vuln discovered in curl
-
+: multiple returns allow principled error handling
+: packages: no ifdef guards, no required ordering of top-level declarations
+: also syntax differences: type name comes after variable name 
 
 
 * Go is object-oriented... with a twist!
@@ -253,18 +257,19 @@ A package named `main` produces an executable program (as opposed to a library).
 
 Imports specify _package_paths_ in double quotes.
 
+The `main` function of a `main` package is the program's entrypoint;
+it takes no parameters and returns no results.
 
 
 * More observations about our Hello-World program
 
 .play -edit helloworld.go
 
-The `main` function of a `main` package is the program's entrypoint;
-it takes no parameters and returns no results.
-
 Go's grammar uses semicolons as statement terminators, but those semicolons do not appear in the source; [[https://golang.org/doc/effective_go#semicolons][they're added by the compiler]]. As a result, you're not free to break lines wherever you want.
 
 The formater uses tabs (not spaces) for indentation.
+
+Go source files *must* be encoded in UTF-8, or compilation will fail.
 
 : cmd args: os.Args
 : guillemets doubles
@@ -286,6 +291,8 @@ The formater uses tabs (not spaces) for indentation.
   go build main.go
 
 5. Execute the executable.
+
+: for now, we'll code in this source file, but we'll reorganize our code later
 
 
 
@@ -315,7 +322,11 @@ However, you can cross-compile to a different operating system and architecture 
 
   GOOS=windows GOARCH=amd64 go build main.go
 
-.image https://blog.golang.org/store/gophers.jpg 300 _
+The following command lists all valid GOOS/GOARCH combinations:
+
+  go tool dist list
+
+.image https://blog.golang.org/store/gophers.jpg 200 _
 
 
 
@@ -347,7 +358,7 @@ Discuss. Which keywords are new to you? Which one(s) seem to be missing?
 
 *range*, used in conjunction with `for`, allows you to iterate over various data structures.
 
-No `while` keyword in Go! All loops are done with the `for` keyword.
+No `while` keyword in Go! All loops are written with the `for` keyword.
 
 : defer: a cleaner alternative to try-catch-finally
 
@@ -471,6 +482,7 @@ It's also available online at [[https://golang.org/pkg/fmt][https://golang.org/p
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
 
 
+
 * Package: the unit of encapsulation
 
 In Go, the package (not the type!) is the unit of encapsulation.
@@ -493,17 +505,22 @@ Whether a package-level identifier is exported depends on the case of its first 
 
 * Importing packages
 
-A package can be imported in different ways:
+A package can be imported in different ways: normal imports, named imports, blank imports, dot imports, relative imports.
 
-- normal import
-- named import
-- blank import
-- dot import
-- relative import
+The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility takes care of adding missing imports, removing unreferenced imports, and organizes imports in a canonical way:
 
-We won't mention relative imports again because they are best avoided.
+  import (
+    // core-library packages
+
+    // third-party packages
+
+    // project packages
+  )
 
 .image https://blog.golang.org/store/gophers.jpg 200 _
+
+: We won't mention relative imports again because they are best avoided.
+: goimports should run every time you save a file in VS Code
 
 
 
@@ -575,6 +592,210 @@ Dot imports can be convenient in test code, but are otherwise best avoided becau
 - they obscure the provenance of identifiers.
 
 : similar to Java's static imports
+
+
+
+* Types
+
+
+
+* Basic types
+
+Go provides basic types:
+
+- booleans
+- numeric (integer and floating-point)
+- strings
+
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
+
+
+* Composites types 
+
+Go also provides composite types, which are composed of other existing types:
+
+- pointers
+- functions
+- channels
+- interfaces
+- arrays
+- slices
+- maps
+- structs
+
+
+
+* Every type has a zero value
+
+In Go, [[https://twitter.com/dildog/status/1390848784918327298][unlike in C]], there is no such thing as an uninitialized variable.
+
+Every type, whether built-in or user-defined, has a default value called its _zero_value_.
+
+When you declare a variable without initializing it, its value is the zero value of the variable's type:
+
+  var i int    // the value of i is 0
+  var s string // the value of s is the empty string ""
+
+Types whose zero value is `nil` are known as _reference_types_: pointers, functions, channels, interfaces, slices, and maps.
+
+: in French: valeur vierge
+
+
+
+* Comparability
+
+A type is said to be _comparable_ if arbitrary values of that type can be compared
+for equality (with operator `==`) or inequality (with operator `!=`).
+
+All basic types are comparable, but not all composite types are comparable;
+for instance, functions, slices, and maps are not.
+
+In some places (map keys, switch expressions, etc.), only comparable types can be used.
+
+.image https://golangforall.com/assets/kanat.svg 200 _
+
+
+
+* Type definitions
+
+The `type` keyword lets you define a type based on some existing _underlying_type_:
+
+  type Celsius int
+  type Fahrenheit int
+  type Kelvin int
+
+`Celsius`, `Fahrenheit`, and `Kelvin` are three _defined_types_ all based on type `int`.
+
+The four types share the same zero value (`0`, in this case).
+
+However, they are distinct types and are *not* interchangeable.
+
+.image https://blog.golang.org/gopher/header.jpg 150 _
+
+: You can only declare methods on defined types that you own.
+: you can have type definitions anywhere, incl. inside functions
+:   - struct types useful for JSON encoding/decoding
+:   - interface types useful for asserting on behaviour
+
+
+
+* Type conversion
+
+If two types are "compatible", an expression of one type can be [[https://golang.org/ref/spec#Conversions][converted]] to the other, either implicitly or explicitly.
+
+However, Go requires many conversions from one type to another to be explicit
+
+.play -edit type_conversion.go /^//START/,/^//END/
+
+
+
+* Variables
+
+
+
+* Strings
+
+
+
+* Bytes, code points, characters
+
+Three distinct concepts are at play with strings in Go: _bytes_, _code_points_, and _characters_.
+
+*Bytes*
+
+- A byte is made up of 8 bits. Duh!
+
+*Code*points*
+
+- Also known as "runes" in the Go world.
+- A code point simply corresponds to a place in the Unicode alphabet.
+
+*Characters*
+
+- Also known as "glyphs".
+- A character is made up of one or mode code points.
+
+See [[https://blog.golang.org/strings][Rob Pike - Strings, bytes, runes and characters in Go (Golang blog)]]
+
+
+
+* Runes
+
+The predeclared `rune` type is a 32-bit integer type that represents a Unicode code point.
+Unsurprisingly, its zero value is `0`.
+
+Rune literals are delimited by single quotes. Escape sequences (`'\u00e9'`) are possible.
+
+In UTF-8, a rune is encoded as a sequence of 1 to 4 bytes.
+
+.play -edit rune_bytes.go /^//START/,/^//END/
+
+The `rune` type is an alias of type `int32`. The two types are interchangeable.
+
+
+
+* Characters
+
+You're used to reading characters on a computer screen, but the Unicode concept of _character_ is harder to grasp than you might think!
+
+Note in particular that
+
+- a character can be made up of more than one code points, and
+- a given character can have multiple representations.
+
+For instance, the character `é` can be represented either by
+
+- a single code point named [[https://unicode-table.com/en/00E9/][_Latin_Small_Letter_E_with_Acute_]], or by
+- the combination of a [[https://unicode-table.com/en/0065/][_Latin_Small_Letter_E_]] and an [[https://unicode-table.com/en/00B4/][_Acute_Accent_]] (a _combining_code_point_):
+
+.play -edit characters.go /^//START/,/^//END/
+
+
+
+* Strings
+
+A string is _not_ stored in memory as a sequence of runes! It is instead stored as a more compact sequence of bytes that (usually) represent valid UTF-8 text.
+
+String literals are delimited either by double quotes (`"`) or backticks (```):
+
+String literals that do not contain byte-level escapes always contain valid UTF-8:
+
+: string literals always contain UTF-8 text as long as they have no byte-level escapes
+: Go source code is UTF-8, so the source code for the string literal is UTF-8 text
+
+
+* Strings under the hood
+
+In Go, a string is a two-word immutable data structure made up of
+
+- a pointer to a byte array,
+- an integer corresponding to the number of bytes that make up the string.
+
+For instance, the string `"Hello,`World!"` is represented in memory as follows:
+
+.image strings_two_words.svg 200 _
+
+
+
+
+
+* String indexing and substring operator
+
+
+* Ranging over a string
+
+
+* Other operations on strings
+
+As in many other languages, the plus sign is used for string concatenation.
+
+Built-in function `len` returns the number of *bytes* in a string, whereas
+function `utf8.RuneCountInString` returns the number of *runes* in a string.
+
+.play -edit strings_etc.go /^//START/,/^//END/
+
+Other useful functions for manipulating strings are provided by packages `strings`, `unicode/utf8`, `strconv`, and `regexp`.
 
 
 
@@ -799,7 +1020,7 @@ However, braces around the body are mandatory.
 
 .play -edit if_simple.go /^//START/,/^//END/
 
-A short-variable-declaration statement can precede the condition:
+A [[https://golang.org/ref/spec#Statements][_simple_statement_]] (usually a short variable declaration) can precede the condition:
 
 .play -edit if_short_variable_decl.go /^//START/,/^//END/
 
@@ -1575,7 +1796,7 @@ to the underlying data structure (hash table).
 
 The zero value of map types is `nil`.
 
-Map types are not comparable.
+Map types are *not* comparable.
 
 .play -edit map_reference.go /^//START/,/^//END/
 
@@ -1660,6 +1881,7 @@ To range over a map in a certain order, you must
 .play -edit map_range_deterministic.go /^//START/,/^//END/
 
 
+
 * Implementing a set using a map
 
 Go provides no native set types, but you can by with map types.
@@ -1671,6 +1893,33 @@ You can implement a set of `string` as a map[string]bool:
 A more memory-efficient alternative is to use a `map[string]struct{}`:
 
 .play -edit map_set_nothing.go /^//START/,/^//END/
+
+
+
+* Don't insert entries in a map while ranging over it
+
+You can of course mutate values associated to a key that is already present in the map.
+
+But inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
+
+.play -edit map_insert_while_ranging.go /^//START/,/^//END/
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
+
+: If a map entry is created during iteration, that entry may be produced during the iteration or may be skipped.
+: The choice may vary for each entry created and from one iteration to the next.
+
+
+
+* Don't remove entries unrelated to the current iteration
+
+If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
+
+Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order is undeterministic, removing entries unrelated to the current iteration can be a source of undeterminism:
+
+.play -edit map_delete_while_ranging.go /^//START/,/^//END/
+
+Avoid doing that!
 
 
 
@@ -1758,9 +2007,9 @@ Each goroutine gets its own stack, which starts small and grows/shrinks as requi
 
 For example, a goroutine can pass a pointer to another goroutine, and the latter can dereference that pointer without causing an access violation.
 
-[[https://golang.org/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid data races!
+[[https://golang.org/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid _data_races_!
 
-(A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location at the same time.)
+A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location in a concurrent fashion (i.e. at the "same" time).
 
 
 
@@ -1770,9 +2019,11 @@ The _Go_scheduler_ is a part of the Go runtime that automatically multiplexes go
 
 It continually observes the run-time behavior of goroutines and decides to suspends them when they block and then resumes them when they become unblocked.
 
-No need for you to think about it; just picture the Go scheduler and goroutines as a chef and his/her kitchen assistants.
+No need for you to think about it yet; for now, simply picture the Go scheduler and goroutines as a chef and his/her kitchen assistants.
 
-.image https://homemaking.com/wp-content/uploads/2020/04/cooking.jpg 250 _
+.image https://rrsg.s3.amazonaws.com/wp-content/uploads/2020/03/25180622/90517519_1171371749860657_3506201698723816143_n.jpg 250 _
+
+: scheduler mechanics discussed in the advanced course
 
 
 
@@ -1892,7 +2143,7 @@ We need another mechanism...
 
 * Wait groups
 
-The core library's [[https://golang.org/pkg/sync/#WaitGroup][`sync` package]] provides a mechanism for _orchestrating_ goroutines: wait groups.
+The [[https://golang.org/pkg/sync/#WaitGroup][`sync` package]] provides a mechanism for orchestrating goroutines: _wait_groups_.
 
 Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
 
@@ -1981,7 +2232,7 @@ Can you spot the bug in the following programme?
 
 * Closures running as goroutines: explanation
 
-There is a _data_race_: a variable is being read and updated by different goroutines at the same time!
+There is a _data_race_: a variable is being read and updated by different goroutines in a concurrent fashion!
 
 More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture_ and read loop variable `i` as it's being updated by the loop.
 
@@ -2013,26 +2264,25 @@ Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-
 
 * Fixing the data race
 
-Pass the value of the loop variable as an argument to the anonymous function.
-
-That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the loop variable's value at the time of the iteration of interest.
-
-.play -edit goroutine_func_arg.go /^//START/,/^//END/
-
-
-
-* Fixing the data race
-
-An alternative solution consists in redeclaring the variable inside the loop.
+One way to fix the data race consists in shadowing the loop variable inside the loop, before the `go` statement.
 
 .play -edit goroutine_func_redecl.go /^//START/,/^//END/
 
-This approach has merit for long anonymous functions because the fix is colocated with the start of the `go` statement (reduced cognitive load).
+Although the redeclaration looks a bit weird, this solution has merit insofar as the fix is colocated with the start of the `go` statement (reduced cognitive load).
 
 See also the [[https://golang.org/doc/faq#closures_and_goroutines][Golang FAQ about this]].
 
 : kind of awkward to pass them as parameters further down if the anonymous function is long
 
+
+
+* Fixing the data race
+
+An alternative solution consists in passing the value of the loop variable as an argument to the anonymous function.
+
+That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the loop variable's value at the time of the iteration of interest.
+
+.play -edit goroutine_func_arg.go /^//START/,/^//END/
 
 
 * Be careful when running closures as goroutines
@@ -2055,11 +2305,13 @@ Does the user experience improve?
 
 * Namecheck project: aggregate the results (how?)
 
-What if, instead of simply printing the results, we wanted to somehow aggregated them?
+What if, instead of printing the results, we wanted to somehow aggregated them?
 
 Remember: the result(s) of the function call to which the `go` keyword is applied are lost.
 
 We need a way to communicate between goroutines...
+
+.image https://blog.golang.org/gopher/plush.jpg 300 _
 
 
 
@@ -2067,18 +2319,28 @@ We need a way to communicate between goroutines...
 
 
 
-* Don't communicate by sharing memory; share memory by communicating.
+* Sharing is caring
 
-Because goroutines all execute in the same address space, we need to be careful about data access from multiple goroutines.
+Because goroutines all execute in the same address space, we need to be careful about how we access and modify data from multiple goroutines, or we'll cause _data_races_...
 
-We could use locks to synchronize goroutine access to the shared memory...
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
 
-\... but Go encourages a different approach, in which shared values are passed around on _channels_.
 
-See also
 
-- [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=2m42s][Rob Pike - Go proverbs (Gopherfest 2015)]]
-- [[https://golang.org/doc/effective_go#sharing][Effective Go (Share by communicating)]]
+* Share memory by communicating
+
+Rather than using locks to synchronize goroutine access to the shared memory, Go encourages an approach in which shared values are passed around on _channels_.
+
+The Go community [[https://golang.org/doc/effective_go#sharing][summarizes this powerful idea]] through a slightly cryptic mantra:
+[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=2m42s][_Do_not_communicate_by_sharing_memory;_instead,_share_memory_by_communicating._]]
+
+Compared to their lower-level alternatives alternatives, channels are indeed often
+
+- more elegant,
+- more composable,
+- less error-prone.
+
+As Rob Pike puts it: [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=4m20s][channels orchestrate; mutexes serialize]].
 
 
 
@@ -2109,7 +2371,7 @@ Plural of the channel's element type:
 
   var tasks chan Task
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
 
 
 
@@ -2192,6 +2454,28 @@ on the serving hatch's platform at any one time.
 
 
 
+* Choose the capacity of your channels wisely
+
+Choosing the capacity of a channel can be delicate!
+
+In some cases, that choice directly impacts program correctness. If you choose unwisely, the program will typically deadlock or won't produce the correct results.
+
+In other cases, it has no impact on correctness, but an unwise choice causes some _goroutine_leaks_, which in turn can cause performance degradation and even crashes.
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
+
+
+
+* Choose the capacity of your channels wisely (cont'd)
+
+In yet other cases, that choice has no impact on correctness or on the occurence of goroutine leaks, but it affects performance. In such cases, you should profile your program under realistic load to determine a good value to use.
+
+.image https://blog.golang.org/5years/gophers5th.jpg 300 _
+
+Such performance optimization is covered in [[https://www.humancoders.com/formations/go-avance#outline][the next course]].
+
+
+
 * Operations on a channel
 
 Channels support the following operations:
@@ -2260,7 +2544,7 @@ Note: the value received from a channel by a goroutine is only accessible to tha
 
 
 
-* Exercise
+* Exercise: fix a deadlock
 
 .play -edit deadlock_example.go /^//START/,/^//END/
 
@@ -2268,15 +2552,17 @@ This programme deadlocks. Can you guess why? How would you fix it?
 
 Add sends and receives to fix ideas. Discuss.
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
 
 
 * Receive ambiguity
 
 As shown by the diagram on the previous slide, when a channel is closed and empty, receiving from that channel yields the zero value of the channel's element type...
 
-.image https://blog.golang.org/gopher/plush.jpg 300 _
-
 How can we tell whether the value we're receiving is from a closed channel or whether someone really sent a zero value of the element's type to the channel?
+
+.image https://blog.golang.org/gopher/plush.jpg 300 _
 
 
 
@@ -2289,7 +2575,7 @@ There is a special form of channel receive that yields an additional boolean val
 
 The value of variable `ok` is
 
-- `true` if the value received was delivered by a successful send operation to the channel, or
+- `true` if the value received was delivered by a send operation to the channel, or
 - `false` if it is a zero value generated because the channel is closed and empty.
 
 
@@ -2324,7 +2610,7 @@ Note:
 
 *Terminating*a*range*operation*
 
-If you range over a channel anywhere in your code, that range expression will block until you close the channel.
+If you range over a channel and no additional values get sent to it, the range expression will block until you close the channel.
 
 *Broadcasting*a*signal*
 
@@ -2333,6 +2619,8 @@ Because closing a channel unblocks all receives from that channel, it can be use
 In fact, the [[https://golang.org/pkg/context/][`context` package]] is [[https://vimeo.com/115309491#t=10m][based on this idea]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/go-grpc-web.svg 200 _
+
+: you could use break to terminate the loop during an iteration, though
 
 
 
@@ -2465,7 +2753,15 @@ Review the functions that accept a channel parameter, and determine whether a ch
 
 * Select statement
 
-A `select` statement is multiway concurrent control switch.
+The `select` keyword forms a trifecta with goroutines and channels!
+
+A `select` statement is a multiway concurrent control switch: it allows you to select one of several channel communications (send or receive).
+
+.image https://pbs.twimg.com/media/DDWqkrFUMAAbIyL?format=png&name=large 300 _
+
+
+
+* Mechanics of select
 
   select {
   case v, ok:= <-ch1:
@@ -2581,11 +2877,13 @@ Browse the documentation of the `context`, and modify the code from the previous
 
 You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Playground]].
 
+: extra exercise: make IsAvailable cancellable
+
 
 
 * Exercise: ping-pong and goroutine leaks
 
-This [[https://play.golang.org/p/R4_2kBHF3gy][Go Playground]] models a ping-pong game.
+[[https://play.golang.org/p/6dMkQaFJG-P][This Go Playground]] models a ping-pong game ([[https://talks.golang.org/2013/advconc.slide#6][adapted from by Sameer Ajmani]]).
 
 Unfortunately, a goroutine systematically leaks.
 
@@ -2625,9 +2923,17 @@ Create a `server` folder under `cmd` and copy `cmd/cli/main.go` to `cmd/server/m
 * Namecheck project: turn your CLI tool into a Web server
 
 1. Start from [[https://golang.org/pkg/net/http/#example_ListenAndServe][https://golang.org/pkg/net/http/#example_ListenAndServe]].
+
 2. Adapt the code from the CLI executable to your server
+
 3. Define a `/check` route that accepts a username to test as a query parameter.
-4. Return JSON in the HTTP response (see [[https://golang.org/pkg/encoding/json/][encoding/json]]); make sure the content type is correct.
+
+4. Return JSON in the response (see [[https://golang.org/pkg/encoding/json/][encoding/json]]), with the correct content type.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: http.HandleFunc registers the handler on the DefaultServeMux (package-level variable)
+: ListenAndServe: it last arg is nil, serves the DefaultServeMux
 
 
 
@@ -2655,8 +2961,27 @@ However, sometimes, sharing memory is simpler and/or performant.
 
 We'll cover two facilities for sharing memory:
 
-- synchronized operations on fixed-sized integers, provided by the [[https://golang.org/pkg/sync/atomic/][`sync/atomic` package]],
-- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://golang.org/pkg/sync/][`sync` package]].
+- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://golang.org/pkg/sync/][the `sync` package]],
+- synchronized operations on fixed-sized integers from [[https://golang.org/pkg/sync/atomic/][the `sync/atomic` package]].
+
+
+
+* Namecheck project: count of checks per username
+
+This a motivating exercise for mutual exclusions.
+
+Keep track (in memory) of how many times each username has been checked.
+
+- What data structure seems appropriate?
+- Create an additional `/frequency` route that returns a JSON representation of the data structure in question.
+
+Discuss.
+
+
+* TODO
+
+map is not concurrency-safe
+can't use sync/atomics because only applies to fixed-sized integers.
 
 
 
@@ -2690,28 +3015,14 @@ By unsafely writing to and reading from our `visits` variable from multiple goro
 
 Consult the documentation of the [[https://golang.org/pkg/sync/atomic/][`sync/atomic` package]] and fix the data race.
 
+Note: because the correct use of atomic operations is fraught with difficulties, it is [[https://groups.google.com/g/golang-nuts/c/AoO3aivfA_E/m/zFjhu8XvngMJ][generally discouraged]] in favor of mutexes.
+
 .image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
 
 : Check whether the race detector can detect it.
 
 
 
-* Namecheck project: count of checks per username
-
-This a motivating exercise for mutual exclusions.
-
-Keep track (in memory) of how many times each username has been checked.
-
-- What data structure seems appropriate?
-- Create an additional `/frequency` route that returns a JSON representation of the data structure in question.
-
-Discuss.
-
-
-* TODO
-
-map is not concurrency-safe
-can't use sync/atomics because only applies to fixed-sized integers.
 
 
 
@@ -2724,4 +3035,10 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 .image https://blog.golang.org/store/gophers.jpg 400 _
 
 
+
 * Open discussion
+
+
+* Image credits
+
+TODO
