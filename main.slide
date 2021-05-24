@@ -236,7 +236,7 @@ Limitations include:
 
 * Hello, World!
 
-.play -edit helloworld.go
+.play -edit src/helloworld.go
 
 You can play with this program [[https://play.golang.org/p/7vin2BK8_A6][in the Go Playground]].
 
@@ -248,22 +248,20 @@ You can play with this program [[https://play.golang.org/p/7vin2BK8_A6][in the G
 
 * Observations about our Hello-World program
 
-.play -edit helloworld.go
+.play -edit src/helloworld.go
 
-All source file starts with a _package_clause_,
-i.e. the `package` keyword followed by the package's name: `package`main`
+All source file starts with a _package_clause_, i.e. the `package` keyword followed by the package's name: `package`main`
 
 A package named `main` produces an executable program (as opposed to a library).
 
 Imports specify _package_paths_ in double quotes.
 
-The `main` function of a `main` package is the program's entrypoint;
-it takes no parameters and returns no results.
+The `main` function of a `main` package is the program's entrypoint; it takes no parameters and returns no results.
 
 
 * More observations about our Hello-World program
 
-.play -edit helloworld.go
+.play -edit src/helloworld.go
 
 Go's grammar uses semicolons as statement terminators, but those semicolons do not appear in the source; [[https://golang.org/doc/effective_go#semicolons][they're added by the compiler]]. As a result, you're not free to break lines wherever you want.
 
@@ -279,18 +277,22 @@ Go source files *must* be encoded in UTF-8, or compilation will fail.
 * Namecheck project: a starting point
 
 1. Create a folder named `namecheck`.
+
 2. Create a file named `main.go` file at the root of the `namecheck` folder.
 
   namecheck
   └── main.go
 
 3. Write a "Hello World" programme in main.go
+
 4. Compile it by running the following command, which creates an executable
 (named `main` on *nix systems or `main.exe` on Windows):
 
   go build main.go
 
 5. Execute the executable.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 : for now, we'll code in this source file, but we'll reorganize our code later
 
@@ -466,6 +468,8 @@ on your machine, and check the contents of the folder:
 
 Note that the folder also contains test files.
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
 
 
 * Exercise: a closer look at the fmt package
@@ -530,7 +534,7 @@ This is the most common form of import.
 
 You used a normal import in your Hello-World program:
 
-.play -edit helloworld.go
+.play -edit src/helloworld.go
 
 To access an identifier exported by a different package (`fmt`, here), you must qualify it using the default package name as prefix (`fmt.Println`).
 
@@ -584,7 +588,7 @@ Use that pattern if you have to, but do not emulate it in your own code.
 
 A dot import allows you to access all the exported identifiers of the imported package without the need to qualify them:
 
-.play -edit helloworld_dot.go
+.play -edit src/helloworld_dot.go
 
 Dot imports can be convenient in test code, but are otherwise best avoided because
 
@@ -686,7 +690,7 @@ If two types are "compatible", an expression of one type can be [[https://golang
 
 However, Go requires many conversions from one type to another to be explicit
 
-.play -edit type_conversion.go /^//START/,/^//END/
+.play -edit src/type_conversion.go /^//START/,/^//END/
 
 
 
@@ -729,7 +733,7 @@ Rune literals are delimited by single quotes. Escape sequences (`'\u00e9'`) are 
 
 In UTF-8, a rune is encoded as a sequence of 1 to 4 bytes.
 
-.play -edit rune_bytes.go /^//START/,/^//END/
+.play -edit src/rune_bytes.go /^//START/,/^//END/
 
 The `rune` type is an alias of type `int32`. The two types are interchangeable.
 
@@ -749,7 +753,7 @@ For instance, the character `é` can be represented either by
 - a single code point named [[https://unicode-table.com/en/00E9/][_Latin_Small_Letter_E_with_Acute_]], or by
 - the combination of a [[https://unicode-table.com/en/0065/][_Latin_Small_Letter_E_]] and an [[https://unicode-table.com/en/00B4/][_Acute_Accent_]] (a _combining_code_point_):
 
-.play -edit characters.go /^//START/,/^//END/
+.play -edit src/characters.go /^//START/,/^//END/
 
 
 
@@ -774,7 +778,7 @@ In Go, a string is a two-word immutable data structure made up of
 
 For instance, the string `"Hello,`World!"` is represented in memory as follows:
 
-.image strings_two_words.svg 200 _
+.image img/strings_two_words.svg 200 _
 
 
 
@@ -793,7 +797,7 @@ As in many other languages, the plus sign is used for string concatenation.
 Built-in function `len` returns the number of *bytes* in a string, whereas
 function `utf8.RuneCountInString` returns the number of *runes* in a string.
 
-.play -edit strings_etc.go /^//START/,/^//END/
+.play -edit src/strings_etc.go /^//START/,/^//END/
 
 Other useful functions for manipulating strings are provided by packages `strings`, `unicode/utf8`, `strconv`, and `regexp`.
 
@@ -808,7 +812,7 @@ Other useful functions for manipulating strings are provided by packages `string
 To call a function, specify *all* the required arguments by *position* within parentheses
 after the name of the function, using commas as delimiters:
 
-.play -edit function_call.go /^//START/,/^//END/
+.play -edit src/function_call.go /^//START/,/^//END/
 
 [[https://docs.python.org/3/glossary.html#term-argument][Unlike Python]] (and others), Go doesn't allow you
 
@@ -824,7 +828,7 @@ Each argument expression is eagerly evaluated, and the result is bound to the co
 
 In brief, functions only operate on *copies* of their arguments:
 
-.play -edit call_by_value.go /^//START/,/^//END/
+.play -edit src/call_by_value.go /^//START/,/^//END/
 
 
 
@@ -836,7 +840,7 @@ are composed of a pointer to some hidden data structure in memory.
 [[https://en.wikipedia.org/wiki/Evaluation_strategy#Call_by_sharing][_Call_by_sharing_]] is perhaps a more appropriate term than _call_by_value_ to describe
 what happens when values of such types are passed to a function.
 
-.play -edit call_by_sharing.go /^//START/,/^//END/
+.play -edit src/call_by_sharing.go /^//START/,/^//END/
 
 
 * Function declaration
@@ -910,7 +914,7 @@ Named results can be useful for documenting the results' roles and simplifying s
 
 You can declare a function that accepts an arbitrary number of identically typed parameters:
 
-.play -edit function_variadic.go /^//START/,/^//END/
+.play -edit src/function_variadic.go /^//START/,/^//END/
 
 
 The variadic argument (`rest`, here) is a _slice_ and must be the last to appear in the parameter list.
@@ -927,7 +931,7 @@ The type of identically typed consecutive parameters can be factored out:
 
 Similarly, the type of identically typed consecutive results can be factored out:
 
-.play -edit function_factored_type_in_result_list.go /^//START/,/^//END/
+.play -edit src/function_factored_type_in_result_list.go /^//START/,/^//END/
 
 
 
@@ -935,7 +939,7 @@ Similarly, the type of identically typed consecutive results can be factored out
 
 Go supports recursion: a function can call itself (directly or indirectly).
 
-.play -edit recursion.go /^//START/,/^//END/
+.play -edit src/recursion.go /^//START/,/^//END/
 
 Recursion is useful for traversing recursive data structures, such as trees.
 
@@ -949,7 +953,7 @@ you're less likely to cause a stack overflow by recursing than in other language
 Functions can [[https://golang.org/pkg/net/http/#HandleFunc][take other functions as parameters]], [[https://play.golang.org/p/LfT4e0lPmNV][return functions as results]],
 be stored in variables, etc.
 
-.play -edit function_nil.go /^//START/,/^//END/
+.play -edit src/function_nil.go /^//START/,/^//END/
 
 Each function has a type.
 
@@ -971,7 +975,7 @@ Go supports anonymous functions but lacks a concise "lambda" notation:
 
 An anonymous functions can _capture_ variables that are accessible to it:
 
-.play -edit function_closure.go /^//START/,/^//END/
+.play -edit src/function_closure.go /^//START/,/^//END/
 
 Anonymous functions are often conveniently used in conjunction with the `go` keyword to launch goroutines.
 
@@ -1018,11 +1022,11 @@ How would you achieve that?
 The condition must be of type `bool` and needs not be enclosed in parens.
 However, braces around the body are mandatory.
 
-.play -edit if_simple.go /^//START/,/^//END/
+.play -edit src/if_simple.go /^//START/,/^//END/
 
 A [[https://golang.org/ref/spec#Statements][_simple_statement_]] (usually a short variable declaration) can precede the condition:
 
-.play -edit if_short_variable_decl.go /^//START/,/^//END/
+.play -edit src/if_short_variable_decl.go /^//START/,/^//END/
 
 The scope of such variables is restricted to the if(-else) statement.
 
@@ -1035,7 +1039,7 @@ The scope of such variables is restricted to the if(-else) statement.
 
 Braces around the `else` body are also mandatory.
 
-.play -edit if_else.go /^//START/,/^//END/
+.play -edit src/if_else.go /^//START/,/^//END/
 
 `else` is one of the least popular keyword in Go!
 
@@ -1051,7 +1055,7 @@ The case expressions (not necessarily constants), are evaluated left-to-right an
 
 The first match's case gets executed. Otherwise, the default case (if any) gets executed.
 
-.play -edit switch.go /^//START/,/^//END/
+.play -edit src/switch.go /^//START/,/^//END/
 
 No need for the `break` keyword at the end of cases! Use `fallthrough`, if needed.
 
@@ -1064,7 +1068,7 @@ No need for the `break` keyword at the end of cases! Use `fallthrough`, if neede
 
 You can omit the switch expression, which is equivalent to using `true`:
 
-.play -edit tagless_switch.go /^//START/,/^//END/
+.play -edit src/tagless_switch.go /^//START/,/^//END/
 
 This form of `switch` statement is preferred to a long if-else chain.
 
@@ -1074,7 +1078,7 @@ This form of `switch` statement is preferred to a long if-else chain.
 
 A _type_switch_ allows you to switch on an interface value and change the logic on the basis of the concrete type stored inside it:
 
-.play -edit type_switch.go /^//START/,/^//END/
+.play -edit src/type_switch.go /^//START/,/^//END/
 
 Use type switches sparingly. More on that when we cover interfaces.
 
@@ -1220,7 +1224,7 @@ It can be triggered by a runtime error (such as calling a `nil` function) or som
 
 A panic stops the programme's normal execution, runs deferred function calls as it unwinds the stack, prints an error message and goroutine traces, and exit the program with a non-zero status:
 
-.play -edit panic.go /^//START/,/^//END/
+.play -edit src/panic.go /^//START/,/^//END/
 
 Panics can (but rarely, if ever, should) be [[https://blog.golang.org/defer-panic-and-recover][_recovered_]].
 
@@ -1393,7 +1397,7 @@ Subpackages of a package are simply packages located in subfolders of that packa
 
 They allow grouping of functionalities related to but more specific than those provided by their superpackage.
 
-.image encoding_core_lib.png 150 _
+.image img/encoding_core_lib.png 150 _
 
 A package doesn't have any special relationship with its subpackages:
 
@@ -1407,7 +1411,7 @@ A package doesn't have any special relationship with its subpackages:
 
 For example, package `foo` cannot import package `bar` if `bar` itself imports `foo`.
 
-.image dependency_cycle.svg 150 _
+.image img/dependency_cycle.svg 150 _
 
 Imports form a _directed_acyclic_graph_, like the graph of commits in a Git repository.
 
@@ -1425,7 +1429,7 @@ A rule of thumb is that a superpackage doesn't depend on any of its subpackages.
 
 For example, here is a partial view of the `encoding` package and its subpackages:
 
-.image dep_arrows_dont_point_down.svg _ 1000
+.image img/dep_arrows_dont_point_down.svg _ 1000
 
 Note that no dependency arrows points down.
 
@@ -1434,7 +1438,7 @@ Note that no dependency arrows points down.
 
 To a deep and narrow package hierarchy, prefer a shallow and possibly wide one:
 
-.image pkg_shallow_and_wide.svg 400 _
+.image img/pkg_shallow_and_wide.svg 400 _
 
 
 
@@ -1781,7 +1785,7 @@ The type of a map of keys of type `K` and values of type `V` is denoted by `map[
 
 The key type *must* be comparable:
 
-.play -edit incomparable_key_type.go /^//START/,/^//END/
+.play -edit src/incomparable_key_type.go /^//START/,/^//END/
 
 .image https://golangforall.com/assets/dvoe.svg 150 _
 
@@ -1798,7 +1802,7 @@ The zero value of map types is `nil`.
 
 Map types are *not* comparable.
 
-.play -edit map_reference.go /^//START/,/^//END/
+.play -edit src/map_reference.go /^//START/,/^//END/
 
 
 
@@ -1806,11 +1810,11 @@ Map types are *not* comparable.
 
 Invoke built-in function `make` with the desired map type to initialize an empty map:
 
-.play -edit map_make.go /^//START/,/^//END/
+.play -edit src/map_make.go /^//START/,/^//END/
 
 Alternatively, you can create and populate a map with a _map_literal_:
 
-.play -edit map_literal.go /^//START/,/^//END/
+.play -edit src/map_literal.go /^//START/,/^//END/
 
 The trailing comma is mandatory, here.
 
@@ -1818,13 +1822,15 @@ The trailing comma is mandatory, here.
 
 * Accessing a value associated with a key in a map
 
-`m[k]` yields the value corresponding to a key `k` in a map `m`. `m[k]` is *not* addressable!
+`m[k]` yields the value corresponding to a key `k` in a map `m`.
+
+`m[k]` is *not* addressable!
 
 If the key is absent from the map or if the map is `nil`, the zero value of the map's value type is returned.
 
 To determine whether the key is value is present in the map, you can declare an additional variable (commonly named "ok" or "exists") of boolean type.
 
-.play -edit map_access.go /^//START/,/^//END/
+.play -edit src/map_access.go /^//START/,/^//END/
 
 : yields the actual value: you can operate on m[k] directly (e.g. m[k]++ if map value type is integer)
 
@@ -1840,7 +1846,7 @@ If the key was already present in the map, the value associated with it prior is
 
 Attempts to store a value in a `nil` map cause a panic!
 
-.play -edit map_store.go /^//START/,/^//END/
+.play -edit src/map_store.go /^//START/,/^//END/
 
 
 
@@ -1852,7 +1858,7 @@ To remove a key `k` and its value from a map `m`, use built-in function `delete`
 
 If the map is `nil` or if the key is already absent from the map, deleting the key from the map is a no-op.
 
-.play -edit map_delete.go /^//START/,/^//END/
+.play -edit src/map_delete.go /^//START/,/^//END/
 
 
 
@@ -1860,7 +1866,7 @@ If the map is `nil` or if the key is already absent from the map, deleting the k
 
 You can iterate over a map using `for` and `range`:
 
-.play -edit map_range.go /^//START/,/^//END/
+.play -edit src/map_range.go /^//START/,/^//END/
 
 At each iteration, the variables yielded by the `range` expression hold copies of
 the key and value.
@@ -1878,7 +1884,7 @@ To range over a map in a certain order, you must
 - sort them in the desired order,
 - access the map values as you range over that slice.
 
-.play -edit map_range_deterministic.go /^//START/,/^//END/
+.play -edit src/map_range_deterministic.go /^//START/,/^//END/
 
 
 
@@ -1888,11 +1894,11 @@ Go provides no native set types, but you can by with map types.
 
 You can implement a set of `string` as a map[string]bool:
 
-.play -edit map_set_bool.go /^//START/,/^//END/
+.play -edit src/map_set_bool.go /^//START/,/^//END/
 
 A more memory-efficient alternative is to use a `map[string]struct{}`:
 
-.play -edit map_set_nothing.go /^//START/,/^//END/
+.play -edit src/map_set_nothing.go /^//START/,/^//END/
 
 
 
@@ -1902,7 +1908,7 @@ You can of course mutate values associated to a key that is already present in t
 
 But inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
 
-.play -edit map_insert_while_ranging.go /^//START/,/^//END/
+.play -edit src/map_insert_while_ranging.go /^//START/,/^//END/
 
 .image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
 
@@ -1917,7 +1923,7 @@ If a map entry that has not yet been reached is removed during iteration, the co
 
 Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order is undeterministic, removing entries unrelated to the current iteration can be a source of undeterminism:
 
-.play -edit map_delete_while_ranging.go /^//START/,/^//END/
+.play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
 
 Avoid doing that!
 
@@ -2093,7 +2099,7 @@ Call them concurrently in the `main` function.
 
 * Exercise: concurrent coffee making (first attempt)
 
-.play -edit goroutines_without_waitgroup.go /^//START/,/^//END/
+.play -edit src/goroutines_without_waitgroup.go /^//START/,/^//END/
 
 Does the programme behave as you expected? Why or why not?
 
@@ -2116,7 +2122,7 @@ Any ideas?
 
 Sleep a bit at the end?
 
-.play -edit goroutines_with_sleep.go /^//START/,/^//END/
+.play -edit src/goroutines_with_sleep.go /^//START/,/^//END/
 
 However, this solution is not entirely satisfactory. Why?
 
@@ -2197,7 +2203,7 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 (implementations of `grindCoffeeBeans` and `frothMilk` are as before)
 
-.play -edit goroutines_with_waitgroup.go /^//START/,/^//END/
+.play -edit src/goroutines_with_waitgroup.go /^//START/,/^//END/
 
 : don't forget the pair of parens at the end of each function literal!
 : What happens if I remove a wg.Done()? deadlock
@@ -2223,7 +2229,7 @@ If a function needs a wait group declared elsewhere, pass a pointer to it (`*syn
 
 Can you spot the bug in the following programme?
 
-.play -edit goroutine_func_quiz.go /^//START/,/^//END/
+.play -edit src/goroutine_func_quiz.go /^//START/,/^//END/
 
 : ask them first how they expect the programme to behave
 : sometimes prints 10, not 9! because loop variable goes beyond bound before loop can end
@@ -2236,7 +2242,7 @@ There is a _data_race_: a variable is being read and updated by different gorout
 
 More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture_ and read loop variable `i` as it's being updated by the loop.
 
-.play -edit goroutine_func_answer.go /^//START/,/^//END/
+.play -edit src/goroutine_func_answer.go /^//START/,/^//END/
 
 Consequently, the programme is undeterministic: the results are unpredictable.
 
@@ -2266,7 +2272,7 @@ Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-
 
 One way to fix the data race consists in shadowing the loop variable inside the loop, before the `go` statement.
 
-.play -edit goroutine_func_redecl.go /^//START/,/^//END/
+.play -edit src/goroutine_func_redecl.go /^//START/,/^//END/
 
 Although the redeclaration looks a bit weird, this solution has merit insofar as the fix is colocated with the start of the `go` statement (reduced cognitive load).
 
@@ -2282,7 +2288,7 @@ An alternative solution consists in passing the value of the loop variable as an
 
 That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the loop variable's value at the time of the iteration of interest.
 
-.play -edit goroutine_func_arg.go /^//START/,/^//END/
+.play -edit src/goroutine_func_arg.go /^//START/,/^//END/
 
 
 * Be careful when running closures as goroutines
@@ -2291,7 +2297,7 @@ When running a closure as a goroutine, it's very easy to inadvertently capture v
 
 Defining a dedicated named function can help:
 
-.play -edit goroutine_func_standalone.go /^//START/,/^//END/
+.play -edit src/goroutine_func_standalone.go /^//START/,/^//END/
 
 
 
@@ -2321,7 +2327,10 @@ We need a way to communicate between goroutines...
 
 * Sharing is caring
 
-Because goroutines all execute in the same address space, we need to be careful about how we access and modify data from multiple goroutines, or we'll cause _data_races_...
+Because goroutines all execute in the same address space, programs that modify data being simultaneously accessed by multiple goroutines [[https://golang.org/ref/mem#tmp_1][*must* serialize such access]].
+
+Programs that ignore this injunction are bound to contain [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bugs_]], which may manifest as _data_races_...
+
 
 .image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
 
@@ -2468,11 +2477,14 @@ In other cases, it has no impact on correctness, but an unwise choice causes som
 
 * Choose the capacity of your channels wisely (cont'd)
 
-In yet other cases, that choice has no impact on correctness or on the occurence of goroutine leaks, but it affects performance. In such cases, you should profile your program under realistic load to determine a good value to use.
+In yet other cases, that choice has no impact on correctness or on the occurence of goroutine leaks, but it affects performance.
+
+In such cases, you should profile your program under realistic load in order to determine a good value to use.
+
+Such performance optimization is covered in [[https://www.humancoders.com/formations/go-avance#outline][the next course]].
 
 .image https://blog.golang.org/5years/gophers5th.jpg 300 _
 
-Such performance optimization is covered in [[https://www.humancoders.com/formations/go-avance#outline][the next course]].
 
 
 
@@ -2511,9 +2523,10 @@ A channel send is a statement, not an expression.
 
 * Semantics of a channel send
 
-.image send_semantics.svg 400 _
+.image img/send_semantics.svg _ 900
 
 Note: buffered channels accept a limited number of values without a corresponding receive for those values.
+
 
 
 * Receiving from a channel
@@ -2538,15 +2551,15 @@ The value received is only a copy of the value that was sent to the channel.
 
 * Semantics of a channel receive
 
-.image receive_semantics.svg 400 _
+.image img/receive_semantics.svg 450 _
 
 Note: the value received from a channel by a goroutine is only accessible to that goroutine; it is removed from the channel for all the other goroutines.
 
 
 
-* Exercise: fix a deadlock
+* Exercise: fixing a deadlock
 
-.play -edit deadlock_example.go /^//START/,/^//END/
+.play -edit src/deadlock_example.go /^//START/,/^//END/
 
 This programme deadlocks. Can you guess why? How would you fix it?
 
@@ -2596,7 +2609,7 @@ Closing a channel is definitive; a closed channel cannot be "re-opened".
 
 * Semantics of close
 
-.image close_semantics.svg _ 800
+.image img/close_semantics.svg _ 800
 
 Note:
 
@@ -2677,7 +2690,7 @@ The code above is an exact equivalent to the following:
 
 Important: the `for` statement will block until the channel is closed!
 
-.play -edit range_blocks_until_channel_closed.go /^//START/,/^//END/
+.play -edit src/range_blocks_until_channel_closed.go /^//START/,/^//END/
 
 
 
@@ -2685,7 +2698,7 @@ Important: the `for` statement will block until the channel is closed!
 
 Operating on a copy `cb` of a channel `ca` affects the same underlying data structure as if you operated on channel `ca` directly.
 
-.play -edit channels_are_references.go /^//START/,/^//END/
+.play -edit src/channels_are_references.go /^//START/,/^//END/
 
 If that weren't the case, passing channels to functions wouldn't be very useful.
 
@@ -2694,12 +2707,16 @@ If that weren't the case, passing channels to functions wouldn't be very useful.
 * Namecheck project: gather the results via a channel
 
 1. In `main`, declare some `Result` type.
+
 2. In `main`, initialize a `chan`Result`, and make sure it is accessible to the child goroutines.
+
 3. In each child goroutine, create a `Result` value and send it to the channel.
+
 4. In `main`, range over that channel and store the results in a slice.
+
 5. In `main`, Print the resulting slice.
 
-.image https://blog.golang.org/store/gophers.jpg 400 _
+.image https://blog.golang.org/store/gophers.jpg 300 _
 
 : type Result struct { Username string Platform string Valid bool Available bool Error error }
 : the channel allows us to serialize access to the slice (local mutable state)
@@ -2726,7 +2743,7 @@ The compiler disallows
 
 * Channel directions: example
 
-.play -edit channel_dir.go /^//START/,/^//END/
+.play -edit src/channel_dir.go /^//START/,/^//END/
 
 
 
@@ -2797,13 +2814,17 @@ A `select` statement is a multiway concurrent control switch: it allows you to s
 * Namecheck project: fail early
 
 1. Remove the `Error` field from your `Result` type
+
 2. Modify your code to report normal results and errors through separate channels.
+
 3. Use a `select` statement to receive from both channels.
+
 4. Terminate the programme as soon as one error is received
 
 Hint: choose channel capacity wisely.
 
-.image https://blog.golang.org/gopher/plush.jpg 300 _
+.image https://blog.golang.org/gopher/plush.jpg 250 _
+
 
 
 * Canceling goroutines
@@ -2830,7 +2851,7 @@ If function `cancellable` is launched as a goroutine, another goroutine can get 
 
 * Exercise: render a function cancellable
 
-.play -edit uncancellable.go /^//START/,/^//END/
+.play -edit src/uncancellable.go /^//START/,/^//END/
 
 Function `printInts` only terminates when the whole program does.
 
@@ -2842,7 +2863,7 @@ You can do this exercise in the [[https://play.golang.org/p/ANQV_mTOriS][Go Play
 
 * Exercise: render a function cancellable (solution)
 
-.play -edit cancellable.go /^//START/,/^//END/
+.play -edit src/cancellable.go /^//START/,/^//END/
 
 This solution is available on the [[https://play.golang.org/p/xlT_rE5B43n][Go Playground]].
 
@@ -2873,7 +2894,7 @@ By convention, the `context.Context` parameter (if any) is always first.
 
 * Exercise: cancelling a goroutine with context.Context
 
-Browse the documentation of the `context`, and modify the code from the previous exercise to use a `context.Context` rather than a `quit` channel.
+Browse the documentation of [[https://golang.org/pkg/context/][the `context` package]], and modify the code from the previous exercise to use a `context.Context` rather than a `quit` channel.
 
 You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Playground]].
 
@@ -2934,6 +2955,7 @@ Create a `server` folder under `cmd` and copy `cmd/cli/main.go` to `cmd/server/m
 
 : http.HandleFunc registers the handler on the DefaultServeMux (package-level variable)
 : ListenAndServe: it last arg is nil, serves the DefaultServeMux
+: important to capture error from http.ListenAndServe, because otherwise fails silently if port collision (e.g. ":80")
 
 
 
@@ -3005,7 +3027,7 @@ Our server is concurrent: it handles each incoming request in a separate gorouti
 
 However, unsafely incrementing an integer from multiple goroutines yields unpredictable results: some updates typically get lost.
 
-.play -edit plusplus_isnt_atomic.go /^//START/,/^//END/
+.play -edit src/plusplus_isnt_atomic.go /^//START/,/^//END/
 
 
 
@@ -3015,9 +3037,10 @@ By unsafely writing to and reading from our `visits` variable from multiple goro
 
 Consult the documentation of the [[https://golang.org/pkg/sync/atomic/][`sync/atomic` package]] and fix the data race.
 
-Note: because the correct use of atomic operations is fraught with difficulties, it is [[https://groups.google.com/g/golang-nuts/c/AoO3aivfA_E/m/zFjhu8XvngMJ][generally discouraged]] in favor of mutexes.
-
 .image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
+
+Note: because the correct use of atomic operations is fraught with difficulties, it is [[https://groups.google.com/g/golang-nuts/c/AoO3aivfA_E/m/zFjhu8XvngMJ][generally discouraged]]; prefer mutexes or channels.
+
 
 : Check whether the race detector can detect it.
 

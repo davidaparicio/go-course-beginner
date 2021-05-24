@@ -14,10 +14,10 @@ func main() {
 	wg.Add(concurrency)
 	for i := 0; i < concurrency; i++ {
 		go func() {
+			defer wg.Done()
 			for j := 0; j < n; j++ {
 				visits++ // HL
 			}
-			wg.Done()
 		}()
 	}
 	wg.Wait()
