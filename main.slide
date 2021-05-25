@@ -715,7 +715,7 @@ Moreover, you have to use `var` rather than `:=` when the default type of the in
 
 In other cases, the choice between the two syntaxes is up to you.
 
-However, convention favors short variable declaration over using the `var` keyword when the variable's initial value must be the zero value or simply doesn't matter.
+However, convention favors using the `var` keyword rather than a short variable declaration when the variable's initial value must be the zero value or simply doesn't matter.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
 
@@ -2691,7 +2691,6 @@ Note:
 
 
 
-
 * How is closing a channel useful?
 
 *Terminating*a*range*operation*
@@ -2729,11 +2728,6 @@ Think of a restaurant as a channel.
 - Similarly, closing a channel doesn't amount to flushing it out; some goroutine(s) can still consume those elements.
 
 .image https://rew-online.com/wp-content/uploads/2019/10/restaurantCLOSED.jpg 300 _
-
-
-
-
-
 
 
 
