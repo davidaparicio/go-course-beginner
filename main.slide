@@ -294,7 +294,7 @@ Go source files *must* be encoded in UTF-8, or compilation will fail.
 
 5. Execute the executable.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
 
 : for now, we'll code in this source file, but we'll reorganize our code later
 
@@ -3073,6 +3073,7 @@ Keep track (in memory) of how many times each username has been checked.
 Discuss.
 
 
+
 * TODO
 
 map is not concurrency-safe
@@ -3081,8 +3082,6 @@ can't use sync/atomics because only applies to fixed-sized integers.
 
 
 * Namecheck project: number of visits
-
-This a motivating exercise for atomics.
 
 Keep an in-memory count of the number of requests served by our `/check` route.
 
@@ -3096,24 +3095,34 @@ Discuss.
 
 * The need for atomic operations
 
-Our server is concurrent: it handles each incoming request in a separate goroutine.
-
-However, unsafely incrementing an integer from multiple goroutines yields unpredictable results: some updates typically get lost.
+Carelessly incrementing an integer from multiple goroutines yields unpredictable results: some updates typically get lost.
 
 .play -edit src/plusplus_isnt_atomic.go /^//START/,/^//END/
 
 
 
-* Namecheck project: number of visits
+
+* The need for atomic operations (cont'd)
+
+Our server is concurrent: it handles each incoming request in a separate goroutine.
 
 By unsafely writing to and reading from our `visits` variable from multiple goroutines, we've created a data race and are likely to lose updates to `visits`.
 
-Consult the documentation of the [[https://golang.org/pkg/sync/atomic/][`sync/atomic` package]] and fix the data race.
-
 .image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
 
-Note: because the correct use of atomic operations is fraught with difficulties, it is [[https://groups.google.com/g/golang-nuts/c/AoO3aivfA_E/m/zFjhu8XvngMJ][generally discouraged]]; prefer mutexes or channels.
+We can use atomic operations provided by the `sync/atomic` package to update the count in a safe manner.
 
+However, note that, because using atomic operations correctly is fraught with difficulties, it is [[https://groups.google.com/g/golang-nuts/c/AoO3aivfA_E/m/zFjhu8XvngMJ][generally discouraged]]; prefer mutexes or channels.
+
+
+
+* Namecheck project: number of visits
+
+1. Consult the documentation of [[https://golang.org/pkg/sync/atomic/][the `sync/atomic` package]].
+
+2. Find a way to fix the data race.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : Check whether the race detector can detect it.
 
