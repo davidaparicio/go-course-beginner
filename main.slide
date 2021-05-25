@@ -6,7 +6,9 @@ jcretel-infosec@protonmail.com
 https://jub0bs.com
 @jub0bs
 
-* Setup TODO
+
+
+* Setup
 
 Make sure you have the latest version of Go (1.16.4) installed by running
 
@@ -16,16 +18,13 @@ To figure out where your Go distribution is installed, run
 
   go env GOROOT
 
-Visual Studio Code
+To learn Go, I recommend Visual Studio Code and its [[https://code.visualstudio.com/docs/languages/go][Go extension]], which embarks a number of utilities such as `goimports` and `gofmt`.
 
-[[https://code.visualstudio.com/docs/languages/go][Go extension for Visual Studio Code]]
-
-embarks a number of utilities such as `goimports` and `gofmt`.
-
-- Git
+Also make sure you have Git installed.
 
 
-* What to expect from the course TODO
+
+* What to expect from the course
 
 - interaction
 - regular breaks
@@ -43,7 +42,8 @@ embarks a number of utilities such as `goimports` and `gofmt`.
 
 *Objectives*
 
-Write a small CLI tool (and then a server) to check the validity and status of a username on multiple social networks: Twitter, GitHub, etc.
+Write a small CLI tool (and then a server) to check the validity and availability
+of a username on multiple social networks: Twitter, GitHub, etc.
 
 A forcing function for learning Go: we'll introduce new concepts as needed.
 
@@ -70,7 +70,7 @@ Go was created in 2007 at Google by Robert Griesemer, Rob Pike, and Ken Thompson
 
 : Griesemer: V8 JS engine, Hot Spot JVM
 : Pike: predecessors to Go (Newsqueak), Plan 9, Unicode
-: Thompson: recipient of Turing Award, UNIX (with Dennis Ritchie), Unicode (with Pike), Plan 9 (with Pike)
+: Thompson: recipient of Turing Award, UNIX (with Dennis Ritchie), Unicode (with Pike), Plan 9 (with Pike), increment/decrement operators (https://en.wikipedia.org/wiki/B_(programming_language)#History)
 
 
 
@@ -84,12 +84,14 @@ Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0z
 
 * History of the Go project
 
-- started in 2007
-- open-sourced in 2009
-- Go 1.0 released in 2012
-- The go compiler (`gc`) becomes self-hosted in 2015.
+- 2007: the project starts at Google.
+- 2009: Go is open-sourced.
+- 2012: Go 1.0 released.
+- 2015: The go compiler (`gc`) becomes self-hosted.
 - ...
-- Go 1.16 released in 2021.
+- 2021: Go 1.16 is released.
+- ...
+- 2022: Go 1.18 is released. Generics are added to the language.
 
 
 
@@ -696,6 +698,46 @@ However, Go requires many conversions from one type to another to be explicit
 
 * Variables
 
+Playground
+
+
+
+* var vs. short variable declaration
+
+Short variable declaration is only allowed for local variables, declared within functions.
+
+Moreover, you have to use `var` rather than `:=` when the default type of the initializing expression won't do or cannot be inferred:
+
+  var f fahrenheit = 32   // more idiomatic than f := fahrenheit(32)
+
+  userptr := nil          // won't compile
+  var userptr *user = nil // fine
+
+In other cases, the choice between the two syntaxes is up to you.
+
+However, convention favors short variable declaration over using the `var` keyword when the variable's initial value
+
+- must be the zero value, or
+- simply doesn't matter.
+
+
+
+* Namecheck project: exploring the doc
+
+1. In the main function, declare a string variable named "username". Initialize it with your Twitter or GitHub username.
+
+2. Did you use the `var` keyword or a short variable declaration? Why?
+
+3. Rather than printing "Hello, World!", print "Hello, " followed by your username.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Pointers
+
+Playground
+
 
 
 * Strings
@@ -757,21 +799,43 @@ For instance, the character `é` can be represented either by
 
 
 
-* Strings
+* The string type: zero value and literals
 
-A string is _not_ stored in memory as a sequence of runes! It is instead stored as a more compact sequence of bytes that (usually) represent valid UTF-8 text.
+The `string` type's zero value is simply the empty string.
 
-String literals are delimited either by double quotes (`"`) or backticks (```):
+String literals come in two forms:
 
-String literals that do not contain byte-level escapes always contain valid UTF-8:
+*Interpreted*string*literals*
+
+- delimited by double quotes (`"`)
+- the most common form
+- guaranteed to contain valid UTF-8 (if they do no contain byte-level escapes)
+
+*Raw*string*literals*
+
+- delimited by backticks (```)
+- escape sequences are not applied
+- can be multiline
+- guaranteed to contain valid UTF-8
+
 
 : string literals always contain UTF-8 text as long as they have no byte-level escapes
 : Go source code is UTF-8, so the source code for the string literal is UTF-8 text
+: useful for regexp, templates, multiline strings
 
 
-* Strings under the hood
 
-In Go, a string is a two-word immutable data structure made up of
+* The string type: zero value and literals
+
+.play -edit src/string_literals.go /^//START/,/^//END/
+
+
+
+* The string type: under the hood
+
+A string is _not_ stored in memory as a sequence of runes, but as a more compact sequence of bytes that (usually) represent valid UTF-8 text.
+
+More specifically, a string is a two-word immutable data structure made up of
 
 - a pointer to a byte array,
 - an integer corresponding to the number of bytes that make up the string.
@@ -782,12 +846,30 @@ For instance, the string `"Hello,`World!"` is represented in memory as follows:
 
 
 
+* String indexing
 
+`s[i]` returns the `i`-th *byte* (not rune or character!) using 0-based indexing in string `s`.
 
-* String indexing and substring operator
+If `i` is either negative or larger than `len(s)-1`, then `s[i]` causes a _panic_!
+
+.play -edit src/string_indexing.go /^//START/,/^//END/
+
+: panic is a runtime error
+: also substring operator, but similar to slicing operator which we'll see later
+
 
 
 * Ranging over a string
+
+A for-range loop decodes one UTF-8-encoded *rune* (not character!) on each iteration:
+
+.play -edit src/string_range.go /^//START/,/^//END/
+
+In the code above, during each iteration of the loop,
+
+- `i` corresponds to the starting position of the current rune (measured in bytes),
+- `r` corresponds to the current rune.
+
 
 
 * Other operations on strings
@@ -799,7 +881,7 @@ function `utf8.RuneCountInString` returns the number of *runes* in a string.
 
 .play -edit src/strings_etc.go /^//START/,/^//END/
 
-Other useful functions for manipulating strings are provided by packages `strings`, `unicode/utf8`, `strconv`, and `regexp`.
+Other useful functions for manipulating strings are can be found in packages `unicode/utf8`, `strings`, `strconv`, `fmt`, and `regexp`.
 
 
 
@@ -3043,9 +3125,6 @@ Note: because the correct use of atomic operations is fraught with difficulties,
 
 
 : Check whether the race detector can detect it.
-
-
-
 
 
 
