@@ -698,7 +698,7 @@ However, Go requires many conversions from one type to another to be explicit
 
 * Variables
 
-Playground
+[[https://play.golang.org/p/GTMUrroC0lz][Playground]]
 
 
 
@@ -710,33 +710,20 @@ Moreover, you have to use `var` rather than `:=` when the default type of the in
 
   var f fahrenheit = 32   // more idiomatic than f := fahrenheit(32)
 
-  userptr := nil          // won't compile
+  userptr := nil          // won't compile: untyped nil
   var userptr *user = nil // fine
 
 In other cases, the choice between the two syntaxes is up to you.
 
-However, convention favors short variable declaration over using the `var` keyword when the variable's initial value
+However, convention favors short variable declaration over using the `var` keyword when the variable's initial value must be the zero value or simply doesn't matter.
 
-- must be the zero value, or
-- simply doesn't matter.
-
-
-
-* Namecheck project: exploring the doc
-
-1. In the main function, declare a string variable named "username". Initialize it with your Twitter or GitHub username.
-
-2. Did you use the `var` keyword or a short variable declaration? Why?
-
-3. Rather than printing "Hello, World!", print "Hello, " followed by your username.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
 
 
 
 * Pointers
 
-Playground
+[[https://play.golang.org/p/QJNCrBMXP6b][Playground]]
 
 
 
@@ -825,7 +812,7 @@ String literals come in two forms:
 
 
 
-* The string type: zero value and literals
+* The string type's zero value and string literals
 
 .play -edit src/string_literals.go /^//START/,/^//END/
 
@@ -852,7 +839,11 @@ For instance, the string `"Hello,`World!"` is represented in memory as follows:
 
 If `i` is either negative or larger than `len(s)-1`, then `s[i]` causes a _panic_!
 
+Overwriting `s[i]` or taking its address is illegal and will cause a compilation error.
+
 .play -edit src/string_indexing.go /^//START/,/^//END/
+
+
 
 : panic is a runtime error
 : also substring operator, but similar to slicing operator which we'll see later
