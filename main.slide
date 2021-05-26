@@ -1517,7 +1517,7 @@ To a deep and narrow package hierarchy, prefer a shallow and possibly wide one:
 
 * Keep cool: don't panic
 
-Good packages do not panic, at least not
+Good library packages do not panic, at least not
 
 - after proper initialization, and
 - if they're used as was intended by the package author(s).
@@ -1766,7 +1766,7 @@ you can gather those test cases under a single test function and run them as _su
       {label: "too long", username: "obviously_longer_than_15_chars"},
       {label: "too short", username: "foo"},
     }
-    for c := range cases {
+    for _, c := range cases {
       t.Run(c.label, func(t *testing.T) {
         got := twitter.IsValid(c.username)
         if got != c.want {
