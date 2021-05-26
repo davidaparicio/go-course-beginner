@@ -329,42 +329,6 @@ func processOne(path string) error {
 
 ---
 
-### Gotcha: errors in deferred function calls
-
-* Deferred statements return no result.
-* What if the function call returns an error?
-
-```go
-func foo() error {
-  // ...
-  defer badIfThisFails() // but error is lost!
-  // ...
-  return err
-}
-```
-
----
-
-### Gotcha: errors in deferred function calls
-
-* workaround: use a named return and a func literal
-
-```go
-func foo() (err error) {
-  // ...
-  defer func() {
-    if err1 := gobadIfThisFails(); err1 != nil {
-      err = err1
-  }()
-  // ...
-  return
-}
-```
-
-* see https://www.joeshaw.org/dont-defer-close-on-writable-files/
-
----
-
 ### Namecheck project: write tests for `IsAvailable`
 
 * any issue?
@@ -531,6 +495,7 @@ type error interface {
 type ErrUnknownAvailability struct {
     Username string
     Platform string
+    Cause    error
 }
 ```
 
@@ -542,7 +507,7 @@ type ErrUnknownAvailability struct {
 ### Gotcha: `nil` and interfaces
 
 * An interface that holds a `nil` pointer to a concrete type is not itself `nil`!
-* Example with `ErrUnknownAvailability`
+* [Find the bug!](https://play.golang.org/p/8M8YjK9jjZw)
 * see https://golang.org/doc/faq#nil_error
 
 ---

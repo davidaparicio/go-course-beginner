@@ -2094,7 +2094,7 @@ A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs w
 
 * The Go scheduler
 
-The _Go_scheduler_ is a part of the Go runtime that automatically multiplexes goroutines onto operating-systems threads and manages their scheduling for us.
+The _Go_scheduler_ is a part of the Go runtime that automatically multiplexes goroutines onto operating-system threads and manages their scheduling for us.
 
 It continually observes the run-time behavior of goroutines and decides to suspends them when they block and then resumes them when they become unblocked.
 
