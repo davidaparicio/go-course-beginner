@@ -655,7 +655,7 @@ func (t *Tree) Save(w io.Writer) error // better!
 
 ## Namecheck project: test doubles
 
-* Define a `Client` interface that `&http.Client` satisfies
+* Define a `Client` interface that `*http.Client` satisfies
 * create a `stub` package
 * In it, declare
 ```go
