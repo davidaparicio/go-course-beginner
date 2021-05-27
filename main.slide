@@ -2969,21 +2969,23 @@ You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Play
 
 
 
-* Exercise: ping-pong and goroutine leaks
+* Exercise: debug this ping-pong game
 
-[[https://play.golang.org/p/6dMkQaFJG-P][This Go Playground]] models a ping-pong game ([[https://talks.golang.org/2013/advconc.slide#6][adapted from by Sameer Ajmani]]).
+1. Open [[https://play.golang.org/p/n7XQ_TdOY4t][this Playground]]. It models a ping-pong game ([[https://talks.golang.org/2013/advconc.slide#6][adapted from a talk by Sameer Ajmani]]).
 
-Unfortunately, a goroutine systematically leaks.
+2. The game ends with a deadlock. Can you see why?
 
-Explain why and how you would you fix it.
+3. Discuss and fix the programme.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : two goroutines exchanging one value over and over
-: valid use case of a bidirectional channel
 : pointer element to reduce memory footprint
 : show that deadlock if you never throw the ball on the table
 : one player terminates while the other is left holding the ball
 : one possibility: buffer size of 1, but no guarantee that the same player will play twice in a row
 : non-blocking send by adding a select statement
+: solution: https://play.golang.org/p/RVdBZVVbkj3
 
 
 
