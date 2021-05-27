@@ -1850,155 +1850,6 @@ Keep writing test cases until you're satisfied with the overall code coverage.
 
 
 
-* Maps
-
-A map is a built-in type that represent a collection of key-value pairs.
-
-The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
-
-The key type *must* be comparable:
-
-.play -edit src/incomparable_key_type.go /^//START/,/^//END/
-
-.image https://golangforall.com/assets/dvoe.svg 150 _
-
-: implemented as a hash table
-
-
-
-* Maps are reference types
-
-A function that takes a parameter of some map type only gets a copy of a reference
-to the underlying data structure (hash table).
-
-The zero value of map types is `nil`.
-
-Map types are *not* comparable.
-
-.play -edit src/map_reference.go /^//START/,/^//END/
-
-
-
-* Creating map values
-
-Invoke built-in function `make` with the desired map type to initialize an empty map:
-
-.play -edit src/map_make.go /^//START/,/^//END/
-
-Alternatively, you can create and populate a map with a _map_literal_:
-
-.play -edit src/map_literal.go /^//START/,/^//END/
-
-The trailing comma is mandatory, here.
-
-
-
-* Accessing a value associated with a key in a map
-
-`m[k]` yields the value corresponding to a key `k` in a map `m`.
-
-`m[k]` is *not* addressable!
-
-If the key is absent from the map or if the map is `nil`, the zero value of the map's value type is returned.
-
-To determine whether the key is value is present in the map, you can declare an additional variable (commonly named "ok" or "exists") of boolean type.
-
-.play -edit src/map_access.go /^//START/,/^//END/
-
-: yields the actual value: you can operate on m[k] directly (e.g. m[k]++ if map value type is integer)
-
-
-
-* Storing a key-value pair in a map
-
-Associating a key `k` with a value `v` in a map `m` is simple:
-
-  m[k] = v
-
-If the key was already present in the map, the value associated with it prior is lost.
-
-Attempts to store a value in a `nil` map cause a panic!
-
-.play -edit src/map_store.go /^//START/,/^//END/
-
-
-
-* Removing a key-value pair from a map
-
-To remove a key `k` and its value from a map `m`, use built-in function `delete`:
-
-  delete(m, k)
-
-If the map is `nil` or if the key is already absent from the map, deleting the key from the map is a no-op.
-
-.play -edit src/map_delete.go /^//START/,/^//END/
-
-
-
-* Ranging over a map
-
-You can iterate over a map using `for` and `range`:
-
-.play -edit src/map_range.go /^//START/,/^//END/
-
-At each iteration, the variables yielded by the `range` expression hold copies of
-the key and value.
-
-The iteration order on a map is undeterministic! (Run the snippet a few times.)
-
-
-
-
-* Ranging over a map in a deterministic order
-
-To range over a map in a certain order, you must
-
-- create a slice of keys,
-- sort them in the desired order,
-- access the map values as you range over that slice.
-
-.play -edit src/map_range_deterministic.go /^//START/,/^//END/
-
-
-
-* Implementing a set using a map
-
-Go provides no native set types, but you can by with map types.
-
-You can implement a set of `string` as a map[string]bool:
-
-.play -edit src/map_set_bool.go /^//START/,/^//END/
-
-A more memory-efficient alternative is to use a `map[string]struct{}`:
-
-.play -edit src/map_set_nothing.go /^//START/,/^//END/
-
-
-
-* Don't insert entries in a map while ranging over it
-
-You can of course mutate values associated to a key that is already present in the map.
-
-But inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
-
-.play -edit src/map_insert_while_ranging.go /^//START/,/^//END/
-
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
-
-: If a map entry is created during iteration, that entry may be produced during the iteration or may be skipped.
-: The choice may vary for each entry created and from one iteration to the next.
-
-
-
-* Don't remove entries unrelated to the current iteration
-
-If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
-
-Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order is undeterministic, removing entries unrelated to the current iteration can be a source of undeterminism:
-
-.play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
-
-Avoid doing that!
 
 
 
@@ -2971,7 +2822,7 @@ You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Play
 
 * Exercise: debug this ping-pong game
 
-1. Open [[https://play.golang.org/p/n7XQ_TdOY4t][this Playground]]. It models a ping-pong game ([[https://talks.golang.org/2013/advconc.slide#6][adapted from a talk by Sameer Ajmani]]).
+1. Open [[https://play.golang.org/p/n7XQ_TdOY4t][this Playground]]. It models a ping-pong game adapted from ([[https://talks.golang.org/2013/advconc.slide#6][a talk by Sameer Ajmani]]).
 
 2. The game ends with a deadlock. Can you see why?
 
@@ -3044,6 +2895,158 @@ Import `gorilla/mux` in your server's `main.go` and redefine your route with it.
 
 
 
+* Maps
+
+A map is a built-in type that represent a collection of key-value pairs.
+
+The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
+
+The key type *must* be comparable:
+
+.play -edit src/incomparable_key_type.go /^//START/,/^//END/
+
+.image https://golangforall.com/assets/dvoe.svg 150 _
+
+: implemented as a hash table
+
+
+
+* Maps are reference types
+
+A function that takes a parameter of some map type only gets a copy of a reference
+to the underlying data structure (hash table).
+
+The zero value of map types is `nil`.
+
+Map types are *not* comparable.
+
+.play -edit src/map_reference.go /^//START/,/^//END/
+
+
+
+* Creating map values
+
+Invoke built-in function `make` with the desired map type to initialize an empty map:
+
+.play -edit src/map_make.go /^//START/,/^//END/
+
+Alternatively, you can create and populate a map with a _map_literal_:
+
+.play -edit src/map_literal.go /^//START/,/^//END/
+
+The trailing comma is mandatory, here.
+
+
+
+* Accessing a value associated with a key in a map
+
+`m[k]` yields the value corresponding to a key `k` in a map `m`.
+
+`m[k]` is *not* addressable!
+
+If the key is absent from the map or if the map is `nil`, the zero value of the map's value type is returned.
+
+To determine whether the key is value is present in the map, you can declare an additional variable (commonly named "ok" or "exists") of boolean type.
+
+.play -edit src/map_access.go /^//START/,/^//END/
+
+: yields the actual value: you can operate on m[k] directly (e.g. m[k]++ if map value type is integer)
+
+
+
+* Storing a key-value pair in a map
+
+Associating a key `k` with a value `v` in a map `m` is simple:
+
+  m[k] = v
+
+If the key was already present in the map, the value associated with it prior is lost.
+
+Attempts to store a value in a `nil` map cause a panic!
+
+.play -edit src/map_store.go /^//START/,/^//END/
+
+
+
+* Removing a key-value pair from a map
+
+To remove a key `k` and its value from a map `m`, use built-in function `delete`:
+
+  delete(m, k)
+
+If the map is `nil` or if the key is already absent from the map, deleting the key from the map is a no-op.
+
+.play -edit src/map_delete.go /^//START/,/^//END/
+
+
+
+* Ranging over a map
+
+You can iterate over a map using `for` and `range`:
+
+.play -edit src/map_range.go /^//START/,/^//END/
+
+At each iteration, the variables yielded by the `range` expression hold copies of
+the key and value.
+
+The iteration order on a map is undeterministic! (Run the snippet a few times.)
+
+
+
+
+* Ranging over a map in a deterministic order
+
+To range over a map in a certain order, you must
+
+- create a slice of keys,
+- sort them in the desired order,
+- access the map values as you range over that slice.
+
+.play -edit src/map_range_deterministic.go /^//START/,/^//END/
+
+
+
+* Implementing a set using a map
+
+Go provides no native set types, but you can by with map types.
+
+You can implement a set of `string` as a map[string]bool:
+
+.play -edit src/map_set_bool.go /^//START/,/^//END/
+
+A more memory-efficient alternative is to use a `map[string]struct{}`:
+
+.play -edit src/map_set_nothing.go /^//START/,/^//END/
+
+
+
+* Don't insert entries in a map while ranging over it
+
+You can of course mutate values associated to a key that is already present in the map.
+
+But inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
+
+.play -edit src/map_insert_while_ranging.go /^//START/,/^//END/
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
+
+: If a map entry is created during iteration, that entry may be produced during the iteration or may be skipped.
+: The choice may vary for each entry created and from one iteration to the next.
+
+
+
+* Don't remove entries unrelated to the current iteration
+
+If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
+
+Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order is undeterministic, removing entries unrelated to the current iteration can be a source of undeterminism:
+
+.play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
+
+Avoid doing that!
+
+
+
 * Communicating by sharing memory
 
 Go encourages you to use channels to communicate between goroutines.
@@ -3058,8 +3061,6 @@ We'll cover two facilities for sharing memory:
 
 
 * Namecheck project: count of checks per username
-
-This a motivating exercise for mutual exclusions.
 
 Keep track (in memory) of how many times each username has been checked.
 
