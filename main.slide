@@ -3069,12 +3069,19 @@ Keep track (in memory) of how many times each username has been checked.
 
 Discuss.
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
-* TODO
 
-map is not concurrency-safe
-can't use sync/atomics because only applies to fixed-sized integers.
+* Namecheck project: count of checks per username
+
+Maps are not concurrency-safe! Carelessly updating a map from multiple goroutines yields unpredictable results: some updates typically get lost.
+
+1. Study the documentation of `sync.Mutex`.
+
+2. Guard reads and writes to the map with a mutex.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
@@ -3084,7 +3091,7 @@ Keep an in-memory count of the number of requests served by our `/check` route.
 
 - Declare an integer variable named `visits` at the level of the `main` package.
 - Increment `visits` at each invokation of `/check` handler.
-- Create an additional route `/count` that returns the total number of visits.
+- Create an additional route `/visits` that returns the total number of visits.
 
 Discuss.
 
