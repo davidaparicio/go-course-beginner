@@ -23,6 +23,18 @@ To learn Go, I recommend Visual Studio Code and its [[https://code.visualstudio.
 Also make sure you have Git installed.
 
 
+* Running these slides
+
+A README at the root of this Git repository explains how to run the slides using the `present` tool.
+
+Alternatively, if you don't want to install `present` on your machine, simply visit
+[[https://talks.godoc.org/github.com/jub0bs/go-course-beginner/main.slide][https://talks.godoc.org/github.com/jub0bs/go-course-beginner/main.slide]] in your browser.
+
+Note: some Gopher images won't load because of [[https://github.com/golang/go/issues/46469][a known bug]] in the backend code.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 200 _
+
+
 
 * What to expect from the course
 
@@ -142,6 +154,27 @@ Go is clearly reminiscent of C, but Go is different from C in many notable ways:
 : multiple returns allow principled error handling
 : packages: no ifdef guards, no required ordering of top-level declarations
 : also syntax differences: type name comes after variable name 
+
+
+
+* Go has a rich ecosystem
+
+The `go` toolchain comes with tools for
+
+- cross-compilation
+- code formatting (`gofmt`)
+- automatic package imports (`goimports`)
+- testing & code coverage
+- microbenchmarks
+- profiling & tracing
+- run-time race detector
+- etc.
+
+Moreover, the core library is pretty extensive: [[https://golang.org/pkg/][https://golang.org/pkg/]].
+
+: gofmt: enforced specific style. flattens learning curve and reduces friction for code reviews
+: goimports: imports in canonical order and in alphabetical order per section
+
 
 
 * Go is object-oriented... with a twist!
@@ -461,12 +494,12 @@ Each source file of a package must import the packages it consumes.
 
 Run the following command in your shell to list the production source files that make up the `fmt` package:
 
-  go list -f '{{ join .GoFiles "\n" }}' fmt
+  go list -f "{{ join .GoFiles \"\\n\" }}" fmt
 
 Run the following command in your shell to determine where the `fmt` package lives
 on your machine, and check the contents of the folder:
 
-  go list -f '{{ .Dir }}' fmt
+  go list -f "{{ .Dir }}" fmt
 
 Note that the folder also contains test files.
 
@@ -715,7 +748,7 @@ Moreover, you have to use `var` rather than `:=` when the default type of the in
 
 In other cases, the choice between the two syntaxes is up to you.
 
-However, convention favors using the `var` keyword rather than a short variable declaration when the variable's initial value must be the zero value or simply doesn't matter.
+However, convention favors using the `var` keyword over a short variable declaration when the variable's initial value must be the zero value or simply doesn't matter.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
 
@@ -992,7 +1025,7 @@ You can declare a function that accepts an arbitrary number of identically typed
 
 The variadic argument (`rest`, here) is a _slice_ and must be the last to appear in the parameter list.
 
-You've already used a variadic function... Which one? Check it its signature in the doc.
+You've already used a variadic function... Which one? Check its signature in the doc.
 
 
 
@@ -1334,6 +1367,8 @@ Fail early if the regular expression doesn't compile.
 
 .image https://i.redd.it/48emz1dvfz441.png 200 _
 
+: use a bool variable to control the termination of the loop
+
 
 
 * Namecheck project: validation of Twitter usernames
@@ -1358,6 +1393,20 @@ Let's learn how to create a library package and import it in our `main` package.
 
 
 
+* Namecheck project: create a namecheck package
+
+1. At the root of your project, create a namecheck.go file.
+
+2. In it, simply write the following package clause:
+
+  package namecheck
+
+3. Try compiling. What happens?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
 * Two kinds of packages
 
 *Library*packages*
@@ -1379,28 +1428,6 @@ Let's learn how to create a library package and import it in our `main` package.
 
 
 
-* Namecheck project: create a cmd folder
-
-1. Create a folder named "cmd" at the root of your project.
-
-2. Create subfolders named "cli" and "server".
-
-3. Move your `main.go` file to `cmd/cli/`:
-
-  namecheck
-  └── cmd
-      ├── cli
-      │    └── main.go
-      └── server
-
-4. From the root of your project, check that `main.go` still compiles:
-
-  go run cmd/cli/main.go
-
-Later in the course, we'll create another executable under `cmd/server/`.
-
-
-
 * Source files of a package
 
 A package is composed of one to several source files.
@@ -1414,6 +1441,28 @@ All package members are accessible to all of the package's source files.
 Each source file must import the packages that it needs.
 
 .image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
+
+
+
+* Namecheck project: create a cmd folder
+
+1. Create a folder named "cmd" at the root of your project.
+
+2. Create a subfolder named "cli".
+
+3. Move your `main.go` file to `cmd/cli/`:
+
+  namecheck
+  └── cmd
+      └── cli
+           └── main.go
+
+4. From the root of your project, check that `main.go` still compiles:
+
+  go run cmd/cli/main.go
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
 
 
 
@@ -1536,9 +1585,8 @@ Exported functions should communicate anticipated failures to client code as val
 
   namecheck
   ├── cmd
-  │   ├── cli
-  │   │    └── main.go
-  │   └── server
+  │   └── cli
+  │        └── main.go
   └── twitter
       └── twitter.go
 
@@ -1581,9 +1629,8 @@ A go.mod file will be created at the root of your project:
 
   namecheck
   ├── cmd
-  │   ├── cli
-  │   │    └── main.go
-  │   └── server
+  │   └── cli
+  │        └── main.go
   ├── go.mod
   └── twitter
       └── twitter.go
@@ -2515,6 +2562,8 @@ The value of variable `ok` is
 - `true` if the value received was delivered by a send operation to the channel, or
 - `false` if it is a zero value generated because the channel is closed and empty.
 
+Note: variable `ok` is assigned the value `false`, not as soon as the channel gets closed, but only when the channel has been drained.
+
 
 
 * Closing a channel
@@ -2590,7 +2639,7 @@ Ranging over a channel amounts to iteratively receiving from it:
     // do something with v
   }
 
-Note: only iteration variable is permitted.
+Variable `v` takes the successive values sent on the channel until the channel is closed.
 
 The code above is an exact equivalent to the following:
 
@@ -2791,7 +2840,9 @@ This solution is available on the [[https://play.golang.org/p/xlT_rE5B43n][Go Pl
 
 * Canceling goroutines with context
 
-The `context` package exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
+The `context` package formalizes this idea of broadcasting a signal by closing a channel.
+
+It exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
 
 `Context`'s cancellation mechanism is based on the same quit-channel trick; the channel is accessible via `Context`'s `Done` method:
 
