@@ -1,5 +1,5 @@
 Formation Go
-25 May 2021
+2 June 2021
 
 Julien Cretel
 jcretel-infosec@protonmail.com
@@ -2538,6 +2538,8 @@ Add sends and receives to fix ideas. Discuss.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
+: ask them what happens for go fmt.Println(<-ch)
+
 
 
 * Receive ambiguity
@@ -2873,7 +2875,7 @@ You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Play
 
 * Exercise: debug this ping-pong game
 
-1. Open [[https://play.golang.org/p/n7XQ_TdOY4t][this Playground]]. It models a ping-pong game adapted from ([[https://talks.golang.org/2013/advconc.slide#6][a talk by Sameer Ajmani]]).
+1. Open [[https://play.golang.org/p/n7XQ_TdOY4t][this Playground]] (adapted from [[https://talks.golang.org/2013/advconc.slide#6][a talk by Sameer Ajmani]]). The program models a simple ping-pong game.
 
 2. The game ends with a deadlock. Can you see why?
 

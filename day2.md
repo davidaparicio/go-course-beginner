@@ -298,6 +298,7 @@ func process(paths []string) {
     file, err := os.Open(path)
     if err != nil {
       // deal with error
+      continue
     }
     defer file.Close()
     // do something interesting with file...
@@ -416,6 +417,7 @@ class BoomerangCollection : IEnumerable
 ### Keep interfaces small
 
 * favour one-method interfaces
+* similar to Interface-Segregation principle ("I" in SOLID)
 * easier to satisfy
 * many examples in the standard library
 
@@ -512,18 +514,6 @@ type ErrUnknownAvailability struct {
 
 ---
 
-### `sort.Interface`
-
-```go
-type Interface interface {
-    Len() int
-    Less(i, j int) bool
-    Swap(i, j int)
-}
-```
-
----
-
 ### `io.Reader`
 
 ```go
@@ -533,7 +523,7 @@ type Reader interface {
 ```
 * source of `[]byte`
 * reads the data in the supplied buffer, returns how many bytes were read, and any error that may have occurred
-* satisfied by `*os.File`, and many others
+* satisfied by `os.Stdin`, `*os.File`, `*bytes.Buffer`.
 
 ---
 
@@ -546,7 +536,7 @@ type Writer interface {
 ```
 * sink of `[]byte`
 * writes the data in the supplied buffer, returns how many bytes were written, and any error that may have occurred
-* satisfied by `*os.File`, and many others
+* satisfied by `os.Stdout`, `os.Stderr`, `*os.File`, `*bytes.Buffer`, etc.
 
 ---
 
@@ -637,11 +627,11 @@ func (t *Tree) Save(rw io.ReadWriter) error // good?
 
 ### Require no more, promise no less (cont'd)
 
-* only ask for the required behaviour
+* only ask for the required behaviour: accept as small an interface as possible 
 * similar to DDD principle of "keeping ports small"
 
 ```go
-func (t *Tree) Save(w io.Writer) error // better!
+func (t *Tree) Save(w io.Reader) error // better!
 ```
 
 ---
