@@ -298,11 +298,11 @@ The `main` function of a `main` package is the program's entrypoint; it takes no
 
 .play -edit src/helloworld.go
 
-Go's grammar uses semicolons as statement terminators, but those semicolons do not appear in the source; [[https://golang.org/doc/effective_go#semicolons][they're added by the compiler]]. As a result, you're not free to break lines wherever you want.
+Go's formal grammar [[https://golang.org/ref/spec#Semicolons][uses semicolons as statement terminators]], but those semicolons do not appear in the source; [[https://golang.org/doc/effective_go#semicolons][they're added by the compiler]]. As a result, you're not free to break lines wherever you want.
 
 The formater uses tabs (not spaces) for indentation.
 
-Go source files *must* be encoded in UTF-8, or compilation will fail.
+Go source files [[https://golang.org/ref/spec#Source_code_representation][*must* be encoded in UTF-8]], or compilation will fail.
 
 : cmd args: os.Args
 : guillemets doubles
@@ -427,15 +427,15 @@ Go also comes with several predeclared names accessible from anywhere in your co
 
 * Comments
 
-End-of-line comments start with a double slash and extend to the end of the line:
+[[https://golang.org/ref/spec#Comments][_Line_comments_]] start with a double slash and extend to the end of the line:
 
   var foo = "foo" // this is a comment
 
-Multiline comments are delimited by `/*` and `*/` and do not nest:
+[[https://golang.org/ref/spec#Comments][_General_comments]] are delimited by `/*` and `*/`; they can be multiline and they do not nest:
 
   /*
     this is
-    a multiline comment
+    a general comment
   */
 
 The documentation of a package is written as comments in the package's source file(s).
@@ -1715,7 +1715,7 @@ Your tests then only have access to the exported members of package `foo`.
 White-box testing is the approach favored in the core library. It is convenient,
 but can lead to prohibitive coupling between tests and implementation details.
 
-.image https://memegenerator.net/img/instances/85409288/is-white-box-testing-preferable-no-quicker-easier-more-seductive.jpg 300 _
+.image https://pbs.twimg.com/media/EzrMZe6X0AMSozD?format=jpg&name=900x900 300 _
 
 Black-box testing is an approach favored by [[https://changelog.com/gotime/173#transcript-153][many Gophers]]: it keeps you honest,
 as a package author, by forcing you to test your packages through their public API.
@@ -1752,7 +1752,7 @@ The following example uses black-box testing:
     want := false
     got := twitter.IsValid(username)
     if got != want {
-      t.Errorf("twitter.IsValid(%s): got %t; want %t", username, got, want)
+      t.Errorf("twitter.IsValid(%q): got %t; want %t", username, got, want)
     }
   }
 
@@ -1776,7 +1776,7 @@ To execute the tests for a package and all of its subpackages, run
 
 You can also selectively run some test functions by specifying a regexp, e.g.:
 
-  go test -run='TestUsernameToo*'
+  go test -run='TestUsernameToo*' ./...
 
 
 
@@ -1785,8 +1785,10 @@ You can also selectively run some test functions by specifying a regexp, e.g.:
 Create a file named `twitter_test.go` in the `twitter` folder.
 
   namecheck
+  ├── cmd
+  │   └── cli
+  │       └── main.go
   ├── go.mod
-  ├── main.go
   └── twitter
       ├── twitter.go
       └── twitter_test.go
@@ -1864,11 +1866,13 @@ Write enough good test cases to reach a code coverage that satisfies you.
 Create a `github` package (you can copy the `twitter` package to get started quickly):
 
   namecheck
+  ├── cmd
+  │   └── cli
+  │       └── main.go
   ├── github
   │   ├── github.go
   │   └── github_test.go
   ├── go.mod
-  ├── main.go
   └── twitter
       ├── twitter.go
       └── twitter_test.go
@@ -2410,8 +2414,8 @@ Built-in function `cap` can be used to query a channel's capacity:
 
 Some terminology:
 
-- A channel of zero capacity is called an _unbuffered_channel_.
-- A channel of positive capacity is called a _buffered_channel_.
+- A channel of zero capacity is said to be _unbuffered_ or _synchronous_.
+- A channel of positive capacity is said to be _buffered_.
 
 : The number of elements queued in a channel's buffer can also be queried via built-in function `len`, but is rarely useful. Why?
 : if more than one goroutine interact with the channel, len(ch) is stale as soon as queried
