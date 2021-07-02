@@ -379,6 +379,16 @@ Live demo in Playground
 
 ---
 
+### Interface declation
+
+```go
+type Climber interface {
+    Climb(int)
+}
+```
+
+---
+
 ### Interfaces are reference types
 
 * zero value: `nil`
@@ -386,12 +396,9 @@ Live demo in Playground
 
 ---
 
-### Interface satisfaction
+### Interface satisfaction in other languages...
 
-* simply declare the methods required by the interface on the concrete type
-* verified at compile time
-* implicit!
-* compare to Java, PHP, C#, etc.
+... is specified on the type declaration of the implementor.
 
 ```
 // Java
@@ -403,50 +410,23 @@ class Template implements iTemplate
 // C#
 class BoomerangCollection : IEnumerable
 ```
----
-
-### Interfaces as contracts
-
-* some interfaces ask implementors more than satisfying a signature
-* example: [`io.Reader`](https://golang.org/pkg/io/#Reader)
-* not enforcible by the compiler!
-* write tests to check that the implementor is lawful!
 
 ---
 
-### Keep interfaces small
-
-* favour one-method interfaces
-* similar to Interface-Segregation principle ("I" in SOLID)
-* easier to satisfy
-* many examples in the standard library
-
----
-
-### Naming of single-method interfaces
-
-* method + "er"
+### Interface satisfaction in Go
 
 ```go
-type Climber interface {
-    Climb(int)
+type Mountaineer string // no mention of Climber here!
+
+func (m Mountaineer) Climb(i int) {
+  fmt.Printf("%s climbs %d meters\n", m, i)
 }
 ```
 
----
+* Simply declare the methods required by the interface on the concrete type!
+* `Mountaineer` is a `Climber` simply because it has the required `Climb(int)` method!
+* interface satisfaction is verified at compile time
 
-### Interface composition
-
-```go
-type ReadWriteCloser interface {
-  Reader
-  Writer
-  Closer
-}
-```
-* small interfaces are convenient for composition!
-
----
 
 ## Notable interface types
 
@@ -553,6 +533,28 @@ type Handler interface {
 
 ---
 
+### Keep interfaces small
+
+* favour one-method interfaces
+* similar to Interface-Segregation principle ("I" in SOLID)
+* easier to satisfy
+* many examples in the standard library
+
+---
+
+### Naming of single-method interfaces
+
+* method + "er"
+
+```go
+type Climber interface {
+    Climb(int)
+}
+```
+* this convention can be broken
+
+---
+
 ### Namecheck project: define `Validator` interface
 
 ```go
@@ -563,7 +565,6 @@ type Validator interface {
 
 * Do `twitter.Twitter` and `github.GitHub` satisfy it?
 * If not, make it so!
-
 
 ---
 
@@ -580,13 +581,43 @@ type Availabler interface {
 
 ---
 
+### Interface composition
+
+* Small interfaces are convenient for composition!
+
+```go
+type Reader interface {
+  Read(p []byte) (n int, err error)
+}
+
+type Closer interface {
+  Close() error
+}
+
+type ReadCloser interface { // both a Reader and a Closer
+  Reader
+  Closer
+}
+```
+
+---
+
 ## Namecheck project: define `Checker` interface
 
 * ...by composition of
-  * a `fmt.Stringer`
   * a `Validator`
   * an `Availabler`
+  * a `fmt.Stringer`
 * Do `twitter.Twitter` and `github.GitHub` satisfy it?
+
+---
+
+### Interfaces as contracts
+
+* some interfaces specify implementors to follow certain additional rules
+* example: [`io.Reader`](https://golang.org/pkg/io/#Reader)
+* those rules are not enforcible by the compiler!
+* the onus is on you to respect them when you implement an interface
 
 ---
 

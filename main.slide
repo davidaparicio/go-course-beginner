@@ -1801,34 +1801,6 @@ Write a few test functions to cover all the possible cases.
 
 
 
-* Table-driven subtests
-
-If multiple test functions unduly duplicate the testing logic for different test cases,
-you can gather those test cases under a single test function and run them as _subtests_:
-
-  func TestIsValid(t *testing.T) {
-    cases := []struct{
-      label string
-      username string
-      want bool
-    }{
-      {label: "too long", username: "obviously_longer_than_15_chars"},
-      {label: "too short", username: "foo"},
-    }
-    for _, c := range cases {
-      t.Run(c.label, func(t *testing.T) {
-        got := twitter.IsValid(c.username)
-        if got != c.want {
-          t.Errorf("twitter.IsValid(%s): got %t; want %t", c.username, got, c.want)
-        }
-      })
-    }
-  }
-
-: in composite literals (slices, maps, arrays), Go allows you to omit the inner type name
-
-
-
 * Code coverage
 
 To determine how much of your package's production code is covered by its tests, run
@@ -1955,6 +1927,8 @@ See also
 - [[https://www.youtube.com/watch?v=oV9rvDllKEg][Rob Pike - Concurrency is not Parallelism (2012)]].
 - [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=3m42s][Rob Pike - Go proverbs (Gopherfest 2015)]]
 
+: metaphor: cooking recipe typically has a concurrent component, but whether you can prepare it in parallel depends on the number of cooks/hobs you have!
+
 
 
 * Go's concurrency model
@@ -2019,10 +1993,11 @@ The `go` keyword spawns a new goroutine: it causes the function call that follow
 
 The result(s) of the function call to which the `go` keyword is applied are lost.
 
-Launching an anonymous function as a goroutine is common:
+Launching an anonymous function as a goroutine is sometimes convenient for wrapping statements that should be executed in the background:
 
   go func() {
-    fmt.Println("Grinding coffee beans...")
+    fmt.Println("Don't mind me!")
+    fmt.Println("I'm just running in the background...")
   }()
 
 : just don't forget to invoke it!
@@ -2471,7 +2446,7 @@ Channels support the following operations:
 - _receiving_ a value from a channel,
 - _closing_ a channel (that hasn't been closed yet).
 
-You can also _range_ over a channel, which consists in continually receiving values from it until the channel gets closed.
+You can also _range_ over a channel, which consists in continually receiving values from it.
 
 All those operations are *concurrency-safe*.
 
@@ -2645,7 +2620,7 @@ Ranging over a channel amounts to iteratively receiving from it:
     // do something with v
   }
 
-Variable `v` takes the successive values sent on the channel until the channel is closed.
+Variable `v` takes the successive values sent on the channel until the channel is both closed and empty.
 
 The code above is an exact equivalent to the following:
 
@@ -2661,7 +2636,7 @@ The code above is an exact equivalent to the following:
 
 * Ranging over a channel blocks until the channel is closed
 
-Important: the `for` statement will block until the channel is closed!
+A for-range loop on a channel will only terminate if and after the channel gets closed!
 
 .play -edit src/range_blocks_until_channel_closed.go /^//START/,/^//END/
 
@@ -2673,7 +2648,8 @@ Operating on a copy `cb` of a channel `ca` affects the same underlying data stru
 
 .play -edit src/channels_are_references.go /^//START/,/^//END/
 
-If that weren't the case, passing channels to functions wouldn't be very useful.
+(If that weren't the case, channel function parameters wouldn't be very useful;
+those parameters would instead need to be pointers to channels.)
 
 
 
@@ -2826,19 +2802,15 @@ If function `cancellable` is launched as a goroutine, another goroutine can get 
 
 .play -edit src/uncancellable.go /^//START/,/^//END/
 
-Function `printInts` only terminates when the whole program does.
+Function `printInts` never terminates! Modify the program to make `printInts` cancellable from `main`. Cancel the goroutine after one second.
 
-Modify `printInts` to make it cancellable from `main`. Cancel the goroutine after one second.
-
-You can do this exercise in the [[https://play.golang.org/p/ANQV_mTOriS][Go Playground]].
+You can do this exercise in the [[https://play.golang.org/p/uNLmiVb_1rY][Go Playground]].
 
 
 
 * Exercise: render a function cancellable (solution)
 
-.play -edit src/cancellable.go /^//START/,/^//END/
-
-This solution is available on the [[https://play.golang.org/p/xlT_rE5B43n][Go Playground]].
+The solution is available on the [[https://play.golang.org/p/RBbA2DCWmu2][Go Playground]].
 
 : mention that closing the channel broadcasts a signal to all goroutines that receive from it
 
@@ -2869,11 +2841,17 @@ By convention, the `context.Context` parameter (if any) is always first.
 
 * Exercise: cancelling a goroutine with context.Context
 
-Browse the documentation of [[https://golang.org/pkg/context/][the `context` package]], and modify the code from the previous exercise to use a `context.Context` rather than a `quit` channel.
+Browse the documentation of [[https://golang.org/pkg/context/][the `context` package]], and modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
 
-You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Playground]].
+You can do this exercise in the [[https://play.golang.org/p/RBbA2DCWmu2][Go Playground]].
 
 : extra exercise: make IsAvailable cancellable
+
+
+
+* Exercise: cancelling a goroutine with context.Context (solution) 
+
+The solution is available on the [[https://play.golang.org/p/XXH76YKz_Oj][Go Playground]].
 
 
 
@@ -2893,7 +2871,16 @@ You can do this exercise in the [[https://play.golang.org/p/xlT_rE5B43n][Go Play
 : one player terminates while the other is left holding the ball
 : one possibility: buffer size of 1, but no guarantee that the same player will play twice in a row
 : non-blocking send by adding a select statement
-: solution: https://play.golang.org/p/RVdBZVVbkj3
+
+
+
+* Exercise: debug this ping-pong game (solution)
+
+The solution is available on the [[https://play.golang.org/p/RVdBZVVbkj3][Go Playground]].
+
+
+
+* HTTP server
 
 
 
@@ -2954,7 +2941,7 @@ Import `gorilla/mux` in your server's `main.go` and redefine your route with it.
 
 * Maps
 
-A map is a built-in type that represent a collection of key-value pairs.
+A map is a built-in type that represent a unordered collection of key-value pairs.
 
 The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
 

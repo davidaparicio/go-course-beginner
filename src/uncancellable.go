@@ -2,14 +2,19 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
 // START OMIT
 func main() {
-	go printInts()
-	time.Sleep(1 * time.Second)
-	// do more work...
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		printInts()
+	}()
+	wg.Wait()
 }
 
 func printInts() {
