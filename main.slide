@@ -10,7 +10,7 @@ https://jub0bs.com
 
 * Setup
 
-Make sure you have the latest version of Go (1.16.4) installed by running
+Make sure you have the latest version of Go (1.16.5) installed by running
 
   go version
 
@@ -431,7 +431,7 @@ Go also comes with several predeclared names accessible from anywhere in your co
 
   var foo = "foo" // this is a comment
 
-[[https://golang.org/ref/spec#Comments][_General_comments]] are delimited by `/*` and `*/`; they can be multiline and they do not nest:
+[[https://golang.org/ref/spec#Comments][_General_comments_]] are delimited by `/*` and `*/`; they can be multiline and they do not nest:
 
   /*
     this is
