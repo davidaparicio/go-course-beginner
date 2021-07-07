@@ -676,22 +676,25 @@ func (t *Tree) Save(w io.Reader) error // better!
 
 ## Namecheck project: test doubles
 
-* Define a `Client` interface that `*http.Client` satisfies
-* create a `stub` package
-* In it, declare
-```go
-type clientFunc func(url string) (*http.Response, error)
-```
-* Make `clientFunc` satisfy your `Client` interface
+* Create a `namecheck` package at the root of your project
+* In `namecheck.go`, declare a `Client` interface that `*http.Client` satisfies
 
 ---
 
 ## Namecheck project: test doubles (cont'd)
 
-* Define the following functions in `stub`
+* Create a `stub` package
+* In it, declare a type that satisfies your Client interface
 ```go
-ClientWiththError(err error) namecheck.Client
-ClientWithStatusCodeAndBody(code int, body string) namecheck.Client
+type SuccessfulClient int
 ```
-* Add a field of type `Client` to your `Twitter` and `GitHub` struct types
-* Adjust your `main` and your tests for `IsAvailable`
+* Make `stub.SuccessfulClient` satisfy your `namecheck.Client` interface
+* Its `Get` method should always succeed and return the same status code
+
+---
+
+## Namecheck project: test doubles (cont'd)
+
+* Add a field of type `namecheck.Client` to your `Twitter` and `GitHub` struct types
+* Adjust your `main.go`
+* Write a few test cases for your `IsAvailable` method

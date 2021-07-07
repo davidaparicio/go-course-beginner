@@ -1739,7 +1739,7 @@ Methods such as `Errorf` on the `testing.T` type allow you to signal a test fail
 
 
 
-* Your first test function for the twitter package
+* Test functions: an example for the twitter package
 
 The following example uses black-box testing:
 
@@ -1747,8 +1747,8 @@ The following example uses black-box testing:
 
   // omitted import declaration of your twitter package
 
-  func TestUsernameTooLong(t *testing.T) {
-    username := "obviously_longer_than_15_chars"
+  func TestUsernameContainsTwitter(t *testing.T) {
+    username := "jub0bsOnTwitter"
     want := false
     got := twitter.IsValid(username)
     if got != want {
@@ -1757,6 +1757,27 @@ The following example uses black-box testing:
   }
 
 The message format used here ("got ...; want ...") is widely used.
+
+
+
+* Namecheck project: test twitter's IsValid function
+
+Create a file named `twitter_test.go` in the `twitter` folder.
+
+  namecheck
+  ├── cmd
+  │   └── cli
+  │       └── main.go
+  ├── go.mod
+  └── twitter
+      ├── twitter.go
+      └── twitter_test.go
+
+Follow the black-box approach: use `twitter_test` as the package name.
+
+Write the test function from the previous slide.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
 
 
@@ -1780,36 +1801,15 @@ You can also selectively run some test functions by specifying a regexp, e.g.:
 
 
 
-* Namecheck project: test twitter's IsValid function
-
-Create a file named `twitter_test.go` in the `twitter` folder.
-
-  namecheck
-  ├── cmd
-  │   └── cli
-  │       └── main.go
-  ├── go.mod
-  └── twitter
-      ├── twitter.go
-      └── twitter_test.go
-
-Follow the black-box approach: use `twitter_test` as the package name.
-
-Write a few test functions to cover all the possible cases.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
-
-
-
 * Code coverage
 
 To determine how much of your package's production code is covered by its tests, run
 
-  go test -cover
+  go test -cover ./...
 
 To generate a more detailed (machine-readable) coverage report, first run
 
-  go test -coverprofile="coverage.out"
+  go test -coverprofile="coverage.out" ./...
 
 Then, for a shell-based breakdown of the coverage by package function, run
 
