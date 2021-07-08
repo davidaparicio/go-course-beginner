@@ -7,25 +7,26 @@ import (
 
 // START OMIT
 func main() {
-	c := make(chan string)
+	ch := make(chan string)
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go produce(c, &wg)
-	go consume(c, &wg)
+	go produce(ch, &wg)
+	go consume(ch, &wg)
 	wg.Wait()
 }
 
-func produce(c chan<- string, wg *sync.WaitGroup) {
+func produce(ch chan<- string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	// <-c // would cause a compilation error // HL
-	c <- "hello"
+	// <-ch // would cause a compilation error // HL
+	ch <- "hello"
+	close(ch)
 }
 
-func consume(c <-chan string, wg *sync.WaitGroup) {
+func consume(ch <-chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	// c <- "hi" // would cause a compilation error // HL
-	// close(c)  // would cause a compilation error // HL
-	fmt.Println(<-c)
+	// ch <- "hi" // would cause a compilation error // HL
+	// close(ch)  // would cause a compilation error // HL
+	fmt.Println(<-ch)
 }
 
 // END OMIT
