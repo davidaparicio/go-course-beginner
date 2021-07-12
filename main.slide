@@ -741,7 +741,7 @@ Short variable declaration is only allowed for local variables, declared within 
 
 Moreover, you have to use `var` rather than `:=` when the default type of the initializing expression won't do or cannot be inferred:
 
-  var f fahrenheit = 32   // more idiomatic than f := fahrenheit(32)
+  var f Fahrenheit = 32   // more idiomatic than f := Fahrenheit(32)
 
   userptr := nil          // won't compile: untyped nil
   var userptr *user = nil // fine
@@ -2655,17 +2655,23 @@ those parameters would instead need to be pointers to channels.)
 
 * Namecheck project: gather the results via a channel
 
-1. In `main`, declare some `Result` type.
+1. In `main`, declare the following `Result` type:
 
-2. In `main`, initialize a `chan`Result`, and make sure it is accessible to the child goroutines.
+  type Result struct {
+    Username  string
+    Platform  string
+    Valid     bool
+    Available bool
+    Err       error
+  }
+
+2. In `main`, initialize a `chan`Result`; make sure it's accessible to the child goroutines.
 
 3. In each child goroutine, create a `Result` value and send it to the channel.
 
-4. In `main`, range over that channel and store the results in a slice.
+4. In `main`, range over that channel and store the results in a slice, then print it.
 
-5. In `main`, Print the resulting slice.
-
-.image https://blog.golang.org/store/gophers.jpg 300 _
+.image https://blog.golang.org/store/gophers.jpg 150 _
 
 : type Result struct { Username string Platform string Valid bool Available bool Error error }
 : the channel allows us to serialize access to the slice (local mutable state)
@@ -2762,7 +2768,7 @@ A `select` statement is a multiway concurrent control switch: it allows you to s
 
 * Namecheck project: fail early
 
-1. Remove the `Error` field from your `Result` type
+1. Remove the `Err` field from your `Result` type
 
 2. Modify your code to report normal results and errors through separate channels.
 
@@ -3033,8 +3039,7 @@ You can iterate over a map using `for` and `range`:
 At each iteration, the variables yielded by the `range` expression hold copies of
 the key and value.
 
-The iteration order on a map is undeterministic! (Run the snippet a few times.)
-
+Maps are unordered collections. Not only is the iteration order unspecified, but it is also undeterministic! Try running the code snippet above a few times: the iteration order will typically change from one program execution to the next.
 
 
 
@@ -3042,9 +3047,9 @@ The iteration order on a map is undeterministic! (Run the snippet a few times.)
 
 To range over a map in a certain order, you must
 
-- create a slice of keys,
-- sort them in the desired order,
-- access the map values as you range over that slice.
+- collect all map keys in a slice,
+- sort the slice as desired,
+- access the map values as you range over the sorted slice of keys.
 
 .play -edit src/map_range_deterministic.go /^//START/,/^//END/
 
@@ -3052,9 +3057,9 @@ To range over a map in a certain order, you must
 
 * Implementing a set using a map
 
-Go provides no native set types, but you can by with map types.
+Go provides no native set types, but.. maps to the rescue!
 
-You can implement a set of `string` as a map[string]bool:
+You can implement a set of `string` simply as a map[string]bool:
 
 .play -edit src/map_set_bool.go /^//START/,/^//END/
 
@@ -3062,13 +3067,15 @@ A more memory-efficient alternative is to use a `map[string]struct{}`:
 
 .play -edit src/map_set_nothing.go /^//START/,/^//END/
 
+Pick whichever of the two approaches you prefer.
+
 
 
 * Don't insert entries in a map while ranging over it
 
 You can of course mutate values associated to a key that is already present in the map.
 
-But inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
+However, inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
 
 .play -edit src/map_insert_while_ranging.go /^//START/,/^//END/
 
@@ -3083,7 +3090,8 @@ But inserting new keys in a map while ranging over it yields [[https://golang.or
 
 If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
 
-Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order is undeterministic, removing entries unrelated to the current iteration can be a source of undeterminism:
+Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order on maps is random,
+removing entries unrelated to the current iteration can be a source of undeterminism:
 
 .play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
 
