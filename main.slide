@@ -1,5 +1,5 @@
 Formation Go
-2 June 2021
+2 November 2021
 
 Julien Cretel
 jcretel-infosec@protonmail.com
@@ -10,7 +10,7 @@ https://jub0bs.com
 
 * Setup
 
-Make sure you have the latest version of Go (1.16.5) installed by running
+Make sure you have the latest version of Go (1.17.2) installed by running
 
   go version
 
@@ -101,7 +101,7 @@ Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0z
 - 2012: Go 1.0 released.
 - 2015: The go compiler (`gc`) becomes self-hosted.
 - ...
-- 2021: Go 1.16 is released.
+- 2021: Go 1.17 is released.
 - ...
 - 2022: Go 1.18 is released. Generics are added to the language.
 
@@ -179,7 +179,7 @@ Moreover, the core library is pretty extensive: [[https://golang.org/pkg/][https
 
 * Go is object-oriented... with a twist!
 
-The ability to define custom types (methods on them) promote _abstraction_.
+The ability to define custom types (and methods on them) promote _abstraction_.
 
 Go's interfaces (and, soon, generics) enable _polymorphism_.
 
@@ -516,7 +516,7 @@ The documentation is available offline via the `go`doc` subcommand:
   go doc fmt
   go doc fmt Println
 
-It's also available online at [[https://golang.org/pkg/fmt][https://golang.org/pkg/fmt/]].
+It's also available online at [[https://pkg.go.dev/fmt][https://pkg.go.dev/fmt]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
 
@@ -748,7 +748,7 @@ Moreover, you have to use `var` rather than `:=` when the default type of the in
 
 In other cases, the choice between the two syntaxes is up to you.
 
-However, convention favors using the `var` keyword over a short variable declaration when the variable's initial value must be the zero value or simply doesn't matter.
+However, convention favors using `var` rather than `:=` when the variable's initial value must be the zero value or simply doesn't matter. Favor `:=` in all other cases.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
 
@@ -1637,7 +1637,7 @@ A go.mod file will be created at the root of your project:
 
 Inspect its contents. Then import and use the `twitter` package in your `main` package:
 
-  import github.com/YOUR_GITHUB_USERNAME/namecheck/twitter
+  import "github.com/YOUR_GITHUB_USERNAME/namecheck/twitter"
 
 Now that we have a `twitter` package, let's learn how to write unit tests for it.
 
@@ -1733,7 +1733,7 @@ to a strict convention:
 
 Respect this convention, or your test functions will be ignored by `go`test`.
 
-Methods such as `Errorf` on the `testing.T` type allow you to signal a test failure via an informative message.
+The `testing.T` type provides methods (such as `Errorf`) that allow you to indicate that a test is failing, via an informative message.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
@@ -1748,8 +1748,10 @@ The following example uses black-box testing:
   // omitted import declaration of your twitter package
 
   func TestUsernameContainsTwitter(t *testing.T) {
-    username := "jub0bsOnTwitter"
-    want := false
+    const (
+      username = "jub0bsOnTwitter"
+      want     = false
+    )
     got := twitter.IsValid(username)
     if got != want {
       t.Errorf("twitter.IsValid(%q): got %t; want %t", username, got, want)
@@ -1773,9 +1775,8 @@ Create a file named `twitter_test.go` in the `twitter` folder.
       ├── twitter.go
       └── twitter_test.go
 
-Follow the black-box approach: use `twitter_test` as the package name.
-
-Write the test function from the previous slide.
+Follow the black-box approach (use `twitter_test` as the package name)
+and write the test function shown on the previous slide.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
@@ -1882,11 +1883,14 @@ Keep writing test cases until you're satisfied with the overall code coverage.
 
 * Concurrency
 
-Concurrency is the art of composing a programme in terms of independently executing computations.
+The art of composing a programme in terms of independent computations
 
 Go has native support (i.e. in the language and runtime) for concurrency.
 
-Go's concurrency model is arguably one of the language's strengths, but can be difficult to learn and master.
+Go's concurrency model arguably is one of the language's most attractive features,
+but can be difficult to learn and master.
+
+.image https://i.stack.imgur.com/QjsGt.png 200 _
 
 : hence being relegated to the end of many learning resources
 
@@ -1918,9 +1922,9 @@ Disclaimer: many cooking metaphors ahead!
 
 Concurrency _enables_ parallelism, but parallelism isn't the goal.
 
-It's valuable to write concurrent code even while being ignorant of whether that code will eventually run in parallel.
+Writing concurrent code is valuable regardless of whether that code will run in parallel.
 
-And if good concurrent code does run in parallel, we should get graceful performance improvement for free as the number of cores increase.
+And if good concurrent code _does_ run in parallel, we should get graceful performance improvement for free as the number of cores increase.
 
 See also
 
@@ -1966,6 +1970,7 @@ For example, a goroutine can pass a pointer to another goroutine, and the latter
 
 A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location in a concurrent fashion (i.e. at the "same" time).
 
+.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
 
 
 * The Go scheduler

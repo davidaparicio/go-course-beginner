@@ -427,6 +427,7 @@ func (m Mountaineer) Climb(i int) {
 * `Mountaineer` is a `Climber` simply because it has the required `Climb(int)` method!
 * interface satisfaction is verified at compile time
 
+---
 
 ## Notable interface types
 
