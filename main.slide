@@ -78,7 +78,7 @@ A forcing function for learning Go: we'll introduce new concepts as needed.
 
 Go was created in 2007 at Google by Robert Griesemer, Rob Pike, and Ken Thompson.
 
-.image https://contentlab.io/wp-content/uploads/2020/04/image001.png.webp _ 800
+.image https://miro.medium.com/max/1256/0*pCC5UI7QqThjdBvm.png _ 800
 
 : Griesemer: V8 JS engine, Hot Spot JVM
 : Pike: predecessors to Go (Newsqueak), Plan 9, Unicode
