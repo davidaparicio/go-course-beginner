@@ -115,18 +115,18 @@ Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0z
 
 * Go's mascot
 
-\... [[https://blog.golang.org/gopher][is a gopher]].
+\... [[https://go.dev/blog/gopher][is a gopher]].
 
-.image https://blog.golang.org/gopher/gopher.png 400 _
+.image https://go.dev/blog/gopher/gopher.png 400 _
 
 : more popular than the language's logo
 
 
 * Go's logo
 
-\... [[https://blog.golang.org/go-brand][is not the gopher!]]
+\... [[https://go.dev/blog/go-brand][is not the gopher!]]
 
-.image https://blog.golang.org/go-brand/logos.jpg 400 _
+.image https://go.dev/blog/go-brand/logos.jpg 400 _
 
 : Lapins Crétins vibe!
 
@@ -225,7 +225,7 @@ However, despite having anonymous functions, Go has no concise "lambda" notation
 
 See the results of the [[https://insights.stackoverflow.com/survey/2020#technology-what-languages-are-associated-with-the-highest-salaries-worldwide-global][Stack Overflow's 2020 Developer Survey]].
 
-.image https://blog.golang.org/gophergala/fancygopher.jpg 400 _
+.image https://go.dev/blog/gophergala/fancygopher.jpg 400 _
 
 
 
@@ -275,7 +275,7 @@ Limitations include:
 
 You can play with this program [[https://play.golang.org/p/7vin2BK8_A6][in the Go Playground]].
 
-.image https://blog.golang.org/gopher/plush.jpg 300 _
+.image https://go.dev/blog/gopher/plush.jpg 300 _
 
 : we can already draw some observations from this piece of code
 
@@ -363,7 +363,7 @@ The following command lists all valid GOOS/GOARCH combinations:
 
   go tool dist list
 
-.image https://blog.golang.org/store/gophers.jpg 200 _
+.image https://go.dev/blog/store/gophers.jpg 200 _
 
 
 
@@ -377,7 +377,7 @@ The following command lists all valid GOOS/GOARCH combinations:
 
 Discuss. Which keywords are new to you? Which one(s) seem to be missing?
 
-.image https://blog.golang.org/5years/gophers5th.jpg 300 _
+.image https://go.dev/blog/5years/gophers5th.jpg 300 _
 
 
 
@@ -556,7 +556,7 @@ The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility
     // project packages
   )
 
-.image https://blog.golang.org/store/gophers.jpg 200 _
+.image https://go.dev/blog/store/gophers.jpg 200 _
 
 : We won't mention relative imports again because they are best avoided.
 : goimports should run every time you save a file in VS Code
@@ -710,7 +710,7 @@ The four types share the same zero value (`0`, in this case).
 
 However, they are distinct types and are *not* interchangeable.
 
-.image https://blog.golang.org/gopher/header.jpg 150 _
+.image https://go.dev/blog/gopher/header.jpg 150 _
 
 : You can only declare methods on defined types that you own.
 : you can have type definitions anywhere, incl. inside functions
@@ -782,7 +782,7 @@ Three distinct concepts are at play with strings in Go: _bytes_, _code_points_, 
 - Also known as "glyphs".
 - A character is made up of one or mode code points.
 
-See [[https://blog.golang.org/strings][Rob Pike - Strings, bytes, runes and characters in Go (Golang blog)]]
+See [[https://go.dev/blog/strings][Rob Pike - Strings, bytes, runes and characters in Go (Golang blog)]]
 
 
 
@@ -1332,7 +1332,7 @@ A panic stops the programme's normal execution, runs deferred function calls as 
 
 .play -edit src/panic.go /^//START/,/^//END/
 
-Panics can (but rarely, if ever, should) be [[https://blog.golang.org/defer-panic-and-recover][_recovered_]].
+Panics can (but rarely, if ever, should) be [[https://go.dev/blog/defer-panic-and-recover][_recovered_]].
 
 : recover: if you consume a third-party package that panic willy-nilly
 
@@ -1870,7 +1870,7 @@ Adapt the test cases in `github_test.go` and make them pass.
 
 Keep writing test cases until you're satisfied with the overall code coverage.
 
-.image https://blog.golang.org/store/gophers.jpg 300 _
+.image https://go.dev/blog/store/gophers.jpg 300 _
 
 
 
@@ -1958,7 +1958,7 @@ The `main` function is itself a goroutine that is created when the programme sta
 
 Each goroutine gets its own stack, which starts small and grows/shrinks as required.
 
-.image https://blog.golang.org/store/gophers.jpg 300 _
+.image https://go.dev/blog/store/gophers.jpg 300 _
 
 
 
@@ -2174,7 +2174,7 @@ The call to `wg.Wait` must happen _after_ all calls to `wg.Add` (otherwise: data
 
 If a function needs a wait group declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to the function.
 
-.image https://blog.golang.org/gopher/plush.jpg 300 _
+.image https://go.dev/blog/gopher/plush.jpg 300 _
 
 : if wg.Add concurrent with wg.Wait, data race: https://play.golang.org/p/PPlY-M7yfYh
 
@@ -2215,7 +2215,7 @@ Try running `go` `vet` on the programme.
 
 *race*detector*
 
-The Go CLI provides a [[https://blog.golang.org/race-detector][race detector]], i.e. a tool that can detect data races during execution.
+The Go CLI provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution.
 
 Try running the programme with the `-race` flag.
 
@@ -2272,7 +2272,7 @@ Remember: the result(s) of the function call to which the `go` keyword is applie
 
 We need a way to communicate between goroutines...
 
-.image https://blog.golang.org/gopher/plush.jpg 300 _
+.image https://go.dev/blog/gopher/plush.jpg 300 _
 
 
 
@@ -2438,7 +2438,7 @@ In such cases, you should profile your program under realistic load in order to 
 
 Such performance optimization is covered in [[https://www.humancoders.com/formations/go-avance#outline][the next course]].
 
-.image https://blog.golang.org/5years/gophers5th.jpg 300 _
+.image https://go.dev/blog/5years/gophers5th.jpg 300 _
 
 
 
@@ -2532,7 +2532,7 @@ As shown by the diagram on the previous slide, when a channel is closed and empt
 
 How can we tell whether the value we're receiving is from a closed channel or whether someone really sent a zero value of the element's type to the channel?
 
-.image https://blog.golang.org/gopher/plush.jpg 300 _
+.image https://go.dev/blog/gopher/plush.jpg 300 _
 
 
 
@@ -2676,7 +2676,7 @@ those parameters would instead need to be pointers to channels.)
 
 4. In `main`, range over that channel and store the results in a slice, then print it.
 
-.image https://blog.golang.org/store/gophers.jpg 150 _
+.image https://go.dev/blog/store/gophers.jpg 150 _
 
 : the channel allows us to serialize access to the slice (local mutable state)
 
@@ -2723,7 +2723,7 @@ However, in cases where a function [[https://talks.golang.org/2012/10things.slid
 
 Review the functions that accept a channel parameter, and determine whether a channel direction could have been specified.
 
-.image https://blog.golang.org/gopher/plush.jpg 400 _
+.image https://go.dev/blog/gopher/plush.jpg 400 _
 
 
 
@@ -2782,7 +2782,7 @@ A `select` statement is a multiway concurrent control switch: it allows you to s
 
 Hint: choose channel capacity wisely.
 
-.image https://blog.golang.org/gopher/plush.jpg 250 _
+.image https://go.dev/blog/gopher/plush.jpg 250 _
 
 
 
@@ -3194,7 +3194,7 @@ We're nearing the end of the course.
 
 You've learned a lot, but there is [[https://www.humancoders.com/formations/go-avance][more]]!
 
-.image https://blog.golang.org/store/gophers.jpg 400 _
+.image https://go.dev/blog/store/gophers.jpg 400 _
 
 
 
