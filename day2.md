@@ -231,14 +231,15 @@ for i, v := range s {
 
 ### Namecheck project: availability
 
-* study https://golang.org/pkg/net/http/#pkg-overview
-* implement the following function in the `github` package
+* study https://pkg.go.dev/net/http/#pkg-overview
+* in the `github` package, implement
 ```go
 func IsAvailable(username string) (bool, error)
 ```
 * simply send a GET to `https://github.com/<username>`
   * 404 => available
-  * otherwise, unavailable
+  * 200 => unavailable
+  * otherwise, unknown availability
 
 ---
 
@@ -254,17 +255,20 @@ func IsAvailable(username string) (bool, error)
 ### Cleaning up resources with `defer`
 
 ```go
-func IsAvailable(username string) (bool, error) {
-  resp, err := http.Get("https://twitter.com/" + username)
-  if err != nil {
-    return false, errors.New("Unknown availability")
-  }
-  if resp.StatusCode != http.StatusNotFound {
-    resp.Body.Close() // <--- reclaim resource no longer needed
-    return false, nil
-  }
-  resp.Body.Close() // <--- needed here too!
+resp, err := http.Get("https://github.com/" + username)
+if err != nil {
+  return false, errors.New("unknown availability")
+}
+switch resp.StatusCode {
+case http.StatusNotFound:
+  resp.Body.Close() // <---
   return true, nil
+case http.StatusOK:
+  resp.Body.Close() // <---
+  return false, nil
+default:
+  resp.Body.Close() // <---
+  return false, errors.New("unknown availability")
 }
 ```
 
@@ -274,15 +278,19 @@ func IsAvailable(username string) (bool, error) {
 
 ```go
 func IsAvailable(username string) (bool, error) {
-  resp, err := http.Get("https://twitter.com/" + username)
+  resp, err := http.Get("https://github.com/" + username)
   if err != nil {
-    return false, errors.New("Unknown availability")
+    return false, errors.New("unknown availability")
   }
-  defer resp.Body.Close() // <--- once and for all!
-  if resp.StatusCode != http.StatusNotFound {
+  defer resp.Body.Close()
+  switch resp.StatusCode {
+  case http.StatusNotFound:
+    return true, nil
+  case http.StatusOK:
     return false, nil
+  default:
+    return false, errors.New("unknown availability")
   }
-  return true, nil
 }
 ```
 
@@ -379,7 +387,7 @@ Live demo in Playground
 
 ---
 
-### Interface declation
+### Interface declaration
 
 ```go
 type Climber interface {
@@ -558,6 +566,9 @@ type Climber interface {
 
 ### Namecheck project: define `Validator` interface
 
+* At the root of your project, in a file named `namecheck.go`,
+define the following interface
+
 ```go
 type Validator interface {
   IsValid(username string) bool
@@ -616,7 +627,7 @@ type ReadCloser interface { // both a Reader and a Closer
 ### Interfaces as contracts
 
 * some interfaces specify implementors to follow certain additional rules
-* example: [`io.Reader`](https://golang.org/pkg/io/#Reader)
+* example: [`io.Reader`](https://pkg.go.dev/io/#Reader)
 * those rules are not enforcible by the compiler!
 * the onus is on you to respect them when you implement an interface
 
@@ -652,7 +663,7 @@ func (t *Tree) Save(w io.Writer) error
 * only ask for the required behaviour from interface parameters
 
 ```go
-func (t *Tree) Save(rw io.ReadWriter) error // good?
+func (t *Tree) Load(rw io.ReadWriter) error // good?
 ```
 
 ---
@@ -663,7 +674,7 @@ func (t *Tree) Save(rw io.ReadWriter) error // good?
 * similar to DDD principle of "keeping ports small"
 
 ```go
-func (t *Tree) Save(w io.Reader) error // better!
+func (t *Tree) Load(r io.Reader) error // better!
 ```
 
 ---
@@ -677,7 +688,6 @@ func (t *Tree) Save(w io.Reader) error // better!
 
 ## Namecheck project: test doubles
 
-* Create a `namecheck` package at the root of your project
 * In `namecheck.go`, declare a `Client` interface that `*http.Client` satisfies
 
 ---

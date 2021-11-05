@@ -170,7 +170,7 @@ The `go` toolchain comes with tools for
 - run-time race detector
 - etc.
 
-Moreover, the core library is pretty extensive: [[https://golang.org/pkg/][https://golang.org/pkg/]].
+Moreover, the core library is pretty extensive: [[https://pkg.go.dev/][https://pkg.go.dev/]].
 
 : gofmt: enforced specific style. flattens learning curve and reduces friction for code reviews
 : goimports: imports in canonical order and in alphabetical order per section
@@ -1056,7 +1056,7 @@ you're less likely to cause a stack overflow by recursing than in other language
 
 * Functions are first-class values
 
-Functions can [[https://golang.org/pkg/net/http/#HandleFunc][take other functions as parameters]], [[https://play.golang.org/p/LfT4e0lPmNV][return functions as results]],
+Functions can [[https://pkg.go.dev/net/http/#HandleFunc][take other functions as parameters]], [[https://play.golang.org/p/LfT4e0lPmNV][return functions as results]],
 be stored in variables, etc.
 
 .play -edit src/function_nil.go /^//START/,/^//END/
@@ -1651,7 +1651,7 @@ Now that we have a `twitter` package, let's learn how to write unit tests for it
 
 Testing plays a key role in the Go ecosystem, and is supported out of the box.
 
-The [[https://golang.org/pkg/testing/][`testing` package]] allows you to test your packages through
+The [[https://pkg.go.dev/testing/][`testing` package]] allows you to test your packages through
 
 - unit tests or integration tests
 - example tests (executable examples that end up in the package's documentation),
@@ -2104,7 +2104,7 @@ We need another mechanism...
 
 * Wait groups
 
-The [[https://golang.org/pkg/sync/#WaitGroup][`sync` package]] provides a mechanism for orchestrating goroutines: _wait_groups_.
+The [[https://pkg.go.dev/sync/#WaitGroup][`sync` package]] provides a mechanism for orchestrating goroutines: _wait_groups_.
 
 Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
 
@@ -2383,7 +2383,7 @@ A freshly initialized channel starts its life in an "open" state, but can later 
 
 * Channel capacity
 
-A channel's capacity corresponds to the size of its _buffer_.
+A channel's capacity corresponds to the size of its _buffer_, i.e. the number of elements it can contain at a give time.
 
 Choosing it wisely is important, as it usually affects the correctness and/or the performance of your programme.
 
@@ -2573,7 +2573,7 @@ Closing a channel is definitive; a closed channel cannot be "re-opened".
 Note:
 
 - Closing the nil channel causes a panic.
-- Closing an already closed channel causes a panic
+- Closing an already closed channel causes a panic.
 
 
 
@@ -2587,7 +2587,7 @@ If you range over a channel and no additional values get sent to it, the range e
 
 Because closing a channel unblocks all receives from that channel, it can be used to broadcast a signal to multiple goroutines!
 
-In fact, the [[https://golang.org/pkg/context/][`context` package]] is [[https://vimeo.com/115309491#t=10m][based on this idea]].
+In fact, the [[https://pkg.go.dev/context/][`context` package]] is [[https://vimeo.com/115309491#t=10m][based on this idea]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/go-grpc-web.svg 200 _
 
@@ -2660,7 +2660,7 @@ those parameters would instead need to be pointers to channels.)
 
 * Namecheck project: gather the results via a channel
 
-1. In `main`, declare the following `Result` type:
+1. At the top of `main.go`, declare the following `Result` type:
 
   type Result struct {
     Username  string
@@ -2678,7 +2678,6 @@ those parameters would instead need to be pointers to channels.)
 
 .image https://blog.golang.org/store/gophers.jpg 150 _
 
-: type Result struct { Username string Platform string Valid bool Available bool Error error }
 : the channel allows us to serialize access to the slice (local mutable state)
 
 
@@ -2852,7 +2851,7 @@ By convention, the `context.Context` parameter (if any) is always first.
 
 * Exercise: cancelling a goroutine with context.Context
 
-Browse the documentation of [[https://golang.org/pkg/context/][the `context` package]], and modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
+Browse the documentation of [[https://pkg.go.dev/context/][the `context` package]], and modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
 
 You can do this exercise in the [[https://play.golang.org/p/RBbA2DCWmu2][Go Playground]].
 
@@ -2918,13 +2917,13 @@ Create a `server` folder under `cmd` and copy `cmd/cli/main.go` to `cmd/server/m
 
 * Namecheck project: turn your CLI tool into a Web server
 
-1. Start from [[https://golang.org/pkg/net/http/#example_ListenAndServe][https://golang.org/pkg/net/http/#example_ListenAndServe]].
+1. Start from [[https://pkg.go.dev/net/http#example-ListenAndServe][https://pkg.go.dev/net/http#example-ListenAndServe]].
 
 2. Adapt the code from the CLI executable to your server
 
 3. Define a `/check` route that accepts a username to test as a query parameter.
 
-4. Return JSON in the response (see [[https://golang.org/pkg/encoding/json/][encoding/json]]), with the correct content type.
+4. Return JSON in the response (see [[https://pkg.go.dev/encoding/json/][encoding/json]]), with the correct content type.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3112,8 +3111,8 @@ However, sometimes, sharing memory is simpler and/or performant.
 
 We'll cover two facilities for sharing memory:
 
-- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://golang.org/pkg/sync/][the `sync` package]],
-- synchronized operations on fixed-sized integers from [[https://golang.org/pkg/sync/atomic/][the `sync/atomic` package]].
+- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync/][the `sync` package]],
+- synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]].
 
 
 
@@ -3179,7 +3178,7 @@ However, note that, because using atomic operations correctly is fraught with di
 
 * Namecheck project: number of visits
 
-1. Consult the documentation of [[https://golang.org/pkg/sync/atomic/][the `sync/atomic` package]].
+1. Consult the documentation of [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]].
 
 2. Find a way to fix the data race.
 
