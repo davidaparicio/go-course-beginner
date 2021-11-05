@@ -395,7 +395,9 @@ Discuss. Which keywords are new to you? Which one(s) seem to be missing?
 
 *range*, used in conjunction with `for`, allows you to iterate over various data structures.
 
-No `while` keyword in Go! All loops are written with the `for` keyword.
+No `while` keyword in Go: all loops are written with the `for` keyword.
+
+No `try`/`catch`/`finally` in Go: errors are reported as normal values.
 
 : defer: a cleaner alternative to try-catch-finally
 
@@ -3095,11 +3097,54 @@ However, inserting new keys in a map while ranging over it yields [[https://gola
 If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
 
 Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order on maps is random,
-removing entries unrelated to the current iteration can be a source of undeterminism:
+removing entries unrelated to the current iteration causes undesired *undeterminism*.
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
+
+
+
+* Don't remove entries unrelated to the current iteration (cont'd)
+
+Consider the following program:
 
 .play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
 
-Avoid doing that!
+From one execution to the next, the output may be either
+
+  map[baz:3 foo:1]
+
+or
+
+  map[bar:2 baz:3]
+
+
+
+* Namecheck project: count of checks per username
+
+Keep track (in memory) of how many times each username has been checked.
+
+- What data structure seems appropriate?
+- Create an additional `/stats` route that returns a JSON representation of the data structure in question.
+
+Discuss.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Maps are not concurrency-safe!
+
+The HTTP server provided by `net/http` is concurrent: it handles each incoming request in a separate goroutine.
+
+However maps are *not* concurrency-safe: carelessly updating a map from multiple goroutines yields unpredictable results!
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
+
+
+
+* Maps are not concurrency-safe! (cont'd)
+
+.play -edit src/map_not_concurrency_safe.go /^//START/,/^//END/
 
 
 
@@ -3118,73 +3163,11 @@ We'll cover two facilities for sharing memory:
 
 * Namecheck project: count of checks per username
 
-Keep track (in memory) of how many times each username has been checked.
-
-- What data structure seems appropriate?
-- Create an additional `/frequency` route that returns a JSON representation of the data structure in question.
-
-Discuss.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
-* Namecheck project: count of checks per username
-
-Maps are not concurrency-safe! Carelessly updating a map from multiple goroutines yields unpredictable results: some updates typically get lost.
-
 1. Study the documentation of `sync.Mutex`.
 
 2. Guard reads and writes to the map with a mutex.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
-* Namecheck project: number of visits
-
-Keep an in-memory count of the number of requests served by our `/check` route.
-
-- Declare an integer variable named `visits` at the level of the `main` package.
-- Increment `visits` at each invokation of `/check` handler.
-- Create an additional route `/visits` that returns the total number of visits.
-
-Discuss.
-
-
-
-* The need for atomic operations
-
-Carelessly incrementing an integer from multiple goroutines yields unpredictable results: some updates typically get lost.
-
-.play -edit src/plusplus_isnt_atomic.go /^//START/,/^//END/
-
-
-
-
-* The need for atomic operations (cont'd)
-
-Our server is concurrent: it handles each incoming request in a separate goroutine.
-
-By unsafely writing to and reading from our `visits` variable from multiple goroutines, we've created a data race and are likely to lose updates to `visits`.
-
-.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
-
-We can use atomic operations provided by the `sync/atomic` package to update the count in a safe manner.
-
-However, note that, because using atomic operations correctly is fraught with difficulties, it is [[https://groups.google.com/g/golang-nuts/c/AoO3aivfA_E/m/zFjhu8XvngMJ][generally discouraged]]; prefer mutexes or channels.
-
-
-
-* Namecheck project: number of visits
-
-1. Consult the documentation of [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]].
-
-2. Find a way to fix the data race.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-: Check whether the race detector can detect it.
 
 
 
