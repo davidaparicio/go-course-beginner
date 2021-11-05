@@ -197,6 +197,12 @@ for i, v := range s {
 
 ---
 
+### Namecheck project: use table-driven subtests
+
+See https://go.dev/blog/subtests#table-driven-tests-using-subtests
+
+---
+
 ### Appending an element to a slice
 
 * use the built-in function `append`
@@ -224,8 +230,10 @@ for i, v := range s {
 
 ### Namechecker project: command-line arguments
 
-* modify the programme to pass usernames as command-line arguments
-* store the valid and invalid ones in separate collections
+* Create a commit now.
+* Modify the programme to pass usernames as command-line arguments.
+* Store the valid and invalid ones in separate collections.
+* For simplicity, revert those changes.
 
 ---
 
@@ -395,6 +403,8 @@ type Climber interface {
 }
 ```
 
+* naming convention: method name + "er" suffix
+
 ---
 
 ### Interfaces are reference types
@@ -437,130 +447,12 @@ func (m Mountaineer) Climb(i int) {
 
 ---
 
-## Notable interface types
-
----
-
-### The empty interface
-
-* `interface{}`
-* satisfied by _any_ type
-* useful in some cases (`fmt.Println`)
-* but not very typesafe
-* avoid, if possible
-
----
-
-### `fmt.Stringer`
-
-```go
-type Stringer interface {
-  String() string
-}
-```
-* governs how `fmt` functions print values of a concrete type
-
----
-
-## Namecheck project: satisfy `fmt.Stringer`
-
-* Do `twitter.Twitter` and `github.GitHub` satisfy it?
-* If not, make it so!
-
----
-
-### `error` interface
-
-```go
-type error interface {
-  Error() string
-}
-```
-* for any type meant to represent an error value
-
----
-
-## Namecheck project: define a custom error type
-
-```go
-type ErrUnknownAvailability struct {
-    Username string
-    Platform string
-    Cause    error
-}
-```
-
-* make it satisfy the `error` interface
-* use it in `twitter.IsAvailable`
-
----
-
-### Gotcha: `nil` and interfaces
-
-* An interface that holds a `nil` pointer to a concrete type is not itself `nil`!
-* [Find the bug!](https://play.golang.org/p/8M8YjK9jjZw)
-* see https://golang.org/doc/faq#nil_error
-
----
-
-### `io.Reader`
-
-```go
-type Reader interface {
-  Read(p []byte) (n int, err error)
-}
-```
-* source of `[]byte`
-* reads the data in the supplied buffer, returns how many bytes were read, and any error that may have occurred
-* satisfied by `os.Stdin`, `*os.File`, `*bytes.Buffer`.
-
----
-
-### `io.Writer`
-
-```go
-type Writer interface {
-  Write(p []byte) (n int, err error)
-}
-```
-* sink of `[]byte`
-* writes the data in the supplied buffer, returns how many bytes were written, and any error that may have occurred
-* satisfied by `os.Stdout`, `os.Stderr`, `*os.File`, `*bytes.Buffer`, etc.
-
----
-
-### `http.Handler`
-
-```go
-type Handler interface {
-  ServerHTTP(w http.ResponseWriter, r *http.Request)
-}
-```
-
-* A `http.Handler` responds to a HTTP request.
-* We won't manipulate this type directly, but we _will_ write HTTP handlers :)
-
----
-
 ### Keep interfaces small
 
 * favour one-method interfaces
 * similar to Interface-Segregation principle ("I" in SOLID)
 * easier to satisfy
 * many examples in the standard library
-
----
-
-### Naming of single-method interfaces
-
-* method + "er"
-
-```go
-type Climber interface {
-    Climb(int)
-}
-```
-* this convention can be broken
 
 ---
 
@@ -619,8 +511,107 @@ type ReadCloser interface { // both a Reader and a Closer
 * ...by composition of
   * a `Validator`
   * an `Availabler`
-  * a `fmt.Stringer`
 * Do `twitter.Twitter` and `github.GitHub` satisfy it?
+
+---
+
+## Namecheck project: use a slice of `Checker`s
+
+* In your `main` function, create a slice of `Checker` with two elements:
+  * a pointer to a `twitter.Twitter`
+  * a pointer to a `github.GitHub`
+* Simplify the existing code by ranging over the slice of `Checker`s.
+
+---
+
+## Notable interface types
+
+---
+
+### The empty interface
+
+* `interface{}`
+* satisfied by _any_ type
+* useful in some cases (`fmt.Println`)
+* but not very typesafe
+* avoid, if possible
+
+---
+
+### `fmt.Stringer`
+
+```go
+type Stringer interface {
+  String() string
+}
+```
+* governs how `fmt` functions print values of a concrete type
+
+---
+
+## Namecheck project: satisfy `fmt.Stringer`
+
+* Do `twitter.Twitter` and `github.GitHub` satisfy it?
+* If not, make it so!
+* Modify the declaration of `Checker`: embed `fmt.Stringer` in it.
+* For each message, print the name of the platform the username was tested on.
+
+---
+
+### `error` interface
+
+```go
+type error interface {
+  Error() string
+}
+```
+* for any type meant to represent an error value
+
+---
+
+## Namecheck project: define a custom error type
+
+```go
+type ErrUnknownAvailability struct {
+    Username string
+    Platform string
+    Cause    error
+}
+```
+
+* make it satisfy the `error` interface
+* use it in `twitter.IsAvailable`
+
+
+---
+
+### `io.Reader`
+
+```go
+type Reader interface {
+  Read(p []byte) (n int, err error)
+}
+```
+* source of `[]byte`
+* reads the data in the supplied buffer, returns how many bytes were read, and any error that may have occurred
+* satisfied by `os.Stdin`, `*os.File`, `*bytes.Buffer`.
+
+---
+
+### `io.Writer`
+
+```go
+type Writer interface {
+  Write(p []byte) (n int, err error)
+}
+```
+* sink of `[]byte`
+* writes the data in the supplied buffer, returns how many bytes were written, and any error that may have occurred
+* satisfied by `os.Stdout`, `os.Stderr`, `*os.File`, `*bytes.Buffer`, etc.
+
+---
+
+## Interfaces: good practices
 
 ---
 
@@ -679,6 +670,18 @@ func (t *Tree) Load(r io.Reader) error // better!
 
 ---
 
+### Gotcha: `nil` and interfaces
+
+* An interface that holds a `nil` pointer to a concrete type is not itself `nil`!
+* [Find the bug!](https://play.golang.org/p/8M8YjK9jjZw)
+* see https://golang.org/doc/faq#nil_error
+
+---
+
+## Interfaces for testing
+
+---
+
 ## Test doubles
 
 * Interfaces are great for mocking, stubbing, faking, etc.
@@ -697,10 +700,12 @@ func (t *Tree) Load(r io.Reader) error // better!
 * Create a `stub` package
 * In it, declare a type that satisfies your Client interface
 ```go
-type SuccessfulClient int
+type SuccessfulClient struct {
+  StatusCode int
+}
 ```
 * Make `stub.SuccessfulClient` satisfy your `namecheck.Client` interface
-* Its `Get` method should always succeed and return the same status code
+* Its `Get` method should always succeed and return the specified status code
 
 ---
 
