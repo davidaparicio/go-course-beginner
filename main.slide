@@ -10,7 +10,7 @@ https://jub0bs.com
 
 * Setup
 
-Make sure you have the latest version of Go (1.17.2) installed by running
+Make sure you have the latest version of Go (1.17.3) installed by running
 
   go version
 
@@ -132,9 +132,7 @@ Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0z
 
 
 
-* Go versus the C programming language
-
-Go is clearly reminiscent of C, but Go is different from C in many notable ways:
+* Reminiscent of, but different from, the C programming language
 
 - strong typing
 - fast compilation
@@ -153,7 +151,7 @@ Go is clearly reminiscent of C, but Go is different from C in many notable ways:
 : mention heap-overflow vuln discovered in curl
 : multiple returns allow principled error handling
 : packages: no ifdef guards, no required ordering of top-level declarations
-: also syntax differences: type name comes after variable name 
+: also syntax differences: type name comes after variable name
 
 
 
@@ -170,7 +168,7 @@ The `go` toolchain comes with tools for
 - run-time race detector
 - etc.
 
-Moreover, the core library is pretty extensive: [[https://pkg.go.dev/][https://pkg.go.dev/]].
+Moreover, the core library is pretty extensive; see [[https://pkg.go.dev/std][pkg.go.dev/std]].
 
 : gofmt: enforced specific style. flattens learning curve and reduces friction for code reviews
 : goimports: imports in canonical order and in alphabetical order per section
@@ -208,9 +206,9 @@ See also
 
 
 
-* Functions are first-class citizens
+* Go also has functional aspects
 
-In Go, functions can
+Functions are first-class citizens. They can
 
 - take other functions as parameters,
 - return functions as results,
@@ -235,14 +233,14 @@ See the results of the [[https://insights.stackoverflow.com/survey/2020#technolo
 
 * The Go Playground
 
-The Go Playground ([[https://play.golang.org][play.golang.org]]) is a Web app that lets you write and run
+The Go Playground ([[https://go.dev/play/][https://go.dev/play/]]) is a Web app that lets you write and run
 a small Go program from your browser. Features include:
 
 - permalinks (convenient for sharing code snippets)
 - automatic formating
 - automatic imports (from the core library)
 - basic static analysis with `go`vet`
-- [[https://play.golang.org/p/lEDjyvhttIB][limited support for modules and multiple packages]]
+- [[https://go.dev/play/p/lEDjyvhttIB][limited support for modules and multiple packages]]
 - downloading of the program source (^S or ⌘+S)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/computer/gamer.svg 150 _
@@ -273,7 +271,7 @@ Limitations include:
 
 .play -edit src/helloworld.go
 
-You can play with this program [[https://play.golang.org/p/7vin2BK8_A6][in the Go Playground]].
+You can play with this program [[https://go.dev/play/p/7vin2BK8_A6][in the Go Playground]].
 
 .image https://go.dev/blog/gopher/plush.jpg 300 _
 
@@ -383,23 +381,24 @@ Discuss. Which keywords are new to you? Which one(s) seem to be missing?
 
 * Keywords
 
-*chan* and *select* are related to _channels_, which are typed conduits used for communication between goroutines, Go's lightweight threads.
+*chan* and *select* are related to _channels_, which allow you to communicate between goroutines (Go's lightweight threads).
 
-*defer* allows you to unconditionnaly execute some code at the end of a function call.
-
-*fallthrough* can be used to override `switch` cases' normal behavior, which consists in automatically breaking at the end (without the need for an explicit `break` statement).
+*fallthrough* can be used to override `switch`'s normal "breaking" behavior.
 
 *go* is used to spawn goroutines.
 
-*goto* is present in the language but best avoided for most projects.
+*goto* is present in the language, but you shouldn't have to ever use it.
 
 *range*, used in conjunction with `for`, allows you to iterate over various data structures.
 
 No `while` keyword in Go: all loops are written with the `for` keyword.
 
-No `try`/`catch`/`finally` in Go: errors are reported as normal values.
+No `try`/`catch`/`finally` keywords in Go: errors are reported as normal values.
 
-: defer: a cleaner alternative to try-catch-finally
+*defer* allows you to unconditionally execute some code at the end of a function.
+
+
+: defer: a cleaner alternative to finally
 
 
 
@@ -652,7 +651,7 @@ Go provides basic types:
 
 
 
-* Composites types 
+* Composites types
 
 Go also provides composite types, which are composed of other existing types:
 
@@ -733,7 +732,11 @@ However, Go requires many conversions from one type to another to be explicit
 
 * Variables
 
-[[https://play.golang.org/p/GTMUrroC0lz][Playground]]
+Go's declaration syntax departs from C's in many ways.
+Rob Pike clarified the motivations behind this departure in
+[[https://go.dev/blog/declaration-syntax][a post entitled _Go's Declaration Syntax_]].
+
+[[https://go.dev/play/p/GTMUrroC0lz][Playground]]
 
 
 
@@ -758,7 +761,7 @@ However, convention favors using `var` rather than `:=` when the variable's init
 
 * Pointers
 
-[[https://play.golang.org/p/QJNCrBMXP6b][Playground]]
+[[https://go.dev/play/p/QJNCrBMXP6b][Playground]]
 
 
 
@@ -1058,7 +1061,7 @@ you're less likely to cause a stack overflow by recursing than in other language
 
 * Functions are first-class values
 
-Functions can [[https://pkg.go.dev/net/http/#HandleFunc][take other functions as parameters]], [[https://play.golang.org/p/LfT4e0lPmNV][return functions as results]],
+Functions can [[https://pkg.go.dev/net/http/#HandleFunc][take other functions as parameters]], [[https://go.dev/play/p/LfT4e0lPmNV][return functions as results]],
 be stored in variables, etc.
 
 .play -edit src/function_nil.go /^//START/,/^//END/
@@ -2178,7 +2181,7 @@ If a function needs a wait group declared elsewhere, pass a pointer to it (`*syn
 
 .image https://go.dev/blog/gopher/plush.jpg 300 _
 
-: if wg.Add concurrent with wg.Wait, data race: https://play.golang.org/p/PPlY-M7yfYh
+: if wg.Add concurrent with wg.Wait, data race: https://go.dev/play/p/PPlY-M7yfYh
 
 
 
@@ -2816,13 +2819,13 @@ If function `cancellable` is launched as a goroutine, another goroutine can get 
 
 Function `printInts` never terminates! Modify the program to make `printInts` cancellable from `main`. Cancel the goroutine after one second.
 
-You can do this exercise in the [[https://play.golang.org/p/uNLmiVb_1rY][Go Playground]].
+You can do this exercise in the [[https://go.dev/play/p/uNLmiVb_1rY][Go Playground]].
 
 
 
 * Exercise: render a function cancellable (solution)
 
-The solution is available on the [[https://play.golang.org/p/RBbA2DCWmu2][Go Playground]].
+The solution is available on the [[https://go.dev/play/p/RBbA2DCWmu2][Go Playground]].
 
 : mention that closing the channel broadcasts a signal to all goroutines that receive from it
 
@@ -2855,21 +2858,21 @@ By convention, the `context.Context` parameter (if any) is always first.
 
 Browse the documentation of [[https://pkg.go.dev/context/][the `context` package]], and modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
 
-You can do this exercise in the [[https://play.golang.org/p/RBbA2DCWmu2][Go Playground]].
+You can do this exercise in the [[https://go.dev/play/p/RBbA2DCWmu2][Go Playground]].
 
 : extra exercise: make IsAvailable cancellable
 
 
 
-* Exercise: cancelling a goroutine with context.Context (solution) 
+* Exercise: cancelling a goroutine with context.Context (solution)
 
-The solution is available on the [[https://play.golang.org/p/XXH76YKz_Oj][Go Playground]].
+The solution is available on the [[https://go.dev/play/p/XXH76YKz_Oj][Go Playground]].
 
 
 
 * Exercise: debug this ping-pong game
 
-1. Open [[https://play.golang.org/p/n7XQ_TdOY4t][this Playground]] (adapted from [[https://talks.golang.org/2013/advconc.slide#6][a talk by Sameer Ajmani]]). The program models a simple ping-pong game.
+1. Open [[https://go.dev/play/p/n7XQ_TdOY4t][this Playground]] (adapted from [[https://talks.golang.org/2013/advconc.slide#6][a talk by Sameer Ajmani]]). The program models a simple ping-pong game.
 
 2. The game ends with a deadlock. Can you see why?
 
@@ -2888,7 +2891,7 @@ The solution is available on the [[https://play.golang.org/p/XXH76YKz_Oj][Go Pla
 
 * Exercise: debug this ping-pong game (solution)
 
-The solution is available on the [[https://play.golang.org/p/RVdBZVVbkj3][Go Playground]].
+The solution is available on the [[https://go.dev/play/p/RVdBZVVbkj3][Go Playground]].
 
 
 
