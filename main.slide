@@ -734,7 +734,7 @@ However, Go requires many conversions from one type to another to be explicit
 
 Go's declaration syntax departs from C's in many ways.
 Rob Pike clarified the motivations behind this departure in
-[[https://go.dev/blog/declaration-syntax][a post entitled _Go's Declaration Syntax_]].
+[[https://go.dev/blog/declaration-syntax][a post entitled _Go's_Declaration_Syntax_]].
 
 [[https://go.dev/play/p/GTMUrroC0lz][Playground]]
 
