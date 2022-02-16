@@ -1,5 +1,5 @@
 Formation Go
-2 November 2021
+16 February 2022
 
 Julien Cretel
 jcretel-infosec@protonmail.com
@@ -27,12 +27,7 @@ Also make sure you have Git installed.
 
 A README at the root of this Git repository explains how to run the slides using the `present` tool.
 
-Alternatively, if you don't want to install `present` on your machine, simply visit
-[[https://talks.godoc.org/github.com/jub0bs/go-course-beginner/main.slide][https://talks.godoc.org/github.com/jub0bs/go-course-beginner/main.slide]] in your browser.
-
-Note: some Gopher images won't load because of [[https://github.com/golang/go/issues/46469][a known bug]] in the backend code.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 300 _
 
 
 
