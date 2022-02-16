@@ -287,6 +287,7 @@ Imports specify _package_paths_ in double quotes.
 The `main` function of a `main` package is the program's entrypoint; it takes no parameters and returns no results.
 
 
+
 * More observations about our Hello-World program
 
 .play -edit src/helloworld.go
@@ -357,6 +358,43 @@ The following command lists all valid GOOS/GOARCH combinations:
   go tool dist list
 
 .image https://go.dev/blog/store/gophers.jpg 200 _
+
+
+
+* Modules
+
+Go's solution to dependency management is known as the _module_system_.
+
+A _module_ is set of packages that are versioned together.
+
+You *must* initialize a module at the root of your project in order to manage dependencies (incl. packages within the same project).
+
+A module is identified by its _path_, which
+
+- takes the form of a schemeless URI where the module will be made available,
+- acts as prefix for package import paths within the module.
+
+The `go`mod` subcommand allows you to interact with the module system. You can initialize a module by running a command of the form
+
+   go mod init <your-module-path>
+
+: one module per project, initialized at the
+
+
+
+* Namecheck project: initialize a module
+
+At the root of your project, initialize a module:
+
+  go mod init github.com/YOUR_GITHUB_USERNAME/namecheck
+
+A go.mod file will be created at the root of your project:
+
+  namecheck
+  ├── go.mod
+  └── main.go
+
+Inspect its contents.
 
 
 
@@ -760,152 +798,124 @@ However, convention favors using `var` rather than `:=` when the variable's init
 
 
 
-* Strings
+* If and switch statements
 
 
 
-* Bytes, code points, characters
+* If statements
 
-Three distinct concepts are at play with strings in Go: _bytes_, _code_points_, and _characters_.
+The condition must be of type `bool` and needs not be enclosed in parens.
+However, braces around the body are mandatory.
 
-*Bytes*
+.play -edit src/if_simple.go /^//START/,/^//END/
 
-- A byte is made up of 8 bits. Duh!
+A [[https://golang.org/ref/spec#Statements][_simple_statement_]] (usually a short variable declaration) can precede the condition:
 
-*Code*points*
+.play -edit src/if_short_variable_decl.go /^//START/,/^//END/
 
-- Also known as "runes" in the Go world.
-- A code point simply corresponds to a place in the Unicode alphabet.
+The scope of such variables is restricted to the if(-else) statement.
 
-*Characters*
+: mandatory braces: no dangling-else problem like in C, JS, etc.
+: short-var-decl: useful for error handling
 
-- Also known as "glyphs".
-- A character is made up of one or mode code points.
 
-See [[https://go.dev/blog/strings][Rob Pike - Strings, bytes, runes and characters in Go (Golang blog)]]
 
+* If-else statements
 
+Braces around the `else` body are also mandatory.
 
-* Runes
+.play -edit src/if_else.go /^//START/,/^//END/
 
-The predeclared `rune` type is a 32-bit integer type that represents a Unicode code point.
-Unsurprisingly, its zero value is `0`.
+`else` is one of the least popular keyword in Go!
 
-Rune literals are delimited by single quotes. Escape sequences (`'\u00e9'`) are possible.
+If-else chains are considered non-idiomatic, and can often be advantageously replaced by a _tagless_ `switch`.
 
-In UTF-8, a rune is encoded as a sequence of 1 to 4 bytes.
 
-.play -edit src/rune_bytes.go /^//START/,/^//END/
 
-The `rune` type is an alias of type `int32`. The two types are interchangeable.
+* Switch statement
 
+The switch expression, whose type must be comparable, is evaluated once.
 
+The case expressions (not necessarily constants), are evaluated left-to-right and top-to-bottom and tested for equality against the case expression until a match is found.
 
-* Characters
+The first match's case gets executed. Otherwise, the default case (if any) gets executed.
 
-You're used to reading characters on a computer screen, but the Unicode concept of _character_ is harder to grasp than you might think!
+.play -edit src/switch.go /^//START/,/^//END/
 
-Note in particular that
+No need for the `break` keyword at the end of cases! Use `fallthrough`, if needed.
 
-- a character can be made up of more than one code points, and
-- a given character can have multiple representations.
+: A short-variable-declaration statement can precede the switch condition.
+: The default clause can occur at any place among the the normal cases.
 
-For instance, the character `é` can be represented either by
 
-- a single code point named [[https://unicode-table.com/en/00E9/][_Latin_Small_Letter_E_with_Acute_]], or by
-- the combination of a [[https://unicode-table.com/en/0065/][_Latin_Small_Letter_E_]] and an [[https://unicode-table.com/en/00B4/][_Acute_Accent_]] (a _combining_code_point_):
 
-.play -edit src/characters.go /^//START/,/^//END/
+* Tagless switch
 
+You can omit the switch expression, which is equivalent to using `true`:
 
+.play -edit src/tagless_switch.go /^//START/,/^//END/
 
-* The string type: zero value and literals
+This form of `switch` statement is preferred to a long if-else chain.
 
-The `string` type's zero value is simply the empty string.
 
-String literals come in two forms:
 
-*Interpreted*string*literals*
+* Type switch
 
-- delimited by double quotes (`"`)
-- the most common form
-- guaranteed to contain valid UTF-8 (if they do no contain byte-level escapes)
+A _type_switch_ allows you to switch on an interface value and change the logic on the basis of the concrete type stored inside it:
 
-*Raw*string*literals*
+.play -edit src/type_switch.go /^//START/,/^//END/
 
-- delimited by backticks (```)
-- escape sequences are not applied
-- can be multiline
-- guaranteed to contain valid UTF-8
+Use type switches sparingly. More on that when we cover interfaces.
 
 
-: string literals always contain UTF-8 text as long as they have no byte-level escapes
-: Go source code is UTF-8, so the source code for the string literal is UTF-8 text
-: useful for regexp, templates, multiline strings
+* Loops
 
 
+* While-style loop
 
-* The string type's zero value and string literals
+Remember: no `while` keyword in Go!
 
-.play -edit src/string_literals.go /^//START/,/^//END/
+.play -edit src/while.go /^//START/,/^//END/
 
+The conditional expression
 
+- must be of boolean type,
+- needs not be parenthesized,
+- can be omitted (to obtain an infinite loop).
 
-* The string type: under the hood
 
-A string is _not_ stored in memory as a sequence of runes, but as a more compact sequence of bytes that (usually) represent valid UTF-8 text.
 
-More specifically, a string is a two-word immutable data structure made up of
+* break and continue
 
-- a pointer to a byte array,
-- an integer corresponding to the number of bytes that make up the string.
+As in other languages, the `break` keyword terminates the (innermost) loop;
 
-For instance, the string `"Hello,`World!"` is represented in memory as follows:
+.play -edit src/break.go /^//START/,/^//END/
 
-.image img/strings_two_words.svg 200 _
+the `continue` keyword skips to the next iteration of the (innermost) loop.
 
+.play -edit src/continue.go /^//START/,/^//END/
 
+For nested loops, those keywords can be used in conjunction with [[https://go.dev/ref/spec#Labeled_statements][_labels_]].
 
-* String indexing
 
-`s[i]` returns the `i`-th *byte* (not rune or character!) using 0-based indexing in string `s`.
 
-If `i` is either negative or larger than `len(s)-1`, then `s[i]` causes a _panic_!
+* C-style loop
 
-Overwriting `s[i]` or taking its address is illegal and will cause a compilation error.
+The familiar loop syntax from the C-family languages is back.
 
-.play -edit src/string_indexing.go /^//START/,/^//END/
+.play -edit src/forc.go /^//START/,/^//END/
 
+Again, no parentheses needed around the init/condition/post part.
 
 
-: panic is a runtime error
-: also substring operator, but similar to slicing operator which we'll see later
 
+* for-range loop
 
+The `range` keyword can be used in conjunction with `for` to iterate over some data structures, such as a string:
 
-* Ranging over a string
+.play -edit src/forrange.go /^//START/,/^//END/
 
-A for-range loop decodes one UTF-8-encoded *rune* (not character!) on each iteration:
-
-.play -edit src/string_range.go /^//START/,/^//END/
-
-In the code above, during each iteration of the loop,
-
-- `i` corresponds to the starting position of the current rune (measured in bytes),
-- `r` corresponds to the current rune.
-
-
-
-* Other operations on strings
-
-As in many other languages, the plus sign is used for string concatenation.
-
-Built-in function `len` returns the number of *bytes* in a string, whereas
-function `utf8.RuneCountInString` returns the number of *runes* in a string.
-
-.play -edit src/strings_etc.go /^//START/,/^//END/
-
-Other useful functions for manipulating strings are can be found in packages `unicode/utf8`, `strings`, `strconv`, `fmt`, and `regexp`.
+A for-range loop can also be used to iterate over arrays, slices, maps, channels. More about that in due time.
 
 
 
@@ -1116,77 +1126,6 @@ How would you achieve that?
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/adventure/hiking.svg 200 _
 
 : transition: we need to learn about error handling in Go, and for that we need to learn about if and switch statements
-
-
-
-* If and switch statements
-
-
-
-* If statements
-
-The condition must be of type `bool` and needs not be enclosed in parens.
-However, braces around the body are mandatory.
-
-.play -edit src/if_simple.go /^//START/,/^//END/
-
-A [[https://golang.org/ref/spec#Statements][_simple_statement_]] (usually a short variable declaration) can precede the condition:
-
-.play -edit src/if_short_variable_decl.go /^//START/,/^//END/
-
-The scope of such variables is restricted to the if(-else) statement.
-
-: mandatory braces: no dangling-else problem like in C, JS, etc.
-: short-var-decl: useful for error handling
-
-
-
-* If-else statements
-
-Braces around the `else` body are also mandatory.
-
-.play -edit src/if_else.go /^//START/,/^//END/
-
-`else` is one of the least popular keyword in Go!
-
-If-else chains are considered non-idiomatic, and can often be advantageously replaced by a _tagless_ `switch`.
-
-
-
-* Switch statement
-
-The switch expression, whose type must be comparable, is evaluated once.
-
-The case expressions (not necessarily constants), are evaluated left-to-right and top-to-bottom and tested for equality against the case expression until a match is found.
-
-The first match's case gets executed. Otherwise, the default case (if any) gets executed.
-
-.play -edit src/switch.go /^//START/,/^//END/
-
-No need for the `break` keyword at the end of cases! Use `fallthrough`, if needed.
-
-: A short-variable-declaration statement can precede the switch condition.
-: The default clause can occur at any place among the the normal cases.
-
-
-
-* Tagless switch
-
-You can omit the switch expression, which is equivalent to using `true`:
-
-.play -edit src/tagless_switch.go /^//START/,/^//END/
-
-This form of `switch` statement is preferred to a long if-else chain.
-
-
-
-* Type switch
-
-A _type_switch_ allows you to switch on an interface value and change the logic on the basis of the concrete type stored inside it:
-
-.play -edit src/type_switch.go /^//START/,/^//END/
-
-Use type switches sparingly. More on that when we cover interfaces.
 
 
 
@@ -1595,51 +1534,6 @@ Exported functions should communicate anticipated failures to client code as val
 4. Move all the Twitter-specific stuff from `main.go` to `twitter.go`.
 
 5. Try importing package `twitter` in your `main` package. Any issues?
-
-
-
-* Modules
-
-Go's solution to dependency management is known as the _module_system_.
-
-A _module_ is set of packages that are versioned together.
-
-You *must* initialize a module at the root of your project in order to manage dependencies (incl. packages within the same project).
-
-A module is identified by its _path_, which
-
-- takes the form of a schemeless URI where the module will be made available,
-- acts as prefix for package import paths within the module.
-
-The `go`mod` subcommand allows you to interact with the module system. You can initialize a module by running a command of the form
-
-   go mod init <your-module-path>
-
-: one module per project, initialized at the
-
-
-
-* Namecheck project: initialize a module
-
-At the root of your project, initialize a module:
-
-  go mod init github.com/YOUR_GITHUB_USERNAME/namecheck
-
-A go.mod file will be created at the root of your project:
-
-  namecheck
-  ├── cmd
-  │   └── cli
-  │        └── main.go
-  ├── go.mod
-  └── twitter
-      └── twitter.go
-
-Inspect its contents. Then import and use the `twitter` package in your `main` package:
-
-  import "github.com/YOUR_GITHUB_USERNAME/namecheck/twitter"
-
-Now that we have a `twitter` package, let's learn how to write unit tests for it.
 
 
 
@@ -3169,6 +3063,10 @@ We'll cover two facilities for sharing memory:
 
 
 
+* Conclusion
+
+
+
 * What we haven't covered
 
 We're nearing the end of the course.
@@ -3185,3 +3083,155 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 * Image credits
 
 TODO
+
+
+
+* Appendix A: Strings
+
+
+
+* Bytes, code points, characters
+
+Three distinct concepts are at play with strings in Go: _bytes_, _code_points_, and _characters_.
+
+*Bytes*
+
+- A byte is made up of 8 bits. Duh!
+
+*Code*points*
+
+- Also known as "runes" in the Go world.
+- A code point simply corresponds to a place in the Unicode alphabet.
+
+*Characters*
+
+- Also known as "glyphs".
+- A character is made up of one or mode code points.
+
+See [[https://go.dev/blog/strings][Rob Pike - Strings, bytes, runes and characters in Go (Golang blog)]]
+
+
+
+* Runes
+
+The predeclared `rune` type is a 32-bit integer type that represents a Unicode code point.
+Unsurprisingly, its zero value is `0`.
+
+Rune literals are delimited by single quotes. Escape sequences (`'\u00e9'`) are possible.
+
+In UTF-8, a rune is encoded as a sequence of 1 to 4 bytes.
+
+.play -edit src/rune_bytes.go /^//START/,/^//END/
+
+The `rune` type is an alias of type `int32`. The two types are interchangeable.
+
+
+
+* Characters
+
+You're used to reading characters on a computer screen, but the Unicode concept of _character_ is harder to grasp than you might think!
+
+Note in particular that
+
+- a character can be made up of more than one code points, and
+- a given character can have multiple representations.
+
+For instance, the character `é` can be represented either by
+
+- a single code point named [[https://unicode-table.com/en/00E9/][_Latin_Small_Letter_E_with_Acute_]], or by
+- the combination of a [[https://unicode-table.com/en/0065/][_Latin_Small_Letter_E_]] and an [[https://unicode-table.com/en/00B4/][_Acute_Accent_]] (a _combining_code_point_):
+
+.play -edit src/characters.go /^//START/,/^//END/
+
+
+
+* The string type: zero value and literals
+
+The `string` type's zero value is simply the empty string.
+
+String literals come in two forms:
+
+*Interpreted*string*literals*
+
+- delimited by double quotes (`"`)
+- the most common form
+- guaranteed to contain valid UTF-8 (if they do no contain byte-level escapes)
+
+*Raw*string*literals*
+
+- delimited by backticks (```)
+- escape sequences are not applied
+- can be multiline
+- guaranteed to contain valid UTF-8
+
+
+: string literals always contain UTF-8 text as long as they have no byte-level escapes
+: Go source code is UTF-8, so the source code for the string literal is UTF-8 text
+: useful for regexp, templates, multiline strings
+
+
+
+* The string type's zero value and string literals
+
+.play -edit src/string_literals.go /^//START/,/^//END/
+
+
+
+* The string type: under the hood
+
+A string is _not_ stored in memory as a sequence of runes, but as a more compact sequence of bytes that (usually) represent valid UTF-8 text.
+
+More specifically, a string is a two-word immutable data structure made up of
+
+- a pointer to a byte array,
+- an integer corresponding to the number of bytes that make up the string.
+
+For instance, the string `"Hello,`World!"` is represented in memory as follows:
+
+.image img/strings_two_words.svg 200 _
+
+
+
+* String indexing
+
+`s[i]` returns the `i`-th *byte* (not rune or character!) using 0-based indexing in string `s`.
+
+If `i` is either negative or larger than `len(s)-1`, then `s[i]` causes a _panic_!
+
+Overwriting `s[i]` or taking its address is illegal and will cause a compilation error.
+
+.play -edit src/string_indexing.go /^//START/,/^//END/
+
+
+
+: panic is a runtime error
+: also substring operator, but similar to slicing operator which we'll see later
+
+
+
+* Ranging over a string
+
+A for-range loop decodes one UTF-8-encoded *rune* (not character!) on each iteration:
+
+.play -edit src/string_range.go /^//START/,/^//END/
+
+In the code above, during each iteration of the loop,
+
+- `i` corresponds to the starting position of the current rune (measured in bytes),
+- `r` corresponds to the current rune.
+
+
+
+* Other operations on strings
+
+As in many other languages, the plus sign is used for string concatenation.
+
+Built-in function `len` returns the number of *bytes* in a string, whereas
+function `utf8.RuneCountInString` returns the number of *runes* in a string.
+
+.play -edit src/strings_etc.go /^//START/,/^//END/
+
+Other useful functions for manipulating strings are can be found in packages `unicode/utf8`, `strings`, `strconv`, `fmt`, and `regexp`.
+
+
+
