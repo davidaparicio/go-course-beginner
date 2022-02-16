@@ -14,7 +14,7 @@ You can run them in your browser after following a few simple steps.
 2. Install the `present` tool:
 
     ```
-    go get golang.org/x/tools/cmd/present
+    go install golang.org/x/tools/cmd/present
     ```
 
 3. Clone this repository and `cd` to the clone:
