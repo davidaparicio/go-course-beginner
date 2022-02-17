@@ -2112,13 +2112,13 @@ declare the following interface:
 
 * Namecheck project: satisfy the fmt.Stringer
 
-1. Study `fmt.Stringer` in the documentation.
+1. Study the [[https://pkg.go.dev/fmt#Stringer][documentation]] of the `fmt.Stringer` interface type.
 
   type Stringer interface {
     String() string
   }
 
-  It governs how `fmt` functions print values of the corresponding concrete type.
+That interface governs how `fmt` functions represent values.
 
 2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
 
@@ -2168,7 +2168,7 @@ You can declare an interface type by listing more elementary interfaces:
 - a pointer to a `twitter.Twitter`
 - a pointer to a `github.GitHub`
 
-2. Simplify the existing code by ranging over the slice of `Checker`s.
+2. Simplify the existing code by ranging over the slice of `Checker` values.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2222,15 +2222,15 @@ Ponder this: in Go, you can define an interface for a concrete type you don't ow
 
 1. Inspect the source code for `http.Get`.
 
-2. In `namecheck.go`, judiciously declare a useful `Client` interface that `*http.Client` already satisfies.
+2. In `namecheck.go`, judiciously declare a useful `Getter` interface that `*http.Client` already satisfies.
 
 3. Create a `stub` package and, in `stub.go`, declare the following struct type:
 
-  type SuccessfulClient struct {
+  type SuccessfulGetter struct {
     StatusCode int
   }
 
-4. Make `stub.SuccessfulClient` satisfy your `namecheck.Client` interface; its `Get` method should always succeed and return the specified status code
+4. Make `stub.SuccessfulGetter` satisfy your `namecheck.Getter` interface; its `Get` method should always succeed and return the specified status code
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -2238,13 +2238,27 @@ Ponder this: in Go, you can define an interface for a concrete type you don't ow
 
 * Namecheck project: mocking the HTTP client (cont'd)
 
-5. Add a field of type `namecheck.Client` to your `Twitter` and `GitHub` struct types.
+5. Add a field of type `namecheck.Getter` to your `Twitter` and `GitHub` struct types.
 
 6. Adjust your `main.go`.
 
-7. Write a few test cases for your `IsAvailable` method.
+7. Write a few test cases for the `IsAvailable` method of the `twitter.Twitter` type.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Namecheck project: simulating support for many platform
+
+1. In `main.go`, populate your `[]Checkers` slice with twenty pointers to the same `twitter.Twitter` instance.
+
+2. Repeat step 1 for `github.GitHub`.
+
+3. Run your executable.
+
+4. Comment on user experience (UX). How could we improve things?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 200 _
 
 
 
