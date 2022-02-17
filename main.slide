@@ -1780,7 +1780,7 @@ Let's write a function that checks the availability of a username on GitHub.
     return false, nil
   }
 
-3. Now implement it for real. It should send a `GET` request to `https://github.com/USERNAME`, where USERNAME is a placeholder for the username whose availability.
+3. Now implement it for real. It should send a `GET` request to `https://github.com/USERNAME`, where USERNAME is a placeholder for the username whose availability we'd like to check.
 
 - If the response's status code is `404`, `IsAvailable` should return `true` and `nil`.
 - If the response's status code is `200`, `IsAvailable` should return `false` and `nil`.
@@ -1964,7 +1964,7 @@ Implement `IsAvailable` in the `twitter` package:
     }
     defer resp.Body.Close()
     if resp.StatusCode != http.StatusOK {
-      return false, nil
+      return false, errors.New("unknown availability")
     }
     var dto struct {
       Data interface{} `json:"data"`
@@ -2003,11 +2003,11 @@ Live demo in Playground
 
 * Namecheck project: turn IsValid and IsAvailalble into methods
 
-1. In the `twitter` package, turn `IsValid` and `IsAvailable` into method on the `Twitter` type (use a pointer receiver).
+1. In the `twitter` package, turn `IsValid` and `IsAvailable` into methods on the `Twitter` type (use a pointer receiver).
 
 2. Declare a third method named `String` on the `Twitter` type; it should take no parameter and return a string corresponding to the name of the platform: `"Twitter"`.
 
-3. Adjust your tests in `twitter_test.go`.
+3. Adjust your tests in `twitter_test.go` and `main.go`.
 
 4. Repeat steps 1-3 for the `github` package.
 
@@ -2017,7 +2017,234 @@ Live demo in Playground
 
 * Interfaces
 
-TODO
+
+
+* Interfaces in a nutshell
+
+Interface are _the_ mechanism for polymorphism in Go.
+
+Contrary to the other types that we've covered, interfaces are abstract types. They're defined by the method(s) that they require:
+
+  type Climber interface {
+    Climb(int) error
+  }
+
+Convention dictates that single-method interfaces be named by appending "er" to the name of their method, even if it yields a weird name (e.g. `fmt.Stringer`).
+
+
+
+* Interface satisfaction in other languages
+
+In many other languages, interface satisfaction is specified on the type declaration of the implementor:
+
+  class PokerHand implements Comparable<? super PokerHand>  // Java
+  class Template implements iTemplate                       // PHP
+  class BoomerangCollection : IEnumerable                   // C#
+
+Not so in Go!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 300 _
+
+
+
+* Interface satisfaction in Go is implicit
+
+If a concrete type has _all_ the methods required by the interface, it automatically satisfies that interface:
+
+.play -edit src/interface_sat.go /^//START/,/^//END/
+
+Interface satisfaction is verified at compile time (similar to structural typing).
+
+
+
+* Tip: keep interfaces small
+
+In a similar spirit as the [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] (the "I" in SOLID), you should favor one-method interfaces.
+
+Interfaces that require only one methods are easier to satisfy and more composable (more about that later).
+Go's standard library contains many examples of single-method interfaces.
+
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
+
+
+* Notable interfaces
+
+- the empty interface
+- `error`
+- `fmt.Stringer`
+- `io.Writer`
+- `io.Reader`
+- `http.Handler`
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/ballet.svg 200 _
+
+
+
+* Namecheck project: declare a Validator interface
+
+1. At the root of your project, in a file named `namecheck.go`,
+declare the following interface:
+
+  type Validator interface {
+    IsValid(username string) bool
+  }
+
+2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Namecheck project: declare an Availabler interface
+
+1. Still in `namecheck.go`,  declare the following interface:
+
+  type Availabler interface {
+    IsAvailable(username string) (bool, error)
+  }
+
+2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Namecheck project: satisfy the fmt.Stringer
+
+1. Study `fmt.Stringer` in the documentation.
+
+  type Stringer interface {
+    String() string
+  }
+
+  It governs how `fmt` functions print values of the corresponding concrete type.
+
+2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Interface composition
+
+You can declare an interface type by listing more elementary interfaces:
+
+  type Reader interface {
+    Read(p []byte) (n int, err error)
+  }
+
+  type Closer interface {
+    Close() error
+  }
+
+  type ReadCloser interface { // both a Reader and a Closer
+    Reader
+    Closer
+  }
+
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
+
+
+* Namecheck project: declare a Checker interface
+
+1. Still in `namecheck.go`, declare an interface type named `Checker` by composition of
+
+- a `Validator`
+- an `Availabler`
+- a `fmt.Stringer`
+
+2. Do `twitter.Twitter` and `github.GitHub` satisfy it?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Namecheck project: use a slice of Checkers
+
+1. In your `main` function, create a slice of `Checker` with two elements:
+
+- a pointer to a `twitter.Twitter`
+- a pointer to a `github.GitHub`
+
+2. Simplify the existing code by ranging over the slice of `Checker`s.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Favor interface parameters
+
+If possible, take interface types as function parameters, rather than concrete types.
+
+Don't do this:
+
+  type Tree struct {...}
+  func (t *Tree) Save(f *os.File) error
+
+Instead, do this:
+
+  type Tree struct {...}
+  func (t *Tree) Save(w io.Writer) error
+
+More flexible and easier to test!
+
+
+* Require no more, promise no less
+
+Only ask for the required behaviour from interface parameters; accept as small an interface as possible.
+
+Don't do this:
+
+  func (t *Tree) Load(rw io.ReadWriter) error
+
+Instead, do this:
+
+  func (t *Tree) Load(r io.Reader) error
+
+This is similar in spirit to the Domain Driven Domain's principle known as
+"keeping ports small".
+
+
+
+* Using interfaces for test doubles
+
+Interfaces are great for mocking, stubbing, faking, etc.
+
+Ponder this: in Go, you can define an interface for a concrete type you don't own!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 300 _
+
+
+
+* Namecheck project: mocking the HTTP client
+
+1. Inspect the source code for `http.Get`.
+
+2. In `namecheck.go`, judiciously declare a useful `Client` interface that `*http.Client` already satisfies.
+
+3. Create a `stub` package and, in `stub.go`, declare the following struct type:
+
+  type SuccessfulClient struct {
+    StatusCode int
+  }
+
+4. Make `stub.SuccessfulClient` satisfy your `namecheck.Client` interface; its `Get` method should always succeed and return the specified status code
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
+* Namecheck project: mocking the HTTP client (cont'd)
+
+5. Add a field of type `namecheck.Client` to your `Twitter` and `GitHub` struct types.
+
+6. Adjust your `main.go`.
+
+7. Write a few test cases for your `IsAvailable` method.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
@@ -2025,7 +2252,7 @@ TODO
 
 
 
-* Concurrency
+* What do we mean by "concurrency"?
 
 The art of composing a programme in terms of independent computations
 
@@ -2040,7 +2267,7 @@ but can be difficult to learn and master.
 
 
 
-* Concurrency
+* Concurrency metaphors
 
 Disclaimer: many cooking metaphors ahead!
 
