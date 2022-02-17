@@ -1768,6 +1768,256 @@ Keep writing test cases until you're satisfied with the overall code coverage.
 
 
 
+* Namecheck project: availability on GitHub
+
+Let's write a function that checks the availability of a username on GitHub.
+
+1. Study the second code snippet in [[https://pkg.go.dev/net/http/#pkg-overview][the Overview section of the `net/http` package]].
+
+2. In the `github` package, add the following stub:
+
+  func IsAvailable(username string) (bool, error) {
+    return false, nil
+  }
+
+3. Now implement it for real. It should send a `GET` request to `https://github.com/USERNAME`, where USERNAME is a placeholder for the username whose availability.
+
+- If the response's status code is `404`, `IsAvailable` should return `true` and `nil`.
+- If the response's status code is `200`, `IsAvailable` should return `false` and `nil`.
+- For any other status code or in case an error occurs, `IsAvailable` should return `false` and a non-nil error.
+
+
+
+* defer
+
+[[https://pkg.go.dev/net/http/#pkg-overview][The documentation of the `net/http` package]] warns that the client must close the response body when finished with it. Note that the defer keyword is used:
+
+  defer resp.Body.Close()
+
+`defer` is useful for reclaiming resources (like the body of a `http.Response`), and generally cleaning stuff up when you're done with it.
+
+It's similar in spirit to the `finally` keyword from other languages, but it's much more convenient to use. You'll grow to love it!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 200 _
+
+: Along with concurrency primitives and interfaces, this keyword is a highlight of Go!
+
+
+
+* Mechanics of the defer keyword
+
+`defer` causes the function call to which it's applied to unconditionnaly execute when the enclosing function terminates (whether normally or because of a panic).
+
+.play -edit src/defer_unconditional.go /^//START/,/^//END/
+
+
+
+* Mechanics of the defer keyword (cont'd)
+
+Deferred function calls are executed in reverse order in which they occur in the enclosing function.
+
+.play -edit src/defer_reverse.go /^//START/,/^//END/
+
+Note also that the arguments of a deferred function call are evaluated, not when the function call executes, but when the `defer` statement is reached.
+
+
+
+* Why is defer useful?
+
+Here is a version of `IsAvailable` that doesn't use `defer` to close the response body:
+
+  func IsAvailable(username string) (bool, error) {
+    resp, err := http.Get("https://github.com/" + username)
+    if err != nil {
+      return false, errors.New("unknown availability")
+    }
+    switch resp.StatusCode {
+    case http.StatusNotFound:
+      resp.Body.Close()
+      return true, nil
+    case http.StatusOK:
+      resp.Body.Close()
+      return false, nil
+    default:
+      resp.Body.Close()
+      return false, errors.New("unknown availability")
+    }
+  }
+
+Notice how we need to call `resp.Body.Close` at each possible exit point.
+
+
+
+* Why is defer useful? (cont'd)
+
+And now with `defer`:
+
+  func IsAvailable(username string) (bool, error) {
+    resp, err := http.Get("https://github.com/" + username)
+    if err != nil {
+      return false, errors.New("unknown availability")
+    }
+    defer resp.Body.Close() // once and for all
+    switch resp.StatusCode {
+    case http.StatusNotFound:
+      return true, nil
+    case http.StatusOK:
+      return false, nil
+    default:
+      return false, errors.New("unknown availability")
+    }
+  }
+
+As soon as we know the HTTP request succeeded, we can program the closure of the response body and forget about it!
+
+
+
+* A defer pitfall
+
+`defer` is unreasonably convenient and powerful, but must be used with caution.
+
+Consider the following function. What's a potential issue, here?
+
+  func processFiles(paths ...string) {
+    for _, path := range paths {
+      file, err := os.Open(path)
+      if err != nil {
+        // deal with error
+        continue
+      }
+      defer file.Close()
+      // do something interesting with file...
+    }
+  }
+
+
+
+* A defer pitfall (cont'd)
+
+Remember that deferred function calls are executed only when the enclosing function terminates, not at the end of the loop iteration that they appear in. Here, the files will all be closed _only_ when the function terminates!
+
+One solution is to enclose the defer statement in a smaller function:
+
+  func processFiles(paths ...string) {
+    for _, path := range paths {
+      if err := processFile(path); err != nil {
+        // deal with error
+      }
+    }
+  }
+  func processFile(path string) error {
+      file, err := os.Open(path)
+      if err != nil {
+        // deal with error
+      }
+      defer file.Close()
+      // do something interesting with file...
+  }
+
+: If we pass a large number of files to the `processFiles` function, we could run out of file descriptors.
+: ulimit -n
+
+
+
+* Namecheck project: availability on Twitter
+
+We cannot take the same shortcut for Twitter as we did for GitHub, because
+
+  https://twitter.com/FOO
+
+returns a `200` response regardless of whether the user `FOO` actually exists. We'll need to do things properly and call the Twitter API. For now, just stub `IsAvailable` in Twitter:
+
+  func IsAvailable(username string) (bool, error) {
+    return false, nil
+  }
+
+
+
+* Namecheck project: missing abstraction
+
+Our project is starting to take shape, but it still suffers from limitations.
+
+In particular, the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, but nothing relates them. It would be nice to have a common abstration to manipulate one or the other indiscriminately...
+
+Also, at this stage, `IsAvalailable` unconditionally sends a HTTP request. How are we going to write unit tests for it? We'd need a way of somehow mocking the HTTP client...
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+
+
+* Structs
+
+[[https://go.dev/play/p/axkpaElUyHI][Live demo in Playground]]
+
+
+
+* Namecheck project: availability on Twitter
+
+Implement `IsAvailable` in the `twitter` package:
+
+  func IsAvailable(username string) (bool, error) {
+    const tmpl = "https://europe-west6-namechecker-api.cloudfunctions.net/userlookup?username=%s"
+    endpoint := fmt.Sprintf(tmpl, username)
+    resp, err := http.Get(endpoint)
+    if err != nil {
+      return false, errors.New("unknown availability")
+    }
+    defer resp.Body.Close()
+    if resp.StatusCode != http.StatusOK {
+      return false, nil
+    }
+    var dto struct {
+      Data interface{} `json:"data"`
+    }
+    dec := json.NewDecoder(resp.Body)
+    if err := dec.Decode(&dto); err != nil {
+      return false, err
+    }
+    return dto.Data == nil, nil
+  }
+
+: the absence of a data field in the response body indicates the username's availability
+: anonymous struct
+
+
+
+* Namecheck project: custom Twitter & GitHub types
+
+1. In `twitter` package, declare a `Twitter` type based on an empty struct. We'll add fields to it later.
+
+  type Twitter struct{}
+
+2. Similarly, in the `github` package, declare a `GitHub` struct type.
+
+Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods on the two types we've just declared.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Methods
+
+Live demo in Playground
+
+
+
+* Namecheck project: turn IsValid and IsAvailalble into methods
+
+1. In the `twitter` package, turn `IsValid` and `IsAvailable` into method on the `Twitter` type (use a pointer receiver).
+
+2. Declare a third method named `String` on the `Twitter` type; it should take no parameter and return a string corresponding to the name of the platform: `"Twitter"`.
+
+3. Adjust your tests in `twitter_test.go`.
+
+4. Repeat steps 1-3 for the `github` package.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Interfaces
+
+TODO
 
 
 
