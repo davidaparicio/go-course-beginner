@@ -2248,9 +2248,9 @@ Ponder this: in Go, you can define an interface for a concrete type you don't ow
 
 
 
-* Namecheck project: simulating support for many platform
+* Namecheck project: simulating support for many platforms
 
-1. In `main.go`, populate your `[]Checkers` slice with twenty pointers to the same `twitter.Twitter` instance.
+1. In `main.go`, populate your `[]Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
 
 2. Repeat step 1 for `github.GitHub`.
 
