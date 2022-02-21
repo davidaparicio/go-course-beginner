@@ -2250,7 +2250,7 @@ Ponder this: in Go, you can define an interface for a concrete type you don't ow
 
 * Namecheck project: simulating support for many platforms
 
-1. In `main.go`, populate your `[]Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
+1. In `main.go`, judiciously populate your `[]Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
 
 2. Repeat step 1 for `github.GitHub`.
 
@@ -3163,11 +3163,13 @@ A `select` statement is a multiway concurrent control switch: it allows you to s
 
 3. Use a `select` statement to receive from both channels.
 
-4. Terminate the programme as soon as one error is received
+4. Terminate the programme as soon as one error is received.
 
-Hint: choose channel capacity wisely.
+Hint: choose the capacity of your error channel wisely.
 
 .image https://go.dev/blog/gopher/plush.jpg 250 _
+
+: smallest channel capacity to prevent goroutine leaks: len(checkers) - 1
 
 
 
@@ -3271,7 +3273,7 @@ The solution is available on the [[https://go.dev/play/p/XXH76YKz_Oj][Go Playgro
 
 * Exercise: debug this ping-pong game (solution)
 
-The solution is available on the [[https://go.dev/play/p/RVdBZVVbkj3][Go Playground]].
+The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playground]].
 
 
 
@@ -3304,7 +3306,7 @@ Create a `server` folder under `cmd` and copy `cmd/cli/main.go` to `cmd/server/m
 
 1. Start from [[https://pkg.go.dev/net/http#example-ListenAndServe][https://pkg.go.dev/net/http#example-ListenAndServe]].
 
-2. Adapt the code from the CLI executable to your server
+2. Adapt the code from the CLI executable to your server.
 
 3. Define a `/check` route that accepts a username to test as a query parameter.
 
