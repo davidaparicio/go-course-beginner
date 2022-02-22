@@ -1139,7 +1139,7 @@ There are no exceptions in Go! Anticipated failures are reported as [[https://ww
 
 A function that can fail returns an additional `error` result (the last one, by convention):
 
-  func Get(url string) (resp *Response, err error) // example from the http package
+  func Get(url string) (resp *http.Response, err error) // example from the http package
 
 A non-nil `error` result indicates that the function failed; hence this error-check idiom:
 
@@ -1772,15 +1772,15 @@ Keep writing test cases until you're satisfied with the overall code coverage.
 
 Let's write a function that checks the availability of a username on GitHub.
 
-1. Study the second code snippet in [[https://pkg.go.dev/net/http/#pkg-overview][the Overview section of the `net/http` package]].
-
-2. In the `github` package, add the following stub:
+1. In the `github` package, add the following stub:
 
   func IsAvailable(username string) (bool, error) {
     return false, nil
   }
 
-3. Now implement it for real. It should send a `GET` request to `https://github.com/USERNAME`, where USERNAME is a placeholder for the username whose availability we'd like to check.
+2. Study the second code snippet in [[https://pkg.go.dev/net/http/#pkg-overview][the Overview section of the `net/http` package]].
+
+3. Now implement `IsAvailable` for real. It should send a `GET` request to `https://github.com/USERNAME`, where USERNAME is a placeholder for the username whose availability we'd like to check.
 
 - If the response's status code is `404`, `IsAvailable` should return `true` and `nil`.
 - If the response's status code is `200`, `IsAvailable` should return `false` and `nil`.
@@ -1942,6 +1942,262 @@ In particular, the `twitter` and `github` packages both export `IsValid` and `Is
 Also, at this stage, `IsAvalailable` unconditionally sends a HTTP request. How are we going to write unit tests for it? We'd need a way of somehow mocking the HTTP client...
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+
+
+* Arrays
+
+
+
+* Arrays
+
+Arrays are fixed-length containers of elements of the same type.
+
+Contrary to other languages, Go encodes the length of an array in its type name.
+
+The built-in function `len` yields the length of an array.
+
+You can omit to specify the length in array literals and let the compiler infer it.
+
+An array is comparable if the type of its elements is itself comparable.
+
+.play -edit src/arrays.go  /^//START/,/^//END/
+
+: the [0]func() trick is actually used to make types non-comparable w/o compromising memory footprint
+
+
+
+* Array indexing
+
+Like most languages, Go uses 0-based indexing.
+
+Individual elements of an array can be accessed using the usual square-bracket syntax.
+
+Indexing outside the bounds of an array causes a compilation or runtime error (panic).
+
+Taking the address of an array element is legal.
+
+Elements of an array are contiguous in memory.
+
+.play -edit src/array_indexing.go  /^//START/,/^//END/
+
+
+
+* Ranging over an array
+
+You can iterate over an array using a for-range loop.
+
+The first loop variable corresponds to the index of the current element.
+
+The second loop variable is only a copy of the array's current element.
+
+.play -edit src/array_range.go  /^//START/,/^//END/
+
+
+
+* An array's zero value
+
+Arrays are _not_ reference types. They cannot take the value `nil`.
+
+The zero value of an array type is an array full of zero values of its element type.
+
+.play -edit src/array_zero.go  /^//START/,/^//END/
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
+
+* Direct use of arrays is inflexible
+
+A function taking, as a parameter, an array of a given length cannot accept an array of some other length.
+
+.play -edit src/array_inflexible.go  /^//START/,/^//END/
+
+
+
+* Direct use of arrays can be expensive
+
+Remember that Go's evaluation strategy is call by value. Accordingly, functions that take an array as parameter operate on a full copy of that array!
+
+.play -edit src/array_expensive.go  /^//START/,/^//END/
+
+For these reasons, arrays are seldom used directly.
+
+Instead, _slices_, which are an abstraction over arrays, are used extensively in Go.
+
+
+
+* Slices
+
+
+
+* Slices
+
+Slices are arguably the most fundamental and ubiquitous type in Go.
+
+A slice is a variable-length container of elements of the same type.
+
+Contrary to arrays, slices do not have have a length specified in their type name,
+and they can grow and shrink over the course of their lifetime.
+
+In addition to slice literals, you can use the built-in `make` function to initialize a slice
+of a given length.
+
+.play -edit src/slices.go  /^//START/,/^//END
+
+: only make([]string, l) for now
+
+
+
+* Slices under the hood TODO
+
+A slice is essentially a resizable view inside a backing array.
+
+The backing array may extend past the end of the slice.
+
+The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
+
+When using the `make` function to create a slice, you can specify the length and capacity independently. Doing this is often useful when you're about to add elements to the slice
+
+Built-in functions `len` and `cap` yield the _length_ and _capacity_ of a slice.
+
+: show make([]string, l, c) now
+
+
+
+* Slices under the hood (cont'd) TODO
+
+In memory, a slice is a data structure composed of three machine words:
+
+  ------------------------
+  | ptr to backing array |
+  ------------------------
+  |        length        |
+  ------------------------
+  |       capacity       |
+  ------------------------
+
+
+
+* Passing a slice to a function is cheap
+
+The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the underlying array! 
+
+Besides a slice parameter is much more flexible than an array parameter.
+
+.play -edit src/slice_cheap.go  /^//START/,/^//END
+
+: 24 bytes on a 64-bit architecture
+
+
+
+* Slices are not comparable TODO
+
+Slices are _not_ comparable; the only allowed comparison is to the `nil` value.
+
+
+
+* Slice indexing
+
+Like arrays, slices can be indexed.
+
+Taking the address of an array element is legal.
+
+Be careful: indexing outside the bounds of a slice or indexing a `nil` slice causes a panic!
+
+.play -edit src/slice_indexing.go  /^//START/,/^//END/
+
+
+
+* Slicing operator TODO
+
+You can produce a new slice that focuses on a different portion of the same backing array using the _slicing_operator_:
+
+  s1 := s[i:j]
+
+The first index (`i`) is inclusive; the second one (`j`) is exclusive.
+
+Using a second index that exceeds the slice's capacity will cause a panic.
+
+: TODO: mention three-index slicing
+
+
+
+* Namecheck project: pass a username as a command-line arg
+
+1. Consult the [[https://pkg.go.dev/os][documentation of the `os` package]].
+
+2. Identify a member of that package that will allow you to get the program's command-line arguments as a slice of strings.
+
+3. Check the length of that slice; terminate the programme (with a friendly error message) if no username was specified.
+
+4. If a username was specified, use it as before in the rest of your programme.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Ranging over a slice
+
+Just like for arrays, you can iterate over a slice using a for-range loop:
+
+The first loop variable corresponds to the index of the current element.
+
+The second loop variable is only a copy of the slice's current element.
+
+.play -edit src/slice_range.go  /^//START/,/^//END/
+
+
+
+* Namecheck project: use table-driven subtests
+
+Have you noticed that the logic is duplicated across our test functions? Let's fix this!
+
+1. Read the section entitled "Table-driven tests using subtests" [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][of this blog post]].
+
+2. Apply this technique in a `TestIsValid` function. If the anonymous struct confuses you, you can declare a `TestCase` struct type at the top of your function.
+
+3. Move all the test cases for the `IsValid` function inside the slice of test cases within your `TestIsValid` test function.
+
+4. You can now safely remove your original test functions.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Appending elements to a slice
+
+The built-in function `append` is allows you to add elements to the end of a slice.
+
+Its last parameter is variadic.
+
+.play -edit src/append.go  /^//START/,/^//END/
+
+Under the hood, `append` copies elements of the backing array to a larger one when capacity in the former has been reached:
+
+.play -edit src/append_grow.go  /^//START/,/^//END/
+
+
+
+* Aliasing
+
+Bear in mind that multiple slices may share the same backing array.
+
+A change to an element of one such slice will be reflected in the other slices.
+
+.play -edit src/slice_spooky.go  /^//START/,/^//END/
+
+
+
+* Aliasing (cont'd)
+
+Be careful: holding a pointer to a slice element while appending is a bad idea!
+
+After appending, the pointer may well point to an element of an old array that is no longer backing the slice!
+
+.play -edit src/slice_aliasing.go  /^//START/,/^//END/
+
+: could cause a memory leak, because old array cannot be GC'd
 
 
 
