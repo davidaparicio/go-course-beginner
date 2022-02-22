@@ -2498,7 +2498,7 @@ The `io` package provides two complementary interface types:
 
 * Interfaces under the hood
 
-In memory, a slice is a data structure composed of two machine words:
+In memory, an interface value is a data structure composed of two machine words:
 
   ---------------------------
   | descr. of concrete type |
@@ -2561,11 +2561,11 @@ This is similar in spirit to the Domain Driven Domain's principle known as
 
 * Using interfaces for test doubles
 
-Interfaces are great for mocking, stubbing, faking, etc.
+Interfaces are great for [[https://www.martinfowler.com/bliki/TestDouble.html][_test_doubles_]]: mocks, stubs, fakes, dummies, etc.
 
 Ponder this: in Go, you can define an interface for a concrete type you don't own!
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 300 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 250 _
 
 
 
