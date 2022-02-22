@@ -2982,6 +2982,7 @@ That way, by virtue of Go's call-by-value evaluation strategy, the function only
 .play -edit src/goroutine_func_arg.go /^//START/,/^//END/
 
 
+
 * Be careful when running closures as goroutines
 
 When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may cause data races.
@@ -2989,6 +2990,8 @@ When running a closure as a goroutine, it's very easy to inadvertently capture v
 Defining a dedicated named function can help:
 
 .play -edit src/goroutine_func_standalone.go /^//START/,/^//END/
+
+: TODO: add more subtle example https://go.dev/play/p/8VMdHJZ6dyl
 
 
 
@@ -3096,7 +3099,6 @@ Channels are comparable.
 
 
 
-
 * Initializing a channel
 
 Channels are reference types; their zero value is `nil`.
@@ -3106,8 +3108,8 @@ To initialize a channel, use built-in function `make` with two arguments:
 - the first argument corresponds to the type of the channel;
 - the second argument is an (optional) `int` corresponding to the channel's desired (non-negative) _capacity_.
 
-  c1 := make(chan string) // equivalent to make(chan string, 0)
-  c2 := make(chan string, c)
+  c1 := make(chan string, c)
+  c2 := make(chan string)    // equivalent to make(chan string, 0)
 
 A channel's capacity cannot be changed after initialization.
 
@@ -3248,20 +3250,6 @@ Note: the value received from a channel by a goroutine is only accessible to tha
 
 
 
-* Exercise: fixing a deadlock
-
-.play -edit src/deadlock_example.go /^//START/,/^//END/
-
-This programme deadlocks. Can you guess why? How would you fix it?
-
-Add sends and receives to fix ideas. Discuss.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-: ask them what happens for go fmt.Println(<-ch)
-
-
-
 * Receive ambiguity
 
 As shown by the diagram on the previous slide, when a channel is closed and empty, receiving from that channel yields the zero value of the channel's element type...
@@ -3285,6 +3273,20 @@ The value of variable `ok` is
 - `false` if it is a zero value generated because the channel is closed and empty.
 
 Note: variable `ok` is assigned the value `false`, not as soon as the channel gets closed, but only when the channel has been drained.
+
+
+
+* Exercise: fixing a deadlock
+
+.play -edit src/deadlock_example.go /^//START/,/^//END/
+
+This programme deadlocks. Can you guess why? How would you fix it?
+
+Add sends and receives to fix ideas. Discuss.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: ask them what happens for go fmt.Println(<-ch)
 
 
 
