@@ -1241,13 +1241,13 @@ However you choose to handle an error, handle it only once!
 
 `errors.New` allows you to create a simple error value:
 
-	err := errors.New("namecheck: failure to check availability of 'jub0bs' on Twitter")
+  err := errors.New("namecheck: failure to check availability of 'jub0bs' on Twitter")
 
 \... but `fmt.Errorf` is more flexible:
 
-	username := "jub0bs"
-	platform := "Twitter"
-	err := fmt.Errorf("namecheck: failure to check availability of %q on %s", username, platform)
+  username := "jub0bs"
+  platform := "Twitter"
+  err := fmt.Errorf("namecheck: failure to check availability of %q on %s", username, platform)
 
 By convention, error messages
 
@@ -2079,7 +2079,7 @@ In memory, a slice is a data structure composed of three machine words:
 
 
 
-* Passing a slice to a function is cheap
+* Slice function parameters are cheap and flexible
 
 The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the underlying array! 
 
@@ -2139,7 +2139,7 @@ Using a second index that exceeds the slice's capacity will cause a panic.
 
 * Ranging over a slice
 
-Just like for arrays, you can iterate over a slice using a for-range loop:
+Just like for arrays, you can iterate over a slice using a for-range loop.
 
 The first loop variable corresponds to the index of the current element.
 
@@ -2277,7 +2277,7 @@ Live demo in Playground
 
 * Interfaces in a nutshell
 
-Interface are _the_ mechanism for polymorphism in Go.
+Interfaces are _the_ mechanism for polymorphism in Go.
 
 Contrary to the other types that we've covered, interfaces are abstract types. They're defined by the method(s) that they require:
 
@@ -2297,9 +2297,9 @@ In many other languages, interface satisfaction is specified on the type declara
   class Template implements iTemplate                       // PHP
   class BoomerangCollection : IEnumerable                   // C#
 
-Not so in Go!
+Not so in Go, and that's one reason why interfaces are one of the most fascinating aspect of the language!
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 300 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 250 _
 
 
 
@@ -2318,22 +2318,10 @@ Interface satisfaction is verified at compile time (similar to structural typing
 In a similar spirit as the [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] (the "I" in SOLID), you should favor one-method interfaces.
 
 Interfaces that require only one methods are easier to satisfy and more composable (more about that later).
-Go's standard library contains many examples of single-method interfaces.
+
+Go's standard library contains many examples of single-method interfaces: `error`, `fmt.Stringer`, `io.Writer`, `io.Reader`, `http.Handler`, etc.
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
-
-
-
-* Notable interfaces
-
-- the empty interface
-- `error`
-- `fmt.Stringer`
-- `io.Writer`
-- `io.Reader`
-- `http.Handler`
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/ballet.svg 200 _
 
 
 
@@ -2430,6 +2418,112 @@ You can declare an interface type by listing more elementary interfaces:
 
 
 
+* Notable interfaces: the empty interface
+
+The empty interface is an interface that requires no method:
+
+  interface{}
+
+Therefore, it is automatically satisfied by _all_ types (no exception) in Go.
+
+The empty interface is useful for maximum flexibility in very generic functions,
+such as `fmt.Println`:
+
+  func Println(a ...interface{}) (int, error)
+
+However, refrain from using it in the business layer of your application.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/ballet.svg 200 _
+
+
+
+* Notable interfaces: error
+
+Yes, `error` is an interface!
+
+In fact, it's the only interface predeclared by the language, which explains why its name can start with a lowercase "e".
+
+  type error interface {
+    Error() string
+  }
+
+You can declare your own types and make them satisfy the `error` interface.
+
+  type ErrUnkownAvailability struct {
+    Username string
+    Platform string
+    Cause    error
+  }
+
+  func (e *ErrUnkownAvailability) Error() string {
+    const tmpl = "unknown availability of %q on %s: %v"
+    return fmt.Sprintf(tmpl, e.Username, e.Platform, e.Cause)
+  }
+
+
+
+* Notable interfaces: fmt.Stringer
+
+`fmt.Stringer` requires a single method:
+
+  type Stringer interface {
+    String() string
+  }
+
+If a type satisfies `fmt.Stringer`, its `String` method governs how `fmt` functions represent values of that type.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+
+
+
+* Notable interfaces: io.Reader and io.Writer
+
+The `io` package provides two complementary interface types:
+
+  type Reader interface {
+    Read(src []byte) (int, error)
+  }
+
+  type Writer interface {
+    Write(dst []byte) (int, error)
+  }
+
+`io.Reader` represents a _source_ of bytes; it's satisfied by `os.Stdin`, `*os.File`, etc.
+
+`io.Writer` represents a _sink_ of bytes: it's satisfied by `os.Stdout`, `*os.File`, etc.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/network-side.svg 200 _
+
+
+
+* Interfaces under the hood
+
+In memory, a slice is a data structure composed of two machine words:
+
+  ---------------------------
+  | descr. of concrete type |
+  ---------------------------
+  |    pointer to value     |
+  ---------------------------
+
+Interfaces are reference types; their zero value is `nil`.
+
+: TODO: add proof of that
+
+
+
+* Gotcha: interfaces and nil
+
+An interface that holds a `nil` pointer to a concrete type is not itself `nil`!
+
+Find the bug in the following programme:
+
+.play -edit src/interface_nil.go /^//START/,/^//END/
+
+More details about this are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
+
+
+
 * Favor interface parameters
 
 If possible, take interface types as function parameters, rather than concrete types.
@@ -2445,6 +2539,7 @@ Instead, do this:
   func (t *Tree) Save(w io.Writer) error
 
 More flexible and easier to test!
+
 
 
 * Require no more, promise no less

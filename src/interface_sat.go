@@ -4,14 +4,14 @@ import "fmt"
 
 // START OMIT
 type Climber interface {
-	Climb(int) error
+	Climb(int) error // HL
 }
 
 type Mountaineer struct {
 	Name string
 }
 
-func (m *Mountaineer) Climb(height int) error {
+func (m *Mountaineer) Climb(height int) error { // HL
 	fmt.Printf("%s climbs %d meters\n", m, height)
 	return nil
 }
