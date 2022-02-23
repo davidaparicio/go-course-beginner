@@ -857,18 +857,12 @@ You can omit the switch expression, which is equivalent to using `true`:
 
 This form of `switch` statement is preferred to a long if-else chain.
 
+(When we cover interfaces, you'll learn another form of switch, called a _type_switch_.)
 
-
-* Type switch
-
-A _type_switch_ allows you to switch on an interface value and change the logic on the basis of the concrete type stored inside it:
-
-.play -edit src/type_switch.go /^//START/,/^//END/
-
-Use type switches sparingly. More on that when we cover interfaces.
 
 
 * Loops
+
 
 
 * While-style loop
@@ -1263,9 +1257,9 @@ You can also create your own error types (i.e. types that satisfy the `error` in
 
 * Panic
 
-A panic is a runtime event that indicates an exceptional and fatal failure.
+A panic is a run-time event that indicates an exceptional and fatal failure.
 
-It can be triggered by a runtime error (such as calling a `nil` function) or some direct or indirect call to built-in function `panic`.
+It can be triggered by a run-time error (such as calling a `nil` function) or some direct or indirect call to built-in function `panic`.
 
 A panic stops the programme's normal execution, runs deferred function calls as it unwinds the stack, prints an error message and goroutine traces, and exit the program with a non-zero status:
 
@@ -1324,25 +1318,11 @@ All the code we've written in `main.go` so far is specific to Twitter, which is 
 
 It would be preferable to create a dedicated library package for each of the supported platforms (Twitter, GitHub, etc.)
 
-Let's learn how to create a library package and import it in our `main` package.
+Let's learn how to create a library package and use it in our `main` package.
 
 
 
 * Designing and organizing packages
-
-
-
-* Namecheck project: create a namecheck package
-
-1. At the root of your project, create a namecheck.go file.
-
-2. In it, simply write the following package clause:
-
-  package namecheck
-
-3. Try compiling. What happens?
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
@@ -1364,6 +1344,7 @@ Let's learn how to create a library package and import it in our `main` package.
 
 : only should, because _test package exception and also not enforced by tooling, but otherwise confusing
 : in most cases, the last segment of the package path should match the package name as declared in package clause
+: cmd folder: we'll do this ourselves
 
 
 
@@ -1380,28 +1361,6 @@ All package members are accessible to all of the package's source files.
 Each source file must import the packages that it needs.
 
 .image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
-
-
-
-* Namecheck project: create a cmd folder
-
-1. Create a folder named "cmd" at the root of your project.
-
-2. Create a subfolder named "cli".
-
-3. Move your `main.go` file to `cmd/cli/`:
-
-  namecheck
-  └── cmd
-      └── cli
-           └── main.go
-
-4. From the root of your project, check that `main.go` still compiles:
-
-  go run cmd/cli/main.go
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
-
 
 
 
@@ -1523,9 +1482,7 @@ Exported functions should communicate anticipated failures to client code as val
 2. Create a "twitter.go" file in there:
 
   namecheck
-  ├── cmd
-  │   └── cli
-  │        └── main.go
+  ├── main.go
   └── twitter
       └── twitter.go
 
@@ -1661,10 +1618,8 @@ The message format used here ("got ...; want ...") is widely used.
 Create a file named `twitter_test.go` in the `twitter` folder.
 
   namecheck
-  ├── cmd
-  │   └── cli
-  │       └── main.go
   ├── go.mod
+  ├── main.go
   └── twitter
       ├── twitter.go
       └── twitter_test.go
@@ -1733,13 +1688,11 @@ Write enough good test cases to reach a code coverage that satisfies you.
 Create a `github` package (you can copy the `twitter` package to get started quickly):
 
   namecheck
-  ├── cmd
-  │   └── cli
-  │       └── main.go
   ├── github
   │   ├── github.go
   │   └── github_test.go
   ├── go.mod
+  ├── main.go
   └── twitter
       ├── twitter.go
       └── twitter_test.go
@@ -1780,11 +1733,19 @@ Let's write a function that checks the availability of a username on GitHub.
 
 2. Study the second code snippet in [[https://pkg.go.dev/net/http/#pkg-overview][the Overview section of the `net/http` package]].
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Namecheck project: availability on GitHub (cont'd)
+
 3. Now implement `IsAvailable` for real. It should send a `GET` request to `https://github.com/USERNAME`, where USERNAME is a placeholder for the username whose availability we'd like to check.
 
 - If the response's status code is `404`, `IsAvailable` should return `true` and `nil`.
 - If the response's status code is `200`, `IsAvailable` should return `false` and `nil`.
 - For any other status code or in case an error occurs, `IsAvailable` should return `false` and a non-nil error.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
@@ -1973,11 +1934,9 @@ Like most languages, Go uses 0-based indexing.
 
 Individual elements of an array can be accessed using the usual square-bracket syntax.
 
-Indexing outside the bounds of an array causes a compilation or runtime error (panic).
+Taking the address of an array element is legal. Elements are contiguous in memory.
 
-Taking the address of an array element is legal.
-
-Elements of an array are contiguous in memory.
+Be careful: indexing outside the bounds of an array causes either a compilation or a run-time error (panic).
 
 .play -edit src/array_indexing.go  /^//START/,/^//END/
 
@@ -2101,7 +2060,7 @@ Slices are _not_ comparable; the only allowed comparison is to the `nil` value.
 
 Like arrays, slices can be indexed.
 
-Taking the address of an array element is legal.
+Taking the address of a slice element is legal.
 
 Be careful: indexing outside the bounds of a slice or indexing a `nil` slice causes a panic!
 
@@ -2325,6 +2284,24 @@ Go's standard library contains many examples of single-method interfaces: `error
 
 
 
+* Namecheck project: move your main.go to a cmd folder
+
+We're about to create a `namecheck` package at the root of our project, but our `main.go` (which belongs to package `main`) is getting in the way. Let's move it elsewhere.
+
+1. Create a folder named "cmd" at the root of your project.
+
+2. Move your `main.go` file to `cmd/`:
+
+  namecheck
+  └── cmd
+      └── main.go
+
+3. From the root of your project, check that `main.go` still compiles:
+
+  go run cmd/main.go
+
+
+
 * Namecheck project: declare a Validator interface
 
 1. At the root of your project, in a file named `namecheck.go`,
@@ -2481,11 +2458,11 @@ If a type satisfies `fmt.Stringer`, its `String` method governs how `fmt` functi
 The `io` package provides two complementary interface types:
 
   type Reader interface {
-    Read(src []byte) (int, error)
+    Read(dst []byte) (int, error)
   }
 
   type Writer interface {
-    Write(dst []byte) (int, error)
+    Write(src []byte) (int, error)
   }
 
 `io.Reader` represents a _source_ of bytes; it's satisfied by `os.Stdin`, `*os.File`, etc.
@@ -2526,9 +2503,9 @@ More details about this are available in the [[https://go.dev/doc/faq#nil_error]
 
 * Favor interface parameters
 
-If possible, take interface types as function parameters, rather than concrete types.
+If a given function parameter is supposed to provide _behavior_ (rather than data), you should strive to use an interface type (rather than a concrete type) for that parameter.
 
-Don't do this:
+For example, don't do this:
 
   type Tree struct {...}
   func (t *Tree) Save(f *os.File) error
@@ -2538,13 +2515,17 @@ Instead, do this:
   type Tree struct {...}
   func (t *Tree) Save(w io.Writer) error
 
-More flexible and easier to test!
+The latter is more flexible, easier to test, promotes decoupling, and guides you towards the correct implementation.
+
+This principle isn't specific to Go and is known as [[https://blog.ndepend.com/programming-interface-simple-explanation/][_programming_to_an_interface_]].
 
 
 
 * Require no more, promise no less
 
-Only ask for the required behaviour from interface parameters; accept as small an interface as possible.
+Not only should you focus on behavior rather than implementation, but your functions shouldn't ask for behaviors they don't need.
+
+In other words, if a function takes an interface parameter, that interface should be as "small" as possible.
 
 Don't do this:
 
@@ -2554,7 +2535,7 @@ Instead, do this:
 
   func (t *Tree) Load(r io.Reader) error
 
-This is similar in spirit to the Domain Driven Domain's principle known as
+This principle is similar in spirit to the Domain Driven Domain's principle known as
 "keeping ports small".
 
 
@@ -2563,7 +2544,9 @@ This is similar in spirit to the Domain Driven Domain's principle known as
 
 Interfaces are great for [[https://www.martinfowler.com/bliki/TestDouble.html][_test_doubles_]]: mocks, stubs, fakes, dummies, etc.
 
-Ponder this: in Go, you can define an interface for a concrete type you don't own!
+In Go, not only can you declare an interface _after_the_fact_ for a concrete type that you've _already_ declared...
+
+\... but you can also declare an interface for a concrete type you do not own! Ponder this!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 250 _
 
@@ -2593,7 +2576,11 @@ Ponder this: in Go, you can define an interface for a concrete type you don't ow
 
 6. Adjust your `main.go`.
 
-7. Write a few test cases for the `IsAvailable` method of the `twitter.Twitter` type.
+7. Write a few test cases for `github.GitHub`'s `IsAvailable` method.
+
+8. Run the tests. You may get some panics. If you do, can you figure out why and fit it?
+
+9. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method? If not, what would you change?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2603,13 +2590,41 @@ Ponder this: in Go, you can define an interface for a concrete type you don't ow
 
 1. In `main.go`, judiciously populate your `[]Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
 
-2. Repeat step 1 for `github.GitHub`.
+2. Similarly, populate your slice of checkers with twenty pointers to the same `github.GitHub` instance.
 
 3. Run your executable.
 
-4. Comment on user experience (UX). How could we improve things?
+4. Comment on user experience. Is it fast? How could you improve things?
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 250 _
+
+
+
+* Namecheck project: make room for another main.go
+
+We'll experiment with concurrency inside another `main.go`. Later, we'll write a server in that file. Let's set things up!
+
+1. Create a folder named "cli" within the `cmd` folder. Move your `main.go` to `cmd/cli/`.
+
+2. Create a folder named "server" within the `cmd` folder. Create a new `main.go` there.
+
+  namecheck
+  ├── cmd
+  │   ├── cli
+  │   │   └── main.go
+  │   └── server
+  │       └── main.go
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
+  ├── go.mod
+  ├── namecheck.go
+  └── twitter
+      ├── twitter.go
+      └── twitter_test.go
+
+
+
 
 
 
@@ -3108,8 +3123,8 @@ To initialize a channel, use built-in function `make` with two arguments:
 - the first argument corresponds to the type of the channel;
 - the second argument is an (optional) `int` corresponding to the channel's desired (non-negative) _capacity_.
 
-  c1 := make(chan string, c)
-  c2 := make(chan string)    // equivalent to make(chan string, 0)
+  c1 := make(chan string, 16) // initialize a channel of strings of capacity 16
+  c2 := make(chan string)     // equivalent to make(chan string, 0)
 
 A channel's capacity cannot be changed after initialization.
 
@@ -3121,14 +3136,14 @@ A freshly initialized channel starts its life in an "open" state, but can later 
 
 * Channel capacity
 
-A channel's capacity corresponds to the size of its _buffer_, i.e. the number of elements it can contain at a give time.
+A channel's capacity corresponds to the size of its _buffer_, i.e. the maximum number of elements that the channel can contain at any give time.
 
 Choosing it wisely is important, as it usually affects the correctness and/or the performance of your programme.
 
 Built-in function `cap` can be used to query a channel's capacity:
 
-  c := make(chan string, 20)
-  fmt.Println(cap(c)) // 20
+  c := make(chan string, 16) // initialize a channel of strings of capacity 16
+  fmt.Println(cap(c))        // 16
 
 Some terminology:
 
@@ -3308,14 +3323,16 @@ Closing a channel is definitive; a closed channel cannot be "re-opened".
 
 .image img/close_semantics.svg _ 800
 
-Note:
+Note that both
 
-- Closing the nil channel causes a panic.
-- Closing an already closed channel causes a panic.
+- attempting to close a `nil` channel
+- attempting to close an already closed channel
+
+cause a panic.
 
 
 
-* How is closing a channel useful?
+* What's the point of closing a channel?
 
 *Terminating*a*range*operation*
 
@@ -3335,23 +3352,42 @@ In fact, the [[https://pkg.go.dev/context/][`context` package]] is [[https://vim
 
 * Do not systematically close channels
 
+One common misconception is that channels _must_ be closed. Not so!
+
 Channels are not resources; closing a channel is not a way to reclaim or clean up resources (memory, etc.).
 
-Channels will get garbage-collected like any other variable once they become unreachable.
+Channels will get garbage-collected like any other variable once they become unreachable from the rest of the programme.
 
-You only need to close a channel if the semantics of your programme demand it.
+Only close a channel if the semantics of your programme demand it.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 
 
 * Closing a channel doesn't drain it
 
-Think of a restaurant as a channel.
+Closing a channel neither makes it `nil` and nor drains it!
 
-- Announcing the end of service doesn't mean pushing all the patrons out; they can finish their meal before leaving.
-- Similarly, closing a channel doesn't amount to flushing it out; some goroutine(s) can still consume those elements.
+Closing a channel is akin to a restaurant announcing the end of service.
 
-.image https://rew-online.com/wp-content/uploads/2019/10/restaurantCLOSED.jpg 300 _
+- After that, the restaurant accepts no new patrons for the day.
+- However, the staff doesn't push all the patrons out and lock the door; patrons can finish their meal before paying and leaving.
+
+.image https://rew-online.com/wp-content/uploads/2019/10/restaurantCLOSED.jpg 250 _
+
+
+
+* Closing a channel doesn't drain it (cont'd)
+
+Similarly, closing a channel only means that no more values can be sent to it
+(at least, not without causing a panic).
+
+Closing a channel doesn't amount to flushing it out.
+
+Some goroutine(s) can still consume the elements left in a closed channel.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
 
 
 
@@ -3631,27 +3667,6 @@ The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playgro
 
 
 * HTTP server
-
-
-
-* Namecheck project: turn your CLI tool into a Web server
-
-Create a `server` folder under `cmd` and copy `cmd/cli/main.go` to `cmd/server/main.go`.
-
-  namecheck
-  ├── cmd
-  │   ├── cli
-  │   │   └── main.go
-  │   └── server
-  │       └── main.go
-  ├── github
-  │   ├── github.go
-  │   └── github_test.go
-  ├── go.mod
-  ├── namecheck.go
-  └── twitter
-      ├── twitter.go
-      └── twitter_test.go
 
 
 
@@ -4050,7 +4065,7 @@ Overwriting `s[i]` or taking its address is illegal and will cause a compilation
 
 
 
-: panic is a runtime error
+: panic is a run-time error
 : also substring operator, but similar to slicing operator which we'll see later
 
 
