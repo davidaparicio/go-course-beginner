@@ -1301,6 +1301,7 @@ Fail early if the regular expression doesn't compile.
 .image https://i.redd.it/48emz1dvfz441.png 200 _
 
 : use a bool variable to control the termination of the loop
+: mangle the domain name in github.Github's IsAvailable method in order to cause an error
 
 
 
@@ -1482,6 +1483,7 @@ Exported functions should communicate anticipated failures to client code as val
 2. Create a "twitter.go" file in there:
 
   namecheck
+  ├── go.mod
   ├── main.go
   └── twitter
       └── twitter.go
@@ -1490,7 +1492,7 @@ Exported functions should communicate anticipated failures to client code as val
 
 4. Move all the Twitter-specific stuff from `main.go` to `twitter.go`.
 
-5. Try importing package `twitter` in your `main` package. Any issues?
+5. Adjust your `main.go`. You'll need to import your `twitter` package there.
 
 
 
@@ -2293,8 +2295,15 @@ We're about to create a `namecheck` package at the root of our project, but our 
 2. Move your `main.go` file to `cmd/`:
 
   namecheck
-  └── cmd
-      └── main.go
+  ├── cmd
+  │   └── main.go
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
+  ├── go.mod
+  └── twitter
+      ├── twitter.go
+      └── twitter_test.go
 
 3. From the root of your project, check that `main.go` still compiles:
 
@@ -3670,21 +3679,45 @@ The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playgro
 
 
 
-* Namecheck project: turn your CLI tool into a Web server
+* Your first Go server TODO
 
-1. Start from [[https://pkg.go.dev/net/http#example-ListenAndServe][https://pkg.go.dev/net/http#example-ListenAndServe]].
-
-2. Adapt the code from the CLI executable to your server.
-
-3. Define a `/check` route that accepts a username to test as a query parameter.
-
-4. Return JSON in the response (see [[https://pkg.go.dev/encoding/json/][encoding/json]]), with the correct content type.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.play -edit src/server_helloworld.go /^//START/,/^//END/
 
 : http.HandleFunc registers the handler on the DefaultServeMux (package-level variable)
 : ListenAndServe: it last arg is nil, serves the DefaultServeMux
 : important to capture error from http.ListenAndServe, because otherwise fails silently if port collision (e.g. ":80")
+
+
+
+* Namecheck project: turn your CLI tool into a Web server
+
+1. Copy `cmd/cli/main.go` to `cmd/server/main.go`. In the latter, rename the `main` function to `handleCheck`.
+
+2. Adjust `handleCheck`'s signature and implementation:
+
+- If the client provided no username via a query param, return a `400` response.
+- If an error occurs during an availability check, return a `500` response.
+- Otherwise, write (using `fmt.Fprint`) your slice of results in the response.
+
+3. Register your `handleCheck` handler on a route named `/check`.
+
+4. Start your server and hit the `/check` endpoint.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
+* JSON encoding/decoding TODO
+
+TODO
+
+
+
+* Namecheck project: write the results as JSON in the response
+
+So far, what we're writing in the response is a Go-specific textual representation of a slice of checkers. Let's write some JSON instead.
+
+Return JSON in the response (see [[https://pkg.go.dev/encoding/json/][encoding/json]]), with the correct content type.
 
 
 
