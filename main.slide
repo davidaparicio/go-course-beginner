@@ -127,7 +127,7 @@ Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0z
 
 
 
-* Reminiscent of, but different from, the C programming language
+* Reminiscent of but different from C
 
 - strong typing
 - fast compilation
@@ -135,22 +135,32 @@ Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0z
 - memory safety
 - packages
 - full Unicode support
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
+
+: compiled, but type inference, so feels like a dynamic language
+: memory safety: pointers, but no pointer arithmetic; no dangling pointers; no uninitialized variables
+: mention heap-overflow vuln discovered in curl
+
+
+
+* Reminiscent of but different from C (cont'd)
+
 - concurrency primitives
 - sensible `switch` behavior
 - first-class functions
 - multiple function results
 - no semi-colons
 
-: compiled, but type inference, so feels like a dynamic language
-: memory safety: pointers, but no pointer arithmetic; no dangling pointers; no uninitialized variables
-: mention heap-overflow vuln discovered in curl
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
+
 : multiple returns allow principled error handling
 : packages: no ifdef guards, no required ordering of top-level declarations
 : also syntax differences: type name comes after variable name
 
 
 
-* Go has a rich ecosystem
+* Go's rich toolchain
 
 The `go` toolchain comes with tools for
 
@@ -578,7 +588,9 @@ Whether a package-level identifier is exported depends on the case of its first 
 
 * Importing packages
 
-A package can be imported in different ways: normal imports, named imports, blank imports, dot imports, relative imports.
+We'll cover two ways of importing packages: normal imports and named imports.
+
+(For other import syntaxes, see Appendix B.)
 
 The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility takes care of adding missing imports, removing unreferenced imports, and organizes imports in a canonical way:
 
@@ -632,39 +644,6 @@ But named imports are especially useful
   import mlv2 "github.com/jub0bs/missilelauncher/v2"
 
 : more on this later
-
-
-
-* Blank imports
-
-A blank import uses the blank identifier as package name:
-
-  import _ "github.com/go-sql-driver/mysql"
-
-A blank import makes none of the imported package's members available in the importing package.
-
-The sole reason for using a blank import to import a package is the side effects carried out during [[https://golang.org/ref/spec#Package_initialization][the package's initialization]].
-
-Blank imports are used in the so-called _registration_pattern_ in packages such as `database/sql` and `image`.
-
-Use that pattern if you have to, but do not emulate it in your own code.
-
-: difficult to understand, based on shared global state
-
-
-
-* Dot imports
-
-A dot import allows you to access all the exported identifiers of the imported package without the need to qualify them:
-
-.play -edit src/helloworld_dot.go
-
-Dot imports can be convenient in test code, but are otherwise best avoided because
-
-- they pollute the namespace of your source file,
-- they obscure the provenance of identifiers.
-
-: similar to Java's static imports
 
 
 
@@ -750,6 +729,8 @@ However, they are distinct types and are *not* interchangeable.
 : you can have type definitions anywhere, incl. inside functions
 :   - struct types useful for JSON encoding/decoding
 :   - interface types useful for asserting on behaviour
+: few restrictions on the underlying type
+: You can define types at package level or within functions.
 
 
 
@@ -794,7 +775,7 @@ However, convention favors using `var` rather than `:=` when the variable's init
 
 * Pointers
 
-[[https://go.dev/play/p/QJNCrBMXP6b][Playground]]
+[[https://go.dev/play/p/AqhVJV4KlTm][Playground]]
 
 
 
@@ -1135,7 +1116,9 @@ A function that can fail returns an additional `error` result (the last one, by 
 
   func Get(url string) (resp *http.Response, err error) // example from the http package
 
-A non-nil `error` result indicates that the function failed; hence this error-check idiom:
+A non-nil `error` result indicates that the function failed in some way and that its "normal" results are unusable.
+
+"err" is a conventional name for error values and the following nil-check idiom is typical:
 
   resp, err := http.Get("https://jub0bs.com")
   if err != nil {
@@ -1204,7 +1187,7 @@ By avoiding the `else` keyword and eliminating error cases as they arise,
 - you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]] (your code reads like columns of a broadsheet newspaper),
 - you [[https://www.youtube.com/watch?v=yd_rtwYaXps&t=33m30s][reduce the cognitive load]] required to read and understand your code.
 
-See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer's blog post on this topic]].
+See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer's]] and [[https://dave.cheney.net/2019/07/09/clear-is-better-than-clever][Dave Cheney's]] posts on the topic.
 
 .image https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg 200 _
 
@@ -1300,6 +1283,7 @@ Fail early if the regular expression doesn't compile.
 
 .image https://i.redd.it/48emz1dvfz441.png 200 _
 
+: cap should be at least len(checkers)-1
 : use a bool variable to control the termination of the loop
 : mangle the domain name in github.Github's IsAvailable method in order to cause an error
 
@@ -1598,14 +1582,17 @@ The following example uses black-box testing:
 
   package twitter_test
 
-  // omitted import declaration of your twitter package
+  // import declaration of your twitter package (omitted here)
 
   func TestUsernameContainsTwitter(t *testing.T) {
+    // Arrange
     const (
       username = "jub0bsOnTwitter"
       want     = false
     )
+    // Act
     got := twitter.IsValid(username)
+    // Assert
     if got != want {
       t.Errorf("twitter.IsValid(%q): got %t; want %t", username, got, want)
     }
@@ -1757,7 +1744,7 @@ Let's write a function that checks the availability of a username on GitHub.
 
   defer resp.Body.Close()
 
-`defer` is useful for reclaiming resources (like the body of a `http.Response`), and generally cleaning stuff up when you're done with it.
+`defer` is useful for simplifying functions that perform various clean-up actions (such the body of a `http.Response` when you're done with it).
 
 It's similar in spirit to the `finally` keyword from other languages, but it's much more convenient to use. You'll grow to love it!
 
@@ -1773,15 +1760,21 @@ It's similar in spirit to the `finally` keyword from other languages, but it's m
 
 .play -edit src/defer_unconditional.go /^//START/,/^//END/
 
-
-
-* Mechanics of the defer keyword (cont'd)
-
 Deferred function calls are executed in reverse order in which they occur in the enclosing function.
 
 .play -edit src/defer_reverse.go /^//START/,/^//END/
 
+
+
+* Mechanics of the defer keyword (cont'd)
+
 Note also that the arguments of a deferred function call are evaluated, not when the function call executes, but when the `defer` statement is reached.
+
+.play -edit src/defer_eval.go /^//START/,/^//END/
+
+More about how `defer` works in [[https://go.dev/blog/defer-panic-and-recover][Andrew Gerrand - Defer, Panic, and Recover]].
+
+: incl. the receiver, if the function is a method
 
 
 
@@ -1789,25 +1782,9 @@ Note also that the arguments of a deferred function call are evaluated, not when
 
 Here is a version of `IsAvailable` that doesn't use `defer` to close the response body:
 
-  func IsAvailable(username string) (bool, error) {
-    resp, err := http.Get("https://github.com/" + username)
-    if err != nil {
-      return false, errors.New("unknown availability")
-    }
-    switch resp.StatusCode {
-    case http.StatusNotFound:
-      resp.Body.Close()
-      return true, nil
-    case http.StatusOK:
-      resp.Body.Close()
-      return false, nil
-    default:
-      resp.Body.Close()
-      return false, errors.New("unknown availability")
-    }
-  }
+.code src/defer_IsAvailable_without_defer.go /^//START/,/^//END/
 
-Notice how we need to call `resp.Body.Close` at each possible exit point.
+Notice how we need to call `resp.Body.Close` at each possible exit point of the `IsAvailable` function.
 
 
 
@@ -1815,23 +1792,11 @@ Notice how we need to call `resp.Body.Close` at each possible exit point.
 
 And now with `defer`:
 
-  func IsAvailable(username string) (bool, error) {
-    resp, err := http.Get("https://github.com/" + username)
-    if err != nil {
-      return false, errors.New("unknown availability")
-    }
-    defer resp.Body.Close() // once and for all
-    switch resp.StatusCode {
-    case http.StatusNotFound:
-      return true, nil
-    case http.StatusOK:
-      return false, nil
-    default:
-      return false, errors.New("unknown availability")
-    }
-  }
+.code src/defer_IsAvailable_with_defer.go /^//START/,/^//END/
 
 As soon as we know the HTTP request succeeded, we can program the closure of the response body and forget about it!
+
+: also: allows you to colocate the acquisition and cleanup of a resource in your code.
 
 
 
@@ -1839,7 +1804,7 @@ As soon as we know the HTTP request succeeded, we can program the closure of the
 
 `defer` is unreasonably convenient and powerful, but must be used with caution.
 
-Consider the following function. What's a potential issue, here?
+Consider the following function.
 
   func processFiles(paths ...string) {
     for _, path := range paths {
@@ -1852,6 +1817,8 @@ Consider the following function. What's a potential issue, here?
       // do something interesting with file...
     }
   }
+
+What's a potential issue, here?
 
 
 
@@ -1877,6 +1844,7 @@ One solution is to enclose the defer statement in a smaller function:
       // do something interesting with file...
   }
 
+: defer is not block-based but function-based!
 : If we pass a large number of files to the `processFiles` function, we could run out of file descriptors.
 : ulimit -n
 
@@ -1888,7 +1856,11 @@ We cannot take the same shortcut for Twitter as we did for GitHub, because
 
   https://twitter.com/FOO
 
-returns a `200` response regardless of whether the user `FOO` actually exists. We'll need to do things properly and call the Twitter API. For now, just stub `IsAvailable` in Twitter:
+returns a `200` response regardless of whether the user `FOO` actually exists.
+
+We'll need to do things properly and call the Twitter API.
+
+For now, just stub `IsAvailable` in Twitter:
 
   func IsAvailable(username string) (bool, error) {
     return false, nil
@@ -1948,9 +1920,9 @@ Be careful: indexing outside the bounds of an array causes either a compilation 
 
 You can iterate over an array using a for-range loop.
 
-The first loop variable corresponds to the index of the current element.
+The first iteration variable corresponds to the index of the current element.
 
-The second loop variable is only a copy of the array's current element.
+The second iteration variable is only a copy of the array's current element.
 
 .play -edit src/array_range.go  /^//START/,/^//END/
 
@@ -1964,7 +1936,7 @@ The zero value of an array type is an array full of zero values of its element t
 
 .play -edit src/array_zero.go  /^//START/,/^//END/
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
 
 
 
@@ -1974,6 +1946,8 @@ A function taking, as a parameter, an array of a given length cannot accept an a
 
 .play -edit src/array_inflexible.go  /^//START/,/^//END/
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
+
 
 
 * Direct use of arrays can be expensive
@@ -1982,9 +1956,19 @@ Remember that Go's evaluation strategy is call by value. Accordingly, functions 
 
 .play -edit src/array_expensive.go  /^//START/,/^//END/
 
-For these reasons, arrays are seldom used directly.
+.image https://go.dev/blog/gophergala/fancygopher.jpg 200 _
 
-Instead, _slices_, which are an abstraction over arrays, are used extensively in Go.
+
+
+* Arrays are seldom used
+
+For the reasons discussed previously, idiomatic Go code seldom makes direct use of arrays. This is what [[https://go.dev/doc/effective_go#arrays][Effective Go]] has to say on the topic:
+
+_Arrays_are_useful_when_planning_the_detailed_layout_of_memory_and_sometimes_can_help_avoid_allocation,_but_primarily_they_are_a_building_block_for_slices_ [...]
+
+_Slices_ are an abstraction over arrays and, in most situations, using slices should be favored over using arrays.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 
@@ -2016,6 +2000,8 @@ A slice is essentially a resizable view inside a backing array.
 
 The backing array may extend past the end of the slice.
 
+  
+
 The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
 
 When using the `make` function to create a slice, you can specify the length and capacity independently. Doing this is often useful when you're about to add elements to the slice
@@ -2042,9 +2028,9 @@ In memory, a slice is a data structure composed of three machine words:
 
 * Slice function parameters are cheap and flexible
 
-The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the underlying array! 
+The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the underlying array!
 
-Besides a slice parameter is much more flexible than an array parameter.
+Moreover, a slice parameter is much more flexible than an array parameter.
 
 .play -edit src/slice_cheap.go  /^//START/,/^//END
 
@@ -2064,10 +2050,13 @@ Like arrays, slices can be indexed.
 
 Taking the address of a slice element is legal.
 
-Be careful: indexing outside the bounds of a slice or indexing a `nil` slice causes a panic!
+Be careful: indexing a slice in the negatives or beyond its _length_ causes a panic:
 
-.play -edit src/slice_indexing.go  /^//START/,/^//END/
+.play -edit src/slice_indexing.go  /^//START1/,/^//END1/
 
+So does indexing a `nil` slice:
+
+.play -edit src/slice_indexing.go  /^//START2/,/^//END2/
 
 
 * Slicing operator TODO
@@ -2079,6 +2068,8 @@ You can produce a new slice that focuses on a different portion of the same back
 The first index (`i`) is inclusive; the second one (`j`) is exclusive.
 
 Using a second index that exceeds the slice's capacity will cause a panic.
+
+ omitting indices
 
 : TODO: mention three-index slicing
 
@@ -2102,11 +2093,13 @@ Using a second index that exceeds the slice's capacity will cause a panic.
 
 Just like for arrays, you can iterate over a slice using a for-range loop.
 
-The first loop variable corresponds to the index of the current element.
+The first iteration variable corresponds to the index of the current element.
 
-The second loop variable is only a copy of the slice's current element.
+The second iteration variable is only a copy of the slice's current element.
 
 .play -edit src/slice_range.go  /^//START/,/^//END/
+
+: iteration happens over the length (not the capacity) of the slice
 
 
 
@@ -2123,6 +2116,8 @@ Have you noticed that the logic is duplicated across our test functions? Let's f
 4. You can now safely remove your original test functions.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: note that the name of the type can be omitted in struct literal
 
 
 
@@ -2161,10 +2156,250 @@ After appending, the pointer may well point to an element of an old array that i
 : could cause a memory leak, because old array cannot be GC'd
 
 
+* Maps
+
+
+
+* Maps
+
+A map is a built-in type that represent a unordered collection of key-value pairs.
+
+The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
+
+The key type *must* be comparable:
+
+.play -edit src/incomparable_key_type.go /^//START/,/^//END/
+
+.image https://golangforall.com/assets/dvoe.svg 150 _
+
+: implemented as a hash table
+
+
+
+* Maps are reference types
+
+A function that takes a parameter of some map type only gets a copy of a reference
+to the underlying data structure (hash table).
+
+The zero value of map types is `nil`.
+
+Map types are *not* comparable.
+
+.play -edit src/map_reference.go /^//START/,/^//END/
+
+
+
+* Creating map values
+
+Invoke built-in function `make` with the desired map type to initialize an empty map:
+
+.play -edit src/map_make.go /^//START/,/^//END/
+
+Alternatively, you can create and populate a map with a _map_literal_:
+
+.play -edit src/map_literal.go /^//START/,/^//END/
+
+The trailing comma is mandatory, here.
+
+
+
+* Accessing a value associated with a key in a map
+
+`m[k]` yields the value corresponding to a key `k` in a map `m`.
+
+`m[k]` is *not* addressable!
+
+If the key is absent from the map or if the map is `nil`, the zero value of the map's value type is returned.
+
+To determine whether the key is value is present in the map, you can declare an additional variable (commonly named "ok" or "exists") of boolean type.
+
+.play -edit src/map_access.go /^//START/,/^//END/
+
+: yields the actual value: you can operate on m[k] directly (e.g. m[k]++ if map value type is integer)
+
+
+
+* Storing a key-value pair in a map
+
+Associating a key `k` with a value `v` in a map `m` is simple:
+
+  m[k] = v
+
+If the key was already present in the map, the value associated with it prior is lost.
+
+Attempts to store a value in a `nil` map cause a panic!
+
+.play -edit src/map_store.go /^//START/,/^//END/
+
+
+
+* Removing a key-value pair from a map
+
+To remove a key `k` and its value from a map `m`, use built-in function `delete`:
+
+  delete(m, k)
+
+If the map is `nil` or if the key is already absent from the map, deleting the key from the map is a no-op.
+
+.play -edit src/map_delete.go /^//START/,/^//END/
+
+
+
+* Ranging over a map
+
+You can iterate over a map using `for` and `range`:
+
+.play -edit src/map_range.go /^//START/,/^//END/
+
+At each iteration, the variables yielded by the `range` expression hold copies of
+the key and value.
+
+Maps are unordered collections. Not only is the iteration order unspecified, but it is also undeterministic! Try running the code snippet above a few times: the iteration order will typically change from one program execution to the next.
+
+
+
+* Ranging over a map in a deterministic order
+
+To range over a map in a certain order, you must
+
+- collect all map keys in a slice,
+- sort the slice as desired,
+- access the map values as you range over the sorted slice of keys.
+
+.play -edit src/map_range_deterministic.go /^//START/,/^//END/
+
+
+
+* Implementing a set using a map
+
+Go provides no native set types, but.. maps to the rescue!
+
+You can implement a set of `string` simply as a map[string]bool:
+
+.play -edit src/map_set_bool.go /^//START/,/^//END/
+
+A more memory-efficient alternative is to use a `map[string]struct{}`:
+
+.play -edit src/map_set_nothing.go /^//START/,/^//END/
+
+Pick whichever of the two approaches you prefer.
+
+
+
+* Don't insert entries in a map while ranging over it
+
+You can of course mutate values associated to a key that is already present in the map.
+
+However, inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
+
+.play -edit src/map_insert_while_ranging.go /^//START/,/^//END/
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
+
+: If a map entry is created during iteration, that entry may be produced during the iteration or may be skipped.
+: The choice may vary for each entry created and from one iteration to the next.
+
+
+
+* Don't remove entries unrelated to the current iteration
+
+If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
+
+Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order on maps is random,
+removing entries unrelated to the current iteration causes undesired *undeterminism*.
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
+
+
+
+* Don't remove entries unrelated to the current iteration (cont'd)
+
+Consider the following program:
+
+.play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
+
+From one execution to the next, the output may be either
+
+  map[baz:3 foo:1]
+
+or
+
+  map[bar:2 baz:3]
+
+
 
 * Structs
 
 [[https://go.dev/play/p/axkpaElUyHI][Live demo in Playground]]
+
+
+
+* Exercise: design a binary tree
+
+1. Open the Go Playground.
+
+2. Declare a struct type named `Tree` to represent one node of a [[https://en.wikipedia.org/wiki/Binary_tree][binary tree]].
+
+- Each node should contain a value of type `int`.
+- Each node has at most two children.
+- Each node should hold references to its children (if any), but not to its parent node.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Exercise: design a binary tree (cont'd)
+
+3. Implement the following function:
+
+  func Size(t *Tree) int
+
+It should return the number of nodes in its argument.
+
+4. Implement the following function:
+
+  func Sum(t *Tree) int
+
+It should return the sum of the values of all the nodes in its argument.
+
+
+
+* Exercise: design a binary tree (solution)
+
+The solution is available on the [[https://go.dev/play/p/ogVJA0hyXpm][Go Playground]].
+
+Is it satisfactory?
+
+What if we wanted to use another type for node values?
+
+Discuss.
+
+
+
+* A glimse of generics in Go
+
+Go 1.18 added _generics_ to the language.
+
+Types and functions can now be parameterized by types:
+
+  type Tree[E any] struct {
+    Elem  E
+    Left  *Tree[E]
+    Right *Tree[E]
+  }
+
+  func Size(t *Tree[E]) int
+  func Sum(t *Tree[E]) E
+
+(The `any` type is simply an alias for `interface{}`.)
+
+Generics promote code reusability while providing some compile-time guarantees.
+
+If you're interested in the gory details, check out the [[https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md][_Type_Parameters_Proposal_]].
+
+However, you don't need to master generics at this stage of your Go learning.
+
+: generic binary tree: https://go.dev/play/p/hViMHc2nEpR?v=gotip
 
 
 
@@ -2274,13 +2509,17 @@ Interface satisfaction is verified at compile time (similar to structural typing
 
 
 
-* Tip: keep interfaces small
+* Keep interfaces small
 
-In a similar spirit as the [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] (the "I" in SOLID), you should favor one-method interfaces.
+[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=5m18s][As Rob Pike puts it]]: _the_bigger_the_interface,_the_weaker_the_abstraction_.
 
-Interfaces that require only one methods are easier to satisfy and more composable (more about that later).
+In a similar spirit as the [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] (the "I" in SOLID),
+you should design interface types that require few methods.
 
-Go's standard library contains many examples of single-method interfaces: `error`, `fmt.Stringer`, `io.Writer`, `io.Reader`, `http.Handler`, etc.
+Such interfaces are comparatively easier to satisfy and more composable.
+
+Many of the interface types provided by Go's standard library are single-method:
+`error`, `fmt.Stringer`, `io.Writer`, `io.Reader`, `http.Handler`, etc.
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
 
@@ -2486,11 +2725,11 @@ The `io` package provides two complementary interface types:
 
 In memory, an interface value is a data structure composed of two machine words:
 
-  ---------------------------
-  | descr. of concrete type |
-  ---------------------------
-  |    pointer to value     |
-  ---------------------------
+                ---------------------------
+                | descr. of concrete type |
+                ---------------------------
+                |    pointer to value     |
+                ---------------------------
 
 Interfaces are reference types; their zero value is `nil`.
 
@@ -2500,7 +2739,7 @@ Interfaces are reference types; their zero value is `nil`.
 
 * Gotcha: interfaces and nil
 
-An interface that holds a `nil` pointer to a concrete type is not itself `nil`!
+An interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
 
 Find the bug in the following programme:
 
@@ -2528,6 +2767,8 @@ The latter is more flexible, easier to test, promotes decoupling, and guides you
 
 This principle isn't specific to Go and is known as [[https://blog.ndepend.com/programming-interface-simple-explanation/][_programming_to_an_interface_]].
 
+: os.File has a lot of methods that are not relevant to what Tree's Save is supposed to do
+
 
 
 * Require no more, promise no less
@@ -2551,13 +2792,19 @@ This principle is similar in spirit to the Domain Driven Domain's principle know
 
 * Using interfaces for test doubles
 
-Interfaces are great for [[https://www.martinfowler.com/bliki/TestDouble.html][_test_doubles_]]: mocks, stubs, fakes, dummies, etc.
+[[https://www.martinfowler.com/bliki/TestDouble.html][_Test_doubles_]] are substitutes for objects whose side effects are undesirable in tests. Depending on the role they play within a test, people call them _mocks_, _stubs_, _fakes_, etc.
 
-In Go, not only can you declare an interface _after_the_fact_ for a concrete type that you've _already_ declared...
+You now know that you can you declare an interface _after_the_fact_ for your own types.
 
-\... but you can also declare an interface for a concrete type you do not own! Ponder this!
+But even if you use a concrete type that you do not own and for which no interface type is provided, you can always declare your own interface type that this concrete type automatically satisfies!
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 250 _
+See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-tests-in-golang-619653f90742#e976][Mat Ryer's - 5 simple tips and tricks for writing unit tests in #golang]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 200 _
+
+: unit test: no I/O, limit site effects
+: email sender: you don't want to send an email every time
+: payment system: unless e2e tests, don't want to trigger a real payment in unit tests
 
 
 
@@ -2592,6 +2839,8 @@ In Go, not only can you declare an interface _after_the_fact_ for a concrete typ
 9. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method? If not, what would you change?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: need a non-nil request body: use http.NoBody
 
 
 
@@ -2866,41 +3115,43 @@ We need another mechanism...
 
 The [[https://pkg.go.dev/sync/#WaitGroup][`sync` package]] provides a mechanism for orchestrating goroutines: _wait_groups_.
 
+A wait group is little more than a glorified counter with _concurrency-safe_ operations.
+
+A wait group allows you to
+
+- keep track of the number of goroutines you spawn to perform a particular task, and
+- wait for all those goroutines to terminate before moving on.
+
 Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/upright.svg 200 _
 
 : e.g. if you're spawning a goroutine for each line of a file that you're reading, or for each element received from a channel
 
 
 
-* Declaring a wait group
+* Using a wait group
 
-Because the zero value of `sync.WaitGroup` is readily usable, you can simply write
+Initialize a variable of type `sync.WaitGroup`, whose the zero value is readily usable.
 
-  var wg sync.WaitGroup
+A wait group supports three operations:
 
-Alternatively, if you want a `*sync.WaitGroup`, write
+  func (wg *WaitGroup) Add(delta int)
 
-  wg := new(sync.WaitGroup)     // equivalent to &sync.WaitGroup{}
+- increments the counter by delta
+- should be called _just_before_ spawning a goroutine
 
+  func (wg *WaitGroup) Done()
 
+- decrements the counter by 1
+- should be called _at_the_very_end_ of each spawned goroutine (with a `defer`, typically)
 
-* Operations on a wait group
+  func (wg *WaitGroup) Wait()
 
-A wait group is little more than a glorified counter with _concurrency-safe_ operations.
+- `wg.Wait()` blocks until the counter goes back to 0 (acts as a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]])
+- should be called at the point of the spawning goroutine where you need to wait
 
-- `wg.Add(n)` increments the counter by n (>0).
-- `wg.Done()` decrements the counter by 1. It's equivalent to `wg.Add(-1)`.
-- `wg.Wait()` blocks until the counter goes back to 0; it acts as a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]].
-
-
-
-* How to use a wait group
-
-Call `wg.Add(1)` _just_before_ spawning a goroutine.
-
-Call `wg.Done()` _at_the_very_end_ of each child goroutine (use `defer`!).
-
-Call `wg.Wait()` in the spawning goroutine to wait for all child goroutines to terminate.
+: wg.Done() is equivalent to wg.Add(-1)
 
 
 
@@ -2911,6 +3162,8 @@ Use a wait group to make `main` wait until both `grindCoffeeBeans` and `frothMil
 Tip: you can apply the `go` keyword to an anonymous function.
 
 .image https://i.pinimg.com/originals/41/8b/9c/418b9cb037389f7c5b6783ced8a7156b.jpg 300 _
+
+: if you don't control the functions you want to spawn as goroutines, wrap them in anonymous funcs that capture the waitgroup
 
 
 
@@ -2932,9 +3185,9 @@ Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the ch
 
 The call to `wg.Wait` must happen _after_ all calls to `wg.Add` (otherwise: data race).
 
-If a function needs a wait group declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to the function.
+A `sync.WaitGroup` must not be copied after first use. If a function needs to operate on a wait group that was declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to that function.
 
-.image https://go.dev/blog/gopher/plush.jpg 300 _
+.image https://go.dev/blog/gopher/plush.jpg 250 _
 
 : if wg.Add concurrent with wg.Wait, data race: https://go.dev/play/p/PPlY-M7yfYh
 
@@ -2947,7 +3200,7 @@ Can you spot the bug in the following programme?
 .play -edit src/goroutine_func_quiz.go /^//START/,/^//END/
 
 : ask them first how they expect the programme to behave
-: sometimes prints 10, not 9! because loop variable goes beyond bound before loop can end
+: sometimes prints 10, not 9! because iteration variable goes beyond bound before loop can end
 
 
 
@@ -2955,11 +3208,13 @@ Can you spot the bug in the following programme?
 
 There is a _data_race_: a variable is being read and updated by different goroutines in a concurrent fashion!
 
-More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture_ and read loop variable `i` as it's being updated by the loop.
+More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture_ and read iteration variable `i` as it's being updated by the loop.
 
 .play -edit src/goroutine_func_answer.go /^//START/,/^//END/
 
 Consequently, the programme is undeterministic: the results are unpredictable.
+
+: before learning how to fix it, let's see how we can get help for detecting it
 
 
 
@@ -2985,7 +3240,7 @@ Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-
 
 * Fixing the data race
 
-One way to fix the data race consists in shadowing the loop variable inside the loop, before the `go` statement.
+One way to fix the data race consists in shadowing the iteration variable inside the loop, before the `go` statement.
 
 .play -edit src/goroutine_func_redecl.go /^//START/,/^//END/
 
@@ -2999,9 +3254,9 @@ See also the [[https://golang.org/doc/faq#closures_and_goroutines][Golang FAQ ab
 
 * Fixing the data race
 
-An alternative solution consists in passing the value of the loop variable as an argument to the anonymous function.
+An alternative solution consists in passing the value of the iteration variable as an argument to the anonymous function.
 
-That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the loop variable's value at the time of the iteration of interest.
+That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the iteration variable's value at the time of the iteration of interest.
 
 .play -edit src/goroutine_func_arg.go /^//START/,/^//END/
 
@@ -3015,15 +3270,21 @@ Defining a dedicated named function can help:
 
 .play -edit src/goroutine_func_standalone.go /^//START/,/^//END/
 
-: TODO: add more subtle example https://go.dev/play/p/8VMdHJZ6dyl
 
 
+* Namecheck project: check each user name concurrently
 
-* Namecheck project: check concurrently
+1. Extract the body of the for-range loop on your `[]Checker` slice as a function in `main.go`:
 
-Rather than checking the username on each platform sequentially, do so concurrently.
+  func check(checker namecheck.Checker, username string, wg *sync.WaitGroup)
 
-Does the user experience improve?
+2. Within the loop, apply the `go` keyword to your `check` function.
+
+3. Use a wait group in order to wait, at the end of the `main` function, for all the goroutines that you spawned to terminate.
+
+Does user experience improve?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
@@ -3310,7 +3571,10 @@ Add sends and receives to fix ideas. Discuss.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
-: ask them what happens for go fmt.Println(<-ch)
+: ask them what happens if we write go fmt.Println(<-ch)
+: an incorrect approach: go func() { fmt.Println(<-ch) }() then ch <- 42 ...
+: ... because <-ch can execute and main terminate before the Println does
+: correct: go func() { ch <- 42}() and in main: fmt.Println(<-ch)
 
 
 
@@ -3338,24 +3602,6 @@ Note that both
 - attempting to close an already closed channel
 
 cause a panic.
-
-
-
-* What's the point of closing a channel?
-
-*Terminating*a*range*operation*
-
-If you range over a channel and no additional values get sent to it, the range expression will block until you close the channel.
-
-*Broadcasting*a*signal*
-
-Because closing a channel unblocks all receives from that channel, it can be used to broadcast a signal to multiple goroutines!
-
-In fact, the [[https://pkg.go.dev/context/][`context` package]] is [[https://vimeo.com/115309491#t=10m][based on this idea]].
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/go-grpc-web.svg 200 _
-
-: you could use break to terminate the loop during an iteration, though
 
 
 
@@ -3408,7 +3654,7 @@ Ranging over a channel amounts to iteratively receiving from it:
     // do something with v
   }
 
-Variable `v` takes the successive values sent on the channel until the channel is both closed and empty.
+Note that, when ranging over a channel, only one iteration variable is available. It takes the successive values sent on the channel until the channel is both closed and empty.
 
 The code above is an exact equivalent to the following:
 
@@ -3420,17 +3666,19 @@ The code above is an exact equivalent to the following:
     // do something with v
   }
 
+: There's no notion of indexing with channels.
+
 
 
 * Ranging over a channel blocks until the channel is closed
 
-A for-range loop on a channel will only terminate if and after the channel gets closed!
+Closing a channel to which a for-range loop is applied causes the loop to terminate:
 
 .play -edit src/range_blocks_until_channel_closed.go /^//START/,/^//END/
 
 
 
-* Reminder: channels are reference types
+* Remember: channels are reference types
 
 Operating on a copy `cb` of a channel `ca` affects the same underlying data structure as if you operated on channel `ca` directly.
 
@@ -3453,7 +3701,7 @@ those parameters would instead need to be pointers to channels.)
     Err       error
   }
 
-2. In `main`, initialize a `chan`Result`; make sure it's accessible to the child goroutines.
+2. In `main`, initialize a `chan`Result` named `resultCh`; make sure it's accessible to the child goroutines.
 
 3. In each child goroutine, create a `Result` value and send it to the channel.
 
@@ -3589,7 +3837,13 @@ Spawning goroutines is easy, but making sure they terminate sometimes requires m
     }
   }
 
-If function `cancellable` is launched as a goroutine, another goroutine can get it to terminate by sending to or closing the `quit` channel. Why?
+Remember: closing a channel unblocks all receives from that channel.
+
+If function `cancellable` is launched as a goroutine, you can trigger its eventual termination by simply closing the `quit` channel.
+
+: can be used to broadcast a signal to multiple goroutines!
+
+
 
 
 
@@ -3597,15 +3851,21 @@ If function `cancellable` is launched as a goroutine, another goroutine can get 
 
 .play -edit src/uncancellable.go /^//START/,/^//END/
 
-Function `printInts` never terminates! Modify the program to make `printInts` cancellable from `main`. Cancel the goroutine after one second.
+Function `printInts` never terminates...
 
-You can do this exercise in the [[https://go.dev/play/p/uNLmiVb_1rY][Go Playground]].
+1. Modify the program to make `printInts` cancellable.
+
+2. Cancel the goroutine from `main` after one second.
+
+You can do this exercise in the [[https://go.dev/play/p/yWEVD1G7Oix][Go Playground]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 
 
 * Exercise: render a function cancellable (solution)
 
-The solution is available on the [[https://go.dev/play/p/RBbA2DCWmu2][Go Playground]].
+The solution is available on the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playground]].
 
 : mention that closing the channel broadcasts a signal to all goroutines that receive from it
 
@@ -3613,7 +3873,7 @@ The solution is available on the [[https://go.dev/play/p/RBbA2DCWmu2][Go Playgro
 
 * Canceling goroutines with context
 
-The `context` package formalizes this idea of broadcasting a signal by closing a channel.
+The `context` package [[https://vimeo.com/115309491#t=10m][formalizes this idea]] of broadcasting a signal by closing a channel.
 
 It exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
 
@@ -3636,9 +3896,13 @@ By convention, the `context.Context` parameter (if any) is always first.
 
 * Exercise: cancelling a goroutine with context.Context
 
-Browse the documentation of [[https://pkg.go.dev/context/][the `context` package]], and modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
+1. Study the documentation of [[https://pkg.go.dev/context/][the `context` package]].
 
-You can do this exercise in the [[https://go.dev/play/p/RBbA2DCWmu2][Go Playground]].
+2. Modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
+
+You can do this exercise in the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playground]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : extra exercise: make IsAvailable cancellable
 
@@ -3646,7 +3910,7 @@ You can do this exercise in the [[https://go.dev/play/p/RBbA2DCWmu2][Go Playgrou
 
 * Exercise: cancelling a goroutine with context.Context (solution)
 
-The solution is available on the [[https://go.dev/play/p/XXH76YKz_Oj][Go Playground]].
+The solution is available on the [[https://go.dev/play/p/bJeIioSOTIV][Go Playground]].
 
 
 
@@ -3665,7 +3929,8 @@ The solution is available on the [[https://go.dev/play/p/XXH76YKz_Oj][Go Playgro
 : show that deadlock if you never throw the ball on the table
 : one player terminates while the other is left holding the ball
 : one possibility: buffer size of 1, but no guarantee that the same player will play twice in a row
-: non-blocking send by adding a select statement
+: non-blocking send by adding a select statement (with an additional case <-ctx.Done())
+: easy solution: referee receive ball from main after cancel()
 
 
 
@@ -3679,9 +3944,18 @@ The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playgro
 
 
 
-* Your first Go server TODO
+* Your very first Go server
 
 .play -edit src/server_helloworld.go /^//START/,/^//END/
+
+You can define a HTTP handler as a package-level function. It must take two params:
+
+- a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface for you to compose the HTTP response.
+- a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.
+
+You can then register your handler for a given route using [[https://pkg.go.dev/net/http#HandleFunc][function `http.HandleFunc`]].
+
+Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][function `http.ListenAndServe`]], which blocks for as long as the server stays up. Don't forget to check the error it returns.
 
 : http.HandleFunc registers the handler on the DefaultServeMux (package-level variable)
 : ListenAndServe: it last arg is nil, serves the DefaultServeMux
@@ -3707,228 +3981,105 @@ The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playgro
 
 
 
-* JSON encoding/decoding TODO
+* JSON encoding
 
-TODO
+Use [[https://pkg.go.dev/encoding/json/][the `encoding/json` package]] to encode some Go value to JSON.
+
+_Field_tags_ instruct the package about the correspondance between the struct's field names (which must be exported!) and the property names of the resulting JSON object:
+
+.code -edit src/json_encoding.go /^//START1/,/^//END1/
+
+Create a `json.Encoder` that writes to the handler's `http.ResponseWriter`,
+then pass the value to its `Encode` method:
+
+.play -edit src/json_encoding.go /^//START2/,/^//END2/
+
+: don't forget to inspect the resulting error
 
 
 
 * Namecheck project: write the results as JSON in the response
 
-So far, what we're writing in the response is a Go-specific textual representation of a slice of checkers. Let's write some JSON instead.
+1. Instead of writing a Go-specific textual representation of the slice of checkers in the HTTP response, encode the slice to JSON.
 
-Return JSON in the response (see [[https://pkg.go.dev/encoding/json/][encoding/json]]), with the correct content type.
+2. Add field tags in the declaration of your `Result` struct type so that property names in the resulting JSON be lowercase.
 
-
-
-* Namecheck project: use a third-party package for routing
-
-We'll use [[https://github.com/gorilla/mux][gorilla/mux]], a popular alternative to `net/http` for defining routes.
-
-To download the dependency, run the following command at the root of your project:
-
-  go get github.com/gorilla/mux
-
-Doing so will also update your `go.mod` file and create a `go.sum` file.
-
-Import `gorilla/mux` in your server's `main.go` and redefine your route with it.
-
-: we don't really need mux here; nothing fancy; just for practice
-
-
-
-* Maps
-
-A map is a built-in type that represent a unordered collection of key-value pairs.
-
-The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
-
-The key type *must* be comparable:
-
-.play -edit src/incomparable_key_type.go /^//START/,/^//END/
-
-.image https://golangforall.com/assets/dvoe.svg 150 _
-
-: implemented as a hash table
-
-
-
-* Maps are reference types
-
-A function that takes a parameter of some map type only gets a copy of a reference
-to the underlying data structure (hash table).
-
-The zero value of map types is `nil`.
-
-Map types are *not* comparable.
-
-.play -edit src/map_reference.go /^//START/,/^//END/
-
-
-
-* Creating map values
-
-Invoke built-in function `make` with the desired map type to initialize an empty map:
-
-.play -edit src/map_make.go /^//START/,/^//END/
-
-Alternatively, you can create and populate a map with a _map_literal_:
-
-.play -edit src/map_literal.go /^//START/,/^//END/
-
-The trailing comma is mandatory, here.
-
-
-
-* Accessing a value associated with a key in a map
-
-`m[k]` yields the value corresponding to a key `k` in a map `m`.
-
-`m[k]` is *not* addressable!
-
-If the key is absent from the map or if the map is `nil`, the zero value of the map's value type is returned.
-
-To determine whether the key is value is present in the map, you can declare an additional variable (commonly named "ok" or "exists") of boolean type.
-
-.play -edit src/map_access.go /^//START/,/^//END/
-
-: yields the actual value: you can operate on m[k] directly (e.g. m[k]++ if map value type is integer)
-
-
-
-* Storing a key-value pair in a map
-
-Associating a key `k` with a value `v` in a map `m` is simple:
-
-  m[k] = v
-
-If the key was already present in the map, the value associated with it prior is lost.
-
-Attempts to store a value in a `nil` map cause a panic!
-
-.play -edit src/map_store.go /^//START/,/^//END/
-
-
-
-* Removing a key-value pair from a map
-
-To remove a key `k` and its value from a map `m`, use built-in function `delete`:
-
-  delete(m, k)
-
-If the map is `nil` or if the key is already absent from the map, deleting the key from the map is a no-op.
-
-.play -edit src/map_delete.go /^//START/,/^//END/
-
-
-
-* Ranging over a map
-
-You can iterate over a map using `for` and `range`:
-
-.play -edit src/map_range.go /^//START/,/^//END/
-
-At each iteration, the variables yielded by the `range` expression hold copies of
-the key and value.
-
-Maps are unordered collections. Not only is the iteration order unspecified, but it is also undeterministic! Try running the code snippet above a few times: the iteration order will typically change from one program execution to the next.
-
-
-
-* Ranging over a map in a deterministic order
-
-To range over a map in a certain order, you must
-
-- collect all map keys in a slice,
-- sort the slice as desired,
-- access the map values as you range over the sorted slice of keys.
-
-.play -edit src/map_range_deterministic.go /^//START/,/^//END/
-
-
-
-* Implementing a set using a map
-
-Go provides no native set types, but.. maps to the rescue!
-
-You can implement a set of `string` simply as a map[string]bool:
-
-.play -edit src/map_set_bool.go /^//START/,/^//END/
-
-A more memory-efficient alternative is to use a `map[string]struct{}`:
-
-.play -edit src/map_set_nothing.go /^//START/,/^//END/
-
-Pick whichever of the two approaches you prefer.
-
-
-
-* Don't insert entries in a map while ranging over it
-
-You can of course mutate values associated to a key that is already present in the map.
-
-However, inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
-
-.play -edit src/map_insert_while_ranging.go /^//START/,/^//END/
-
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
-
-: If a map entry is created during iteration, that entry may be produced during the iteration or may be skipped.
-: The choice may vary for each entry created and from one iteration to the next.
-
-
-
-* Don't remove entries unrelated to the current iteration
-
-If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
-
-Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order on maps is random,
-removing entries unrelated to the current iteration causes undesired *undeterminism*.
-
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
-
-
-
-* Don't remove entries unrelated to the current iteration (cont'd)
-
-Consider the following program:
-
-.play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
-
-From one execution to the next, the output may be either
-
-  map[baz:3 foo:1]
-
-or
-
-  map[bar:2 baz:3]
-
-
-
-* Namecheck project: count of checks per username
-
-Keep track (in memory) of how many times each username has been checked.
-
-- What data structure seems appropriate?
-- Create an additional `/stats` route that returns a JSON representation of the data structure in question.
-
-Discuss.
+3. Make sure you specify an appropriate content type.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
-* Maps are not concurrency-safe!
+* JSON decoding
+
+.play -edit src/json_encoding.go /^//START3/,/^//END3/
+
+Declaring a local variable whose type is an anynomous struct is pretty common.
+
+Create a `json.Decoder` that reads from the body of the handler's `*http.Request`,
+then pass a pointer to the variable to its `Decode` method.
+
+[[https://twitter.com/mholt6][Matt Holt]]'s [[https://mholt.github.io/json-to-go/][JSON-to-Go converter]] is a time-saving tool for JSON decoding.
+
+For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andrew Gerrand - JSON and Go]].
+
+: don't forget to inspect the resulting error
+: curl -v -XPOST -H "Content-Type: application/json" --data '{"name": "Bob"}' http://localhost:8080/admin/new
+: no exercise for JSON decoding, but you could retrieve the username to test from the request's JSON body instead of a query param
+
+
+
+* Namecheck project: use a third-party package for routing
+
+Let's use [[https://github.com/gorilla/mux][gorilla/mux]], a popular alternative to `net/http` for defining routes.
+
+1. Run the following command within your project to download the dependency:
+
+  go get github.com/gorilla/mux
+
+2. Inspect the changes in your `go.mod` file and notice the creation of a `go.sum` file.
+
+3. Import `gorilla/mux` in your server's `main.go` and redefine your route with it.
+
+4. Run the following command to clean up your `go.mod` file:
+
+  go mod tidy
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+: we don't really need mux here; nothing fancy; just for practice
+
+
+
+* Namecheck project: count of checks per username
+
+Let's keep track (in memory) of how many times each username has been checked.
+
+1. Discuss which data structure seems appropriate.
+
+2. Declare a variable of that type at package level.
+
+3. Create an additional `/stats` route that returns a JSON representation of the data structure in question.
+
+4. Run your server (with the race detector on) and exercise it.
+
+5. Do you notice any problem?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* One problem: we've introduced a synchronization bug
 
 The HTTP server provided by `net/http` is concurrent: it handles each incoming request in a separate goroutine.
 
-However maps are *not* concurrency-safe: carelessly updating a map from multiple goroutines yields unpredictable results!
+However, maps are *not* concurrency-safe: carelessly updating a map from multiple goroutines yields unpredictable results!
 
 .image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
 
 
 
-* Maps are not concurrency-safe! (cont'd)
+* Maps are not concurrency-safe
 
 .play -edit src/map_not_concurrency_safe.go /^//START/,/^//END/
 
@@ -3938,12 +4089,16 @@ However maps are *not* concurrency-safe: carelessly updating a map from multiple
 
 Go encourages you to use channels to communicate between goroutines.
 
-However, sometimes, sharing memory is simpler and/or performant.
+However, sharing memory can sometimes be simpler and/or more performant.
 
-We'll cover two facilities for sharing memory:
+Go's standard library provides two main mechanisms for sharing memory:
 
 - [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync/][the `sync` package]],
 - synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
+
+: won't cover the latter because easy to misuse
 
 
 
@@ -3951,7 +4106,9 @@ We'll cover two facilities for sharing memory:
 
 1. Study the documentation of `sync.Mutex`.
 
-2. Guard reads and writes to the map with a mutex.
+2. Guard reads from and writes to the map with a mutex.
+
+3. Run the server again with the race detector on. Any issue this time?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3974,13 +4131,8 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 * Open discussion
 
 
-* Image credits
 
-TODO
-
-
-
-* Appendix A: Strings
+* Appendix A: strings
 
 
 
@@ -4128,4 +4280,49 @@ function `utf8.RuneCountInString` returns the number of *runes* in a string.
 Other useful functions for manipulating strings are can be found in packages `unicode/utf8`, `strings`, `strconv`, `fmt`, and `regexp`.
 
 
+* Appendix B: other import syntaxes
 
+
+
+* Blank imports
+
+A blank import uses the blank identifier as package name:
+
+  import _ "github.com/go-sql-driver/mysql"
+
+A blank import makes none of the imported package's members available in the importing package.
+
+The sole reason for using a blank import to import a package is the side effects carried out during [[https://golang.org/ref/spec#Package_initialization][the package's initialization]].
+
+Blank imports are used in the so-called _registration_pattern_ in packages such as `database/sql` and `image`.
+
+Use that pattern if you have to, but do not emulate it in your own code.
+
+: difficult to understand, based on shared global state
+
+
+
+* Dot imports
+
+A dot import allows you to access all the exported identifiers of the imported package without the need to qualify them:
+
+.play -edit src/helloworld_dot.go
+
+Dot imports can be convenient in test code, but are otherwise best avoided because
+
+- they pollute the namespace of your source file,
+- they obscure the provenance of identifiers.
+
+: similar to Java's static imports
+
+
+
+* Relative imports
+
+A relative import relies on the location of the imported package relative to that of the importing package on the disk:
+
+  package main
+
+  import ./twitter
+
+Avoid relative imports like the plague!

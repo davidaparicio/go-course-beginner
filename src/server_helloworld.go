@@ -1,20 +1,21 @@
 package main
 
 import (
-	"io"
+	"fmt"
 	"log"
 	"net/http"
 )
 
 // START OMIT
+func helloHandler(w http.ResponseWriter, req *http.Request) { // HL
+	fmt.Fprint(w, "Hello, world!\n")
+}
+
 func main() {
-	http.HandleFunc("/hello", helloHandler)
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	http.HandleFunc("/hello", helloHandler)                   // HL
+	if err := http.ListenAndServe(":8080", nil); err != nil { // HL
 		log.Fatal(err)
 	}
 }
 
-func helloHandler(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "Hello, world!\n")
-}
 // END OMIT

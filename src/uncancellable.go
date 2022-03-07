@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// START OMIT
 func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -17,11 +16,10 @@ func main() {
 	wg.Wait()
 }
 
+// START OMIT
 func printInts() {
-	var i int
-	for {
+	for i := 0; ; i++ {
 		fmt.Println(i)
-		i++
 		time.Sleep(200 * time.Millisecond)
 	}
 }
