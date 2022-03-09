@@ -2059,19 +2059,15 @@ So does indexing a `nil` slice:
 .play -edit src/slice_indexing.go  /^//START2/,/^//END2/
 
 
-* Slicing operator TODO
+* Slicing operator
 
-You can produce a new slice that focuses on a different portion of the same backing array using the _slicing_operator_:
+You can produce a new slice that focuses on a different portion of the same backing array using the _slicing_operator_.
 
-  s1 := s[i:j]
+.play -edit src/slicing_operator.go  /^//START/,/^//END/
 
-The first index (`i`) is inclusive; the second one (`j`) is exclusive.
+The first index is inclusive and, if unspecified, defaults to `0`.
 
-Using a second index that exceeds the slice's capacity will cause a panic.
-
- omitting indices
-
-: TODO: mention three-index slicing
+The second index is exclusive and, if unspecified, defaults to the length of the slice.
 
 
 
@@ -2086,6 +2082,22 @@ Using a second index that exceeds the slice's capacity will cause a panic.
 4. If a username was specified, use it as before in the rest of your programme.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Slicing operator (cont'd)
+
+For slicing expression `s[i:j]` to be legal, the indices `i` and `j` must satisfy
+
+  0 <= i <= j <= cap(s)
+
+Otherwise, a compilation error or panic will occur.
+
+Note that the slicing operator allows you to retrieve the part of the backing array that extends beyond the length of the slice you're operating on:
+
+.play -edit src/slicing_operator2.go  /^//START/,/^//END/
+
+There's also a three-index form, which can be useful in some cases, but we won't talk about it here.
 
 
 
@@ -2660,6 +2672,8 @@ However, refrain from using it in the business layer of your application.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/ballet.svg 200 _
 
+: a bit like *void in C
+
 
 
 * Notable interfaces: error
@@ -2723,29 +2737,58 @@ The `io` package provides two complementary interface types:
 
 * Interfaces under the hood
 
-In memory, an interface value is a data structure composed of two machine words:
+  ----------------------
+  | pointer to itable  |
+  ----------------------
+  |  pointer to value  |
+  ----------------------
 
-                ---------------------------
-                | descr. of concrete type |
-                ---------------------------
-                |    pointer to value     |
-                ---------------------------
+Under the hood, an interface value is a two-word data structure:
 
-Interfaces are reference types; their zero value is `nil`.
+- a pointer to an _itable_, which contains metadata about the concrete type stored in the interface value: name, set of methods, etc.
+- generally, a pointer to the value of the concrete type stored in the interface value.
 
-: TODO: add proof of that
+For the gory details, see [[https://research.swtch.com/interfaces][Russ Cox - Go Data Structures: Interfaces]].
 
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 150 _
 
 
-* Gotcha: interfaces and nil
 
-An interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
+* An interface's zero value
+
+Interfaces are reference types; their zero value is `nil`:
+
+.play -edit src/interface_zero.go /^//START/,/^//END/
+
+A `nil` interface value isn't associated to any concrete type and points to no value:
+
+  ---------------------------------------
+  |                 nil                 |
+  ---------------------------------------     ==     nil
+  |                 nil                 |
+  ---------------------------------------
+
+Be careful: an interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
+
+  ---------------------------------------
+  | pointer to twitter.Twitter's itable |
+  ---------------------------------------     !=     nil
+  |                 nil                 |
+  ---------------------------------------
+
+Developers who fail to account for this distinction expose themselves to subtle bugs...
+
+: Interface types are comparable, but you already know that... How?
+
+
+
+* Pitfall: interfaces and nil
 
 Find the bug in the following programme:
 
 .play -edit src/interface_nil.go /^//START/,/^//END/
 
-More details about this are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
+More details about this subtlety are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
 
 
 
