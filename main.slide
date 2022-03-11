@@ -1291,19 +1291,25 @@ Fail early if the regular expression doesn't compile.
 
 * Namecheck project: validation of Twitter usernames
 
-Write a function named `IsValid` that returns true if its parameter is a valid username on Twitter, and false otherwise:
+1. Write a function named `IsValid` that returns `true` if its parameter is a valid username on Twitter, and `false` otherwise:
 
-  func IsValid(username string) bool {
-    // returns true if username is valid on Twitter
-  }
+  func IsValid(username string) bool
 
-Write a few "tests" for `IsValid` in the `main` function.
+2. Write a few "tests" for `IsValid` in the `main` function.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Namecheck project: the need for dedicated packages
 
 All the code we've written in `main.go` so far is specific to Twitter, which is a bit messy.
 
 It would be preferable to create a dedicated library package for each of the supported platforms (Twitter, GitHub, etc.)
 
 Let's learn how to create a library package and use it in our `main` package.
+
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
 
 
 
@@ -1728,13 +1734,17 @@ Let's write a function that checks the availability of a username on GitHub.
 
 * Namecheck project: availability on GitHub (cont'd)
 
-3. Now implement `IsAvailable` for real. It should send a `GET` request to `https://github.com/USERNAME`, where USERNAME is a placeholder for the username whose availability we'd like to check.
+3. Now implement `IsAvailable` for real. It should send a `GET` request to
+
+  https://github.com/USERNAME
+
+where USERNAME stands for the username whose availability we'd like to check.
 
 - If the response's status code is `404`, `IsAvailable` should return `true` and `nil`.
 - If the response's status code is `200`, `IsAvailable` should return `false` and `nil`.
 - For any other status code or in case an error occurs, `IsAvailable` should return `false` and a non-nil error.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 
 
@@ -1870,11 +1880,13 @@ For now, just stub `IsAvailable` in Twitter:
 
 * Namecheck project: missing abstraction
 
-Our project is starting to take shape, but it still suffers from limitations.
+Our project is starting to take shape, but it still suffers from limitations:
 
-In particular, the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, but nothing relates them. It would be nice to have a common abstration to manipulate one or the other indiscriminately...
+- The `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, but nothing relates them. It would be nice to have a common abstration to manipulate one or the other indiscriminately...
 
-Also, at this stage, `IsAvalailable` unconditionally sends a HTTP request. How are we going to write unit tests for it? We'd need a way of somehow mocking the HTTP client...
+- Function `IsAvalailable` unconditionally sends a HTTP request. How are we going to write unit tests for it? We'd need a way of somehow mocking the HTTP client...
+
+Interfaces are the answer to both problems! Patience; we're getting there...
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
@@ -2135,13 +2147,13 @@ Have you noticed that the logic is duplicated across our test functions? Let's f
 
 * Appending elements to a slice
 
-The built-in function `append` is allows you to add elements to the end of a slice.
+A built-in function named `append` allows you to add elements to the end of a slice.
 
-Its last parameter is variadic.
+Its last parameter is variadic: you can add more than one element to the slice at a time.
 
 .play -edit src/append.go  /^//START/,/^//END/
 
-Under the hood, `append` copies elements of the backing array to a larger one when capacity in the former has been reached:
+Under the hood, the `append` function copies elements of the backing array to a larger one when capacity in the former has been reached:
 
 .play -edit src/append_grow.go  /^//START/,/^//END/
 
@@ -2154,6 +2166,8 @@ Bear in mind that multiple slices may share the same backing array.
 A change to an element of one such slice will be reflected in the other slices.
 
 .play -edit src/slice_spooky.go  /^//START/,/^//END/
+
+In fact, that is what happens when you pass a slice to a function: functions operate on copies of their arguments, but both the original slice and its copy reference the same backing array.
 
 
 
@@ -2284,7 +2298,7 @@ To range over a map in a certain order, you must
 
 * Implementing a set using a map
 
-Go provides no native set types, but.. maps to the rescue!
+Go provides no native set types, but... maps to the rescue!
 
 You can implement a set of `string` simply as a map[string]bool:
 
@@ -2378,7 +2392,7 @@ It should return the sum of the values of all the nodes in its argument.
 
 * Exercise: design a binary tree (solution)
 
-The solution is available on the [[https://go.dev/play/p/ogVJA0hyXpm][Go Playground]].
+The solution is available on the [[https://go.dev/play/p/bxVmvlNAodD][Go Playground]].
 
 Is it satisfactory?
 
@@ -2447,19 +2461,21 @@ Implement `IsAvailable` in the `twitter` package:
 
 * Namecheck project: custom Twitter & GitHub types
 
-1. In `twitter` package, declare a `Twitter` type based on an empty struct. We'll add fields to it later.
+1. In `twitter` package, declare a `Twitter` type based on an empty struct:
 
   type Twitter struct{}
 
-2. Similarly, in the `github` package, declare a `GitHub` struct type.
+We'll add fields to it later.
 
-Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods on the two types we've just declared.
+2. Similarly, in the `github` package, declare a `GitHub` struct type.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
 * Methods
+
+Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods on the two types we've just declared.
 
 Live demo in Playground
 
@@ -2877,7 +2893,7 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 7. Write a few test cases for `github.GitHub`'s `IsAvailable` method.
 
-8. Run the tests. You may get some panics. If you do, can you figure out why and fit it?
+8. Run the tests. You may get some panics. If you do, can you figure out why and fix it?
 
 9. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method? If not, what would you change?
 
@@ -3317,7 +3333,7 @@ Defining a dedicated named function can help:
 
 * Namecheck project: check each user name concurrently
 
-1. Extract the body of the for-range loop on your `[]Checker` slice as a function in `main.go`:
+1. Extract the body of the for-range loop on your `[]Checker` slice as a function in your `main` package:
 
   func check(checker namecheck.Checker, username string, wg *sync.WaitGroup)
 
@@ -4054,6 +4070,8 @@ then pass the value to its `Encode` method:
 
 
 * JSON decoding
+
+Use [[https://pkg.go.dev/encoding/json/][the `encoding/json` package]] to decode some JSON to a Go variable.
 
 .play -edit src/json_encoding.go /^//START3/,/^//END3/
 

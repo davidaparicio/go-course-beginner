@@ -13,6 +13,6 @@ func main() {
 	fmt.Println(m)
 
 	m = nil
-	// m["white"] = "#ffffff" // causes a compilation error // HL
+	// m["white"] = "#ffffff" // causes a panic // HL
 	// END OMIT
 }
