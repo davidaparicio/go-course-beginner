@@ -315,23 +315,21 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
 
 * Namecheck project: a starting point
 
-1. Create a folder named `namecheck`.
-
-2. Create a file named `main.go` file at the root of the `namecheck` folder.
+1. Create a folder named `namecheck`; in it, create a file named `main.go`:
 
   namecheck
   └── main.go
 
-3. Write a "Hello World" programme in main.go
+2. Write a "Hello World" programme in main.go
 
-4. Compile it by running the following command, which creates an executable
+3. Compile it by running the following command, which creates an executable
 (named `main` on *nix systems or `main.exe` on Windows):
 
   go build main.go
 
-5. Execute the executable.
+4. Execute the executable.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 : for now, we'll code in this source file, but we'll reorganize our code later
 
@@ -375,9 +373,18 @@ The following command lists all valid GOOS/GOARCH combinations:
 
 Go's solution to dependency management is known as the _module_system_.
 
-A _module_ is set of packages that are versioned together.
+The terms _package_ and _module_ are confusingly similar, but don't conflate the two!
 
-You *must* initialize a module at the root of your project in order to manage dependencies (incl. packages within the same project).
+- _Packages_ are composed of one or more source files.
+- A _module_ is a set of packages that are versioned together.
+
+You *must* initialize a module at the root of your project in order to manage dependencies, including packages within the same project!
+
+: typically, one module per project
+
+
+
+* Modules (cont'd)
 
 A module is identified by its _path_, which
 
@@ -388,7 +395,10 @@ The `go`mod` subcommand allows you to interact with the module system. You can i
 
    go mod init <your-module-path>
 
-: one module per project, initialized at the
+Doing do will create a text file named `go.mod` at the root of your project.
+
+Don't edit the `go.mod` file manually; instead, you can interact with it solely through the `go`mod` subcommand.
+
 
 
 
@@ -966,10 +976,7 @@ A prospective username is valid on Twitter if it
 
 Write a function that implements the first rule:
 
-  func containsNoIllegalPattern(username string) bool {
-    // returns true if username does not contain "twitter"
-    // (and all case variations, incl. "TwItTEr", etc.)
-  }
+  func containsNoIllegalPattern(username string) bool
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -1088,9 +1095,7 @@ More about `defer` later in the course!
 
 Use the `regexp` package to write a function that implements the second rule:
 
-  func looksGood(username string) (bool, error) {
-    // returns true iff username matches regexp ^[0-9A-Z_a-z]{4,15}$ and some (?) error
-  }
+  func looksGood(username string) (bool, error)
 
 Does the function's signature satisfy you?
 
@@ -1101,6 +1106,7 @@ How would you achieve that?
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/adventure/hiking.svg 200 _
 
 : transition: we need to learn about error handling in Go, and for that we need to learn about if and switch statements
+: ^[0-9A-Z_a-z]{4,15}$
 
 
 
@@ -1114,7 +1120,7 @@ There are no exceptions in Go! Anticipated failures are reported as [[https://ww
 
 A function that can fail returns an additional `error` result (the last one, by convention):
 
-  func Get(url string) (resp *http.Response, err error) // example from the http package
+  func Get(url string) (resp *http.Response, err error)
 
 A non-nil `error` result indicates that the function failed in some way and that its "normal" results are unusable.
 
@@ -1122,10 +1128,9 @@ A non-nil `error` result indicates that the function failed in some way and that
 
   resp, err := http.Get("https://jub0bs.com")
   if err != nil {
-    fmt.Fprintln(os.Stderr, "failure to GET jub0bs.com:", err)
-    return
+    // failure (resp is unusable): handle err and perhaps return early
   }
-  // do something interesting with resp
+  // success: do something interesting with resp
 
 : mention that a boolean result can be used if the function can fails for a single unambiguous cause
 
@@ -1149,6 +1154,7 @@ but that's actually [[https://changelog.com/gotime/16#transcript-68][a strength 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
 : for some functions, a non-nil error may indicate only a partial failure (e.g. Read)
+: just restart the container? what if you have long-running jobs (e.g. billing)? that would add latency to your system
 
 
 
@@ -1195,21 +1201,46 @@ See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat R
 
 
 
-* Different ways of handling errors
+* Different ways of treating an error value
 
-- bubble it up to the caller
-- log it or print it to stderr
-- compare it to some sentinel error value (e.g. `io.EOF`)
-- inspect its underlying cause
-- wrap it in a higher-level error
+*Reporting*it*to*the*caller*
 
-Which approach to favor is highly context-dependent. Discuss.
+- bubbling it up as is
+- wrapping it in some custom higher-level error type
 
-However you choose to handle an error, handle it only once!
+*Consuming*it*
+
+- logging it
+- printing it to stderr
+
+*Inspecting*it*(before*deciding*what*to*do)*
+
+- comparing it to some sentinel error value (e.g. `io.EOF`)
+- looking up its underlying cause (if any)
+
+The best way of treating an error value is highly context-dependent.
+
+: bubble it up: you lose context
+
+
+
+* Consuming or reporting? You must choose!
+
+However you choose to handle an error value, do _not_ both consume it and report it!
+
+  func foo() error {
+    v, err := fallibleFunction()
+    if err != nil {
+      log.Println(err) // bad!
+      return err       // bad!
+    }
+    // do something interesting with v
+  }
+
+Either consume it or report it, but not both. Why not? Discuss.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
 
-: bubble it up: you lose context
 : I've seen people logging the error at every stage of the call stack! => duplicate entries in logs, confusing
 
 
@@ -1235,6 +1266,25 @@ By convention, error messages
 You can also create your own error types (i.e. types that satisfy the `error` interface).
 
 : more on custom error types later
+
+
+
+* Namecheck project: rethinking the looksGood function
+
+1. Exercise function `looksGood` in your `main` function.
+
+2. Treat the error in a sensible way.
+
+3. Take a few moments to think about function `looksGood`...
+
+- Is it easy to use?
+- Does its signature make sense?
+- Who, between the caller and library author, would be to blame for a non-nil error?
+- How would you improve function `looksGood`?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: we're re-compiling the regexp at each call
 
 
 
@@ -1273,19 +1323,21 @@ if some programming error renders the package unusable.
 
 * Namecheck project: fail early if the regexp is unusable
 
-Use what you've learned to change the signature of your `looksGood` function to
+1. In the documentation of the `regexp` package, identify a function that compiles a regular expression and panics if the pattern is invalid.
 
-  func looksGood(username string) bool {
-    // returns true iff username matches regexp ^[0-9A-Z_a-z]{4,15}$
-  }
+2. Use that function to declare a variable of type `*regexp.Regexp` at package level.
 
-Fail early if the regular expression doesn't compile.
+3. Adapt `looksGood`'s implementation to make use of that variable, and simplify `looksGood`'s signature to
+
+  func looksGood(username string) bool
+
+4. Fix your `main` function accordingly.
 
 .image https://i.redd.it/48emz1dvfz441.png 200 _
 
-: cap should be at least len(checkers)-1
-: use a bool variable to control the termination of the loop
-: mangle the domain name in github.Github's IsAvailable method in order to cause an error
+: if the regexp is invalid, the package is unusable => communicate that by panicking at initialisation
+: more efficient: regexp compiled at most once
+: the package-level var cannot be a const
 
 
 
@@ -1828,7 +1880,9 @@ Consider the following function.
     }
   }
 
-What's a potential issue, here?
+What's a potential issue, here? How would you fix it?
+
+: eschewing defer is not an answer :)
 
 
 
@@ -1864,9 +1918,9 @@ One solution is to enclose the defer statement in a smaller function:
 
 We cannot take the same shortcut for Twitter as we did for GitHub, because
 
-  https://twitter.com/FOO
+  https://twitter.com/USERNAME
 
-returns a `200` response regardless of whether the user `FOO` actually exists.
+returns a `200` response regardless of whether the user `USERNAME` actually exists.
 
 We'll need to do things properly and call the Twitter API.
 
@@ -1880,13 +1934,27 @@ For now, just stub `IsAvailable` in Twitter:
 
 * Namecheck project: missing abstraction
 
-Our project is starting to take shape, but it still suffers from limitations:
+Our project is starting to take shape, but it still suffers from limitations...
 
-- The `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, but nothing relates them. It would be nice to have a common abstration to manipulate one or the other indiscriminately...
+One issue is that, although the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, nothing relates them.
 
-- Function `IsAvalailable` unconditionally sends a HTTP request. How are we going to write unit tests for it? We'd need a way of somehow mocking the HTTP client...
+It would be nice to have a common abstration to manipulate one or the other indiscriminately...
 
-Interfaces are the answer to both problems! Patience; we're getting there...
+Interfaces will allow us to do that!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
+
+
+
+* Namecheck project: no way of mocking the HTTP client
+
+Another issue is the lack of testability of function `IsAvailable`.
+
+At the moment, it unconditionally sends a HTTP request to the social network of interest. Explain why this is problematic if you want to write unit tests for `IsAvailable`.
+
+We'd need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests.
+
+Again, interfaces will allow us to solve this issue. Patience!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
@@ -2402,7 +2470,7 @@ Discuss.
 
 
 
-* A glimse of generics in Go
+* A glimpse of generics in Go
 
 Go 1.18 added _generics_ to the language.
 
@@ -2456,20 +2524,7 @@ Implement `IsAvailable` in the `twitter` package:
 
 : the absence of a data field in the response body indicates the username's availability
 : anonymous struct
-
-
-
-* Namecheck project: custom Twitter & GitHub types
-
-1. In `twitter` package, declare a `Twitter` type based on an empty struct:
-
-  type Twitter struct{}
-
-We'll add fields to it later.
-
-2. Similarly, in the `github` package, declare a `GitHub` struct type.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+: simulateLatency=true
 
 
 
@@ -2481,15 +2536,19 @@ Live demo in Playground
 
 
 
-* Namecheck project: turn IsValid and IsAvailalble into methods
+* Namecheck project: turn IsValid and IsAvailable into methods
 
-1. In the `twitter` package, turn `IsValid` and `IsAvailable` into methods on the `Twitter` type (use a pointer receiver).
+1. In the `twitter` package, declare a `Twitter` type based on an empty struct:
 
-2. Declare a third method named `String` on the `Twitter` type; it should take no parameter and return a string corresponding to the name of the platform: `"Twitter"`.
+  type Twitter struct{}
 
-3. Adjust your tests in `twitter_test.go` and `main.go`.
+2. Turn `IsValid` and `IsAvailable` into methods on that type (use a pointer receiver).
 
-4. Repeat steps 1-3 for the `github` package.
+3. Declare a third method named `String` on the `Twitter` type; it should take no parameter and return a string corresponding to the name of the platform: `"Twitter"`.
+
+4. Adjust your tests in `twitter_test.go` and `main.go`.
+
+5. Repeat steps 1-4 for the `github` package.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2501,15 +2560,37 @@ Live demo in Playground
 
 * Interfaces in a nutshell
 
-Interfaces are _the_ mechanism for polymorphism in Go.
+Interfaces (along with generics) are a mechanism for achieving [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]] in Go.
 
-Contrary to the other types that we've covered, interfaces are abstract types. They're defined by the method(s) that they require:
+Contrary to the other types that we've covered, interfaces are abstract types.
+They're defined by the method(s) that they require:
+
+  type Climber interface {
+    Climb(meters int) error
+  }
+
+The names of method parameters do not matter and can be omitted:
 
   type Climber interface {
     Climb(int) error
   }
 
-Convention dictates that single-method interfaces be named by appending "er" to the name of their method, even if it yields a weird name (e.g. `fmt.Stringer`).
+What matters are the names and signatures of the methods required by the interface.
+
+
+* Naming convention for interface types
+
+Resist the temptation to name your interface types with and "I" prefix and/or with an "able" suffix, as you would in other language (e.g. `IEnumerable` in C#)!
+
+In Go, the names of interface types are typically nouns rather than adjectives.
+
+For a single-method interface types, convention dictates that its name be derived by appending "er" to the name of its method, even if it yields a weird name:
+
+  type Stringer interface {
+    String() string
+  }
+
+For interfaces types that require multiple methods or are composed of multiple smaller interfaces, naming conventions are not as firmly established. Pick something sensible.
 
 
 
@@ -2521,7 +2602,7 @@ In many other languages, interface satisfaction is specified on the type declara
   class Template implements iTemplate                       // PHP
   class BoomerangCollection : IEnumerable                   // C#
 
-Not so in Go, and that's one reason why interfaces are one of the most fascinating aspect of the language!
+Not so in Go, and that's one reason why interfaces are one of the most fascinating and liberating aspect of the language!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 250 _
 
@@ -2534,6 +2615,8 @@ If a concrete type has _all_ the methods required by the interface, it automatic
 .play -edit src/interface_sat.go /^//START/,/^//END/
 
 Interface satisfaction is verified at compile time (similar to structural typing).
+
+: as opposed to nominal subtyping
 
 
 
@@ -2584,12 +2667,14 @@ We're about to create a `namecheck` package at the root of our project, but our 
 declare the following interface:
 
   type Validator interface {
-    IsValid(username string) bool
+    IsValid(string) bool
   }
 
 2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: mention that we're defining Validator after the fact!
 
 
 
@@ -2598,7 +2683,7 @@ declare the following interface:
 1. Still in `namecheck.go`,  declare the following interface:
 
   type Availabler interface {
-    IsAvailable(username string) (bool, error)
+    IsAvailable(string) (bool, error)
   }
 
 2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
@@ -2684,9 +2769,17 @@ such as `fmt.Println`:
 
   func Println(a ...interface{}) (int, error)
 
-However, refrain from using it in the business layer of your application.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/ballet.svg 200 _
+
+* Notable interfaces: the empty interface (cont'd)
+
+Because the empty interface is the least specific type in Go, you should use it sparingly.
+
+[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=7m36s][As Rob Pike puts it]], the empty interface says nothing.
+
+If you declare a function that takes a parameter of type `interface{}`, Go's type checker can't provide any compile-time guarantees about the nature of that parameter.
+
+Therefore, peppering empty interfaces all over the business layer of your application (where being very specific pays off) is a bad idea!
 
 : a bit like *void in C
 
@@ -2861,6 +2954,7 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 200 _
 
+: we defined Validator, Availabler, Checker after declaring Twitter and GitHub struct types
 : unit test: no I/O, limit site effects
 : email sender: you don't want to send an email every time
 : payment system: unless e2e tests, don't want to trigger a real payment in unit tests
@@ -3748,7 +3842,7 @@ those parameters would instead need to be pointers to channels.)
 
 
 
-* Namecheck project: gather the results via a channel
+* Namecheck project: aggregate the results
 
 1. At the top of `main.go`, declare the following `Result` type:
 
@@ -3769,6 +3863,8 @@ those parameters would instead need to be pointers to channels.)
 .image https://go.dev/blog/store/gophers.jpg 150 _
 
 : the channel allows us to serialize access to the slice (local mutable state)
+: for anonymous function for wait and close, no need for a wait group? why not?
+: could you put the go func() {...}() before the call to wg.Add?
 
 
 
@@ -3845,18 +3941,24 @@ A `select` statement is a multiway concurrent control switch: it allows you to s
 
 
 
-* For-select loop
+* Event loop: a select nested inside a loop
 
-`select` is often used in conjunction with `for` to form an "event loop":
+`select` is often used in conjunction with `for` to form a so-called _event_loop_.
 
-  for someCondition {
+For instance, if you want to continually receive from two (or more) channels,
+a simple for-range loop won't do; you'll need to nest a `select` inside a loop:
+
+  for !finished {
     select {
-    case v, ok := <-results:
-      // ...
-    case  err, ok := <-errc:
+    case  err, ok := <-errorCh:
+      finished = true
+      continue
+    case v, ok := <-resultCh:
       // ...
     }
   }
+
+In that case, prefer a "while" loop to an infinite loop, to avoid the need for labels.
 
 
 
@@ -3864,31 +3966,33 @@ A `select` statement is a multiway concurrent control switch: it allows you to s
 
 1. Remove the `Err` field from your `Result` type
 
-2. Modify your code to report normal results and errors through separate channels.
+2. Declare another channel named `errorCh` dedicated to `error` values. Choose the capacity of that channel wisely.
 
-3. Use a `select` statement to receive from both channels.
+3. Report normal results and errors through the two different channels.
 
-4. Terminate the programme as soon as one error is received.
+4. In your `main` function, use a for-select to receive from both channels.
 
-Hint: choose the capacity of your error channel wisely.
+5. As soon as you receive one error, print it and terminate the programme.
 
-.image https://go.dev/blog/gopher/plush.jpg 250 _
+.image https://go.dev/blog/gopher/plush.jpg 200 _
 
 : smallest channel capacity to prevent goroutine leaks: len(checkers) - 1
+: use a bool variable to control the termination of the loop
+: mangle the domain name in github.Github's IsAvailable method in order to cause an error
 
 
 
 * Canceling goroutines
 
-Spawning goroutines is easy, but making sure they terminate sometimes requires more effort. One common recipe for canceling a goroutine consists of
+Spawning goroutines is easy, but making sure they terminate sometimes requires more effort. One common recipe for making a function cancellable consists of
 
-- a `select` statement
-- a channel of type `<-chan`struct{}` (commonly named "quit" or "done")
+- a `select` statement, and
+- a channel of type `<-chan`struct{}`.
 
   func cancellable(quit <-chan struct{}) {
     for {
         select {
-        case <-quit:
+        case <-quit: // becomes non-blocking as soon as channel 'quit' is closed!
           return
         default:
           // do something, and maybe sleep a bit
@@ -3896,13 +4000,10 @@ Spawning goroutines is easy, but making sure they terminate sometimes requires m
     }
   }
 
-Remember: closing a channel unblocks all receives from that channel.
-
-If function `cancellable` is launched as a goroutine, you can trigger its eventual termination by simply closing the `quit` channel.
+If function `cancellable` is launched as a goroutine, you can trigger its eventual termination simply by closing the `quit` channel.
 
 : can be used to broadcast a signal to multiple goroutines!
-
-
+: 'done' is another common name for such a channel
 
 
 
@@ -3975,7 +4076,7 @@ The solution is available on the [[https://go.dev/play/p/bJeIioSOTIV][Go Playgro
 
 * Exercise: debug this ping-pong game
 
-1. Open [[https://go.dev/play/p/n7XQ_TdOY4t][this Playground]] (adapted from [[https://talks.golang.org/2013/advconc.slide#6][a talk by Sameer Ajmani]]). The program models a simple ping-pong game.
+1. Open [[https://go.dev/play/p/n7XQ_TdOY4t][this Playground]] (adapted from [[https://www.youtube.com/watch?v=QDDwwePbDtw&t=2m54s][one of Sameer Ajmani's talk]]). The program models a simple ping-pong game.
 
 2. The game ends with a deadlock. Can you see why?
 
@@ -3990,6 +4091,7 @@ The solution is available on the [[https://go.dev/play/p/bJeIioSOTIV][Go Playgro
 : one possibility: buffer size of 1, but no guarantee that the same player will play twice in a row
 : non-blocking send by adding a select statement (with an additional case <-ctx.Done())
 : easy solution: referee receive ball from main after cancel()
+: https://talks.golang.org/2013/advconc.slide#6
 
 
 
@@ -4044,7 +4146,7 @@ Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][fun
 
 Use [[https://pkg.go.dev/encoding/json/][the `encoding/json` package]] to encode some Go value to JSON.
 
-_Field_tags_ instruct the package about the correspondance between the struct's field names (which must be exported!) and the property names of the resulting JSON object:
+_Field_tags_ are used to map the correspondance between the names of a struct's fields (which must be exported!) and the property names of the resulting JSON object:
 
 .code -edit src/json_encoding.go /^//START1/,/^//END1/
 
@@ -4053,6 +4155,7 @@ then pass the value to its `Encode` method:
 
 .play -edit src/json_encoding.go /^//START2/,/^//END2/
 
+: w is the http.ResponseWriter
 : don't forget to inspect the resulting error
 
 
@@ -4116,15 +4219,15 @@ Let's use [[https://github.com/gorilla/mux][gorilla/mux]], a popular alternative
 
 Let's keep track (in memory) of how many times each username has been checked.
 
-1. Discuss which data structure seems appropriate.
+1. Declare a variable of a suitable type at package level.
 
-2. Declare a variable of that type at package level.
+2. In `handleCheck`, increment the count associated to the username being checked.
 
-3. Create an additional `/stats` route that returns a JSON representation of the data structure in question.
+3. Declare an additional `handleStats` server that returns a JSON representation of the variable declared in step 1.
 
-4. Run your server (with the race detector on) and exercise it.
+4. Register your `handleStats` handler on a route named `/stats`.
 
-5. Do you notice any problem?
+5. Run your server (with `--race`) and exercise it. Do you notice any problem?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 

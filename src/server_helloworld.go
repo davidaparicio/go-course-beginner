@@ -7,12 +7,12 @@ import (
 )
 
 // START OMIT
-func helloHandler(w http.ResponseWriter, req *http.Request) { // HL
+func handleHello(w http.ResponseWriter, req *http.Request) { // HL
 	fmt.Fprint(w, "Hello, world!\n")
 }
 
 func main() {
-	http.HandleFunc("/hello", helloHandler)                   // HL
+	http.HandleFunc("/hello", handleHello)                    // HL
 	if err := http.ListenAndServe(":8080", nil); err != nil { // HL
 		log.Fatal(err)
 	}
