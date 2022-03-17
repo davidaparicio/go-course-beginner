@@ -2080,7 +2080,7 @@ A slice is essentially a resizable view inside a backing array.
 
 The backing array may extend past the end of the slice.
 
-  
+
 
 The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
 
@@ -2339,6 +2339,26 @@ If the map is `nil` or if the key is already absent from the map, deleting the k
 
 
 
+* Implementing a set using a map
+
+Go provides no native set types, but... maps to the rescue!
+
+You can simply implement a set of `string` as a map[string]bool:
+
+.play -edit src/map_set_bool.go /^//START/,/^//END/
+
+
+
+* Implementing a set using a map (cont'd)
+
+A more memory-efficient alternative consists in using a `map[string]struct{}`:
+
+.play -edit src/map_set_nothing.go /^//START/,/^//END/
+
+Pick whichever of the two approaches you prefer.
+
+
+
 * Ranging over a map
 
 You can iterate over a map using `for` and `range`:
@@ -2361,22 +2381,6 @@ To range over a map in a certain order, you must
 - access the map values as you range over the sorted slice of keys.
 
 .play -edit src/map_range_deterministic.go /^//START/,/^//END/
-
-
-
-* Implementing a set using a map
-
-Go provides no native set types, but... maps to the rescue!
-
-You can implement a set of `string` simply as a map[string]bool:
-
-.play -edit src/map_set_bool.go /^//START/,/^//END/
-
-A more memory-efficient alternative is to use a `map[string]struct{}`:
-
-.play -edit src/map_set_nothing.go /^//START/,/^//END/
-
-Pick whichever of the two approaches you prefer.
 
 
 
@@ -2560,22 +2564,22 @@ Live demo in Playground
 
 * Interfaces in a nutshell
 
-Interfaces (along with generics) are a mechanism for achieving [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]] in Go.
+Interfaces (along with generics) are a mechanism for achieving [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]] in Go:
+they allow you to manipulate different concrete type that provide the same behavior(s).
 
-Contrary to the other types that we've covered, interfaces are abstract types.
-They're defined by the method(s) that they require:
+Contrary to all the types that we've covered so far, interfaces are abstract types. An interface is defined by a set of methods/behaviors:
 
   type Climber interface {
     Climb(meters int) error
   }
 
-The names of method parameters do not matter and can be omitted:
+Interfaces, by focusing on _behavior_ rather than _implementation_, promote decoupling!
 
-  type Climber interface {
-    Climb(int) error
-  }
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/ballet.svg 200 _
 
-What matters are the names and signatures of the methods required by the interface.
+: The names of method parameters are inconsequential and can be omitted
+: what matters are the names and signatures of the methods required by the interface.
+
 
 
 * Naming convention for interface types
@@ -2584,7 +2588,7 @@ Resist the temptation to name your interface types with and "I" prefix and/or wi
 
 In Go, the names of interface types are typically nouns rather than adjectives.
 
-For a single-method interface types, convention dictates that its name be derived by appending "er" to the name of its method, even if it yields a weird name:
+For a single-method interface types, convention dictates that its name be derived by appending "er" to the name of its method, even if doing so yields a weird name:
 
   type Stringer interface {
     String() string
@@ -2610,29 +2614,50 @@ Not so in Go, and that's one reason why interfaces are one of the most fascinati
 
 * Interface satisfaction in Go is implicit
 
-If a concrete type has _all_ the methods required by the interface, it automatically satisfies that interface:
+If a concrete type has _all_ the methods required by the interface, the compiler automatically considers that the concrete type satisfies the interface:
 
-.play -edit src/interface_sat.go /^//START/,/^//END/
+.play -edit src/interface_sat.go /^//START1/,/^//END1/
 
-Interface satisfaction is verified at compile time (similar to structural typing).
+A concrete-type value can be used wherever an interface value is expected:
 
-: as opposed to nominal subtyping
+.play -edit src/interface_sat.go /^//START2/,/^//END2/
+
+Important: `*Mountaineer` satisfies the `Climber` interface, but `Mountaineer` doesn't.
+
+: structural typing as opposed to nominal subtyping
+
+
+
+* Interface satisfaction: the fine print
+
+Some interface types require implementors to follow additional rules. For instance,
+
+- [[https://pkg.go.dev/io/#Reader][the `io.Reader` interface]] places restrictions on what can be done with the parameter and results of its `Read` method, and
+- [[https://pkg.go.dev/net/http#RoundTripper][the `http.RoundTripper` interface]] requires that implementors be safe for concurrent use by multiple goroutines.
+
+Bear in mind that such rules are not enforcible by the compiler, and that the onus is on you to respect them in your implementations.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+: If you don't, your code may not work as expected.
 
 
 
 * Keep interfaces small
 
+The [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] states that clients should not be forced to depend on methods that they do not use. See [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m49s][Dave Cheney - SOLID Go Design]].
+
+Accordingly, refrain from _interface_pollution_, i.e. declaring interface types with many methods. Smaller interfaces are comparatively easier to satisfy and more composable.
+
 [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=5m18s][As Rob Pike puts it]]: _the_bigger_the_interface,_the_weaker_the_abstraction_.
-
-In a similar spirit as the [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] (the "I" in SOLID),
-you should design interface types that require few methods.
-
-Such interfaces are comparatively easier to satisfy and more composable.
 
 Many of the interface types provided by Go's standard library are single-method:
 `error`, `fmt.Stringer`, `io.Writer`, `io.Reader`, `http.Handler`, etc.
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
+: small interfaces are also easier to redeclare locally, in order to promote source decoupling
+: could redeclare Stringer locally to avoid namecheck having to depend on fmt
 
 
 
@@ -2700,7 +2725,7 @@ declare the following interface:
     String() string
   }
 
-That interface governs how `fmt` functions represent values.
+That interface governs how functions from the `fmt` package represent values of the concrete type in question.
 
 2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
 
@@ -2710,22 +2735,39 @@ That interface governs how `fmt` functions represent values.
 
 * Interface composition
 
-You can declare an interface type by listing more elementary interfaces:
+Consider these two interfaces:
 
   type Reader interface {
-    Read(p []byte) (n int, err error)
+    Read([]byte) (n int, err error)
   }
 
   type Closer interface {
     Close() error
   }
 
-  type ReadCloser interface { // both a Reader and a Closer
+To declare an interface type that is both a `Reader` a `Closer`, you could of course just list the required methods:
+
+  type ReadCloser interface {
+    Read([]byte) (n int, err error)
+    Close() error
+  }
+
+But no need to repeat yourself! Interface composition is easier than this in Go...
+
+
+
+* Interface composition (cont'd)
+
+You can declare a larger interface type simply by listing the more elementary interfaces it's made of:
+
+  type ReadCloser interface {
     Reader
     Closer
   }
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
+: A mix of methods and interface names is also allowed:
 
 
 
@@ -2781,6 +2823,8 @@ If you declare a function that takes a parameter of type `interface{}`, Go's typ
 
 Therefore, peppering empty interfaces all over the business layer of your application (where being very specific pays off) is a bad idea!
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
 : a bit like *void in C
 
 
@@ -2818,7 +2862,7 @@ You can declare your own types and make them satisfy the `error` interface.
     String() string
   }
 
-If a type satisfies `fmt.Stringer`, its `String` method governs how `fmt` functions represent values of that type.
+If a type satisfies `fmt.Stringer`, its `String` method governs the textual representation that functions from the `fmt` package use for that type.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
 
@@ -2865,17 +2909,29 @@ For the gory details, see [[https://research.swtch.com/interfaces][Russ Cox - Go
 
 * An interface's zero value
 
-Interfaces are reference types; their zero value is `nil`:
+Interfaces are reference types; therefore, manipulating pointers to interface is rare.
+
+An interface type's zero value is `nil`:
 
 .play -edit src/interface_zero.go /^//START/,/^//END/
 
-A `nil` interface value isn't associated to any concrete type and points to no value:
+An interface value is considered `nil` if and only if
+
+- *it*isn't*associated*to*any*concrete*type* (!), and
+- it does contain or point to the value of a concrete type.
 
   ---------------------------------------
   |                 nil                 |
   ---------------------------------------     ==     nil
   |                 nil                 |
   ---------------------------------------
+
+: pointers to interfaces useful for decoding JSON to an interface value
+: see https://blog.golang.org/json-and-go
+
+
+
+* Pitfall: interface vs. nil
 
 Be careful: an interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
 
@@ -2887,23 +2943,66 @@ Be careful: an interface value that holds a `nil` pointer to a concrete type is 
 
 Developers who fail to account for this distinction expose themselves to subtle bugs...
 
+More details about this subtlety are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
+
 : Interface types are comparable, but you already know that... How?
 
 
 
-* Pitfall: interfaces and nil
+* Interface vs. nil: spot the bug
 
-Find the bug in the following programme:
+The following programme contains a subtle bug. Can you identify it?
 
 .play -edit src/interface_nil.go /^//START/,/^//END/
 
-More details about this subtlety are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
+
+
+* Interface vs. nil: spot the bug (solution)
+
+  -----------------------------------------
+  | pointer to *ErrLaunchFailure's itable |
+  -----------------------------------------     !=     nil
+  |                 nil                   |
+  -----------------------------------------
+
+To indicate failure, a fallible function should return a result of type `error`, as opposed to a result of a concrete type that happens to satisfy the `error` interface!
+
+.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
+
+See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=14m12s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
+
+
+
+* Interface vs. nil: spot the bug again
+
+The following programme contains a subtle bug. Can you identify it?
+
+.play -edit src/interface_nil_concrete_var.go /^//START/,/^//END/
+
+
+* Interface vs. nil: spot the bug again (solution)
+
+  -----------------------------------------
+  | pointer to *ErrLaunchFailure's itable |
+  -----------------------------------------     !=     nil
+  |                 nil                   |
+  -----------------------------------------
+
+.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
+
+Avoid declaring variables of a concrete type that happens to satisfy `error`!
+
+See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=13m20s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
 
 
 
 * Favor interface parameters
 
 If a given function parameter is supposed to provide _behavior_ (rather than data), you should strive to use an interface type (rather than a concrete type) for that parameter.
+
+This principle isn't specific to Go and is known as [[https://blog.ndepend.com/programming-interface-simple-explanation/][_programming_to_an_interface_]].
 
 For example, don't do this:
 
@@ -2917,17 +3016,15 @@ Instead, do this:
 
 The latter is more flexible, easier to test, promotes decoupling, and guides you towards the correct implementation.
 
-This principle isn't specific to Go and is known as [[https://blog.ndepend.com/programming-interface-simple-explanation/][_programming_to_an_interface_]].
-
 : os.File has a lot of methods that are not relevant to what Tree's Save is supposed to do
 
 
 
 * Require no more, promise no less
 
-Not only should you focus on behavior rather than implementation, but your functions shouldn't ask for behaviors they don't need.
+If what's of interest is behavior rather than implementation, your functions shouldn't ask for behaviors that they don't need.
 
-In other words, if a function takes an interface parameter, that interface should be as "small" as possible.
+In other words, if a function takes an interface parameter, that interface type should be as "small" as possible.
 
 Don't do this:
 
@@ -2937,8 +3034,28 @@ Instead, do this:
 
   func (t *Tree) Load(r io.Reader) error
 
-This principle is similar in spirit to the Domain Driven Domain's principle known as
-"keeping ports small".
+Again, this is more flexible, testable, and promotes correctness of implementation.
+
+See [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m36s][Dave Cheney - SOLID Go Design]].
+
+: a reason to keep interfaces small
+: This principle is similar in spirit to the Domain Driven Domain's principle known as "keeping ports small".
+
+
+
+* Avoid premature abstraction
+
+As Rob Pike puts it: don’t design with interfaces, discover them.
+
+You should resist the temptation to declare interface types upfront.
+
+Instead, start with concrete types and let interfaces emerge naturally when needed
+(e.g. for testability purposes).
+
+Note that we declared the `twitter.Twitter` and `github.GitHub` struct types first,
+and only then did we declare the interface types they satisfy.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 
@@ -2983,16 +3100,19 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 5. Add a field of type `namecheck.Getter` to your `Twitter` and `GitHub` struct types.
 
-6. Adjust your `main.go`.
+  type Twitter struct {
+    Getter namecheck.Getter
+  }
 
-7. Write a few test cases for `github.GitHub`'s `IsAvailable` method.
+6. Adjust your `main.go`
 
-8. Run the tests. You may get some panics. If you do, can you figure out why and fix it?
+7. Write a few test cases for `github.GitHub`'s `IsAvailable` method and run them.
 
-9. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method? If not, what would you change?
+8. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method? If not, what would you change?
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
+: You may get some panics. If you do, can you figure out why and fix it?
 : need a non-nil request body: use http.NoBody
 
 
@@ -3151,23 +3271,35 @@ No need for you to think about it yet; for now, simply picture the Go scheduler 
 
 * The go keyword
 
-The `go` keyword spawns a new goroutine: it causes the function call that follows it to get executed "in the background".
+The `go` keyword spawns a new goroutine: it causes the function call to which it applies to get executed "in the background":
 
   go grindCoffeeBeans()
   go frothMilk()
 
-`go` statements return _immediately_.
+`go` statements do not block; they _immediately_ yield control to the next instruction.
 
-The result(s) of the function call to which the `go` keyword is applied are lost.
+The function's arguments (if any) are executed _before_ the goroutine starts.
 
-Launching an anonymous function as a goroutine is sometimes convenient for wrapping statements that should be executed in the background:
+The function's results (if any) are lost, but channels can be used to communicate values between goroutines.
+
+
+
+* The go keyword (cont'd)
+
+Launching an anonymous function as a goroutine is sometimes convenient for grouping statements that should be executed in the background:
 
   go func() {
     fmt.Println("Don't mind me!")
     fmt.Println("I'm just running in the background...")
   }()
 
-: just don't forget to invoke it!
+Just don't forget to invoke it!
+
+  go func() {
+    fmt.Println("Don't mind me!")
+    fmt.Println("I'm just running in the background...")
+  } // missing parentheses
+
 : goroutine terminology: spawning/spawned, parent/child
 
 
@@ -3189,7 +3321,7 @@ Therefore, a goroutine cannot readily be _killed_.
 
 
 
-* The golden rule
+* The golden rule about the go keyword
 
 Before spawning a new goroutine, you must understand exactly under what conditions it will terminate.
 
@@ -3737,7 +3869,7 @@ A freshly initialized channel starts its life in an "open" state.
 
   ch := make(chan string) // ch is open (until closed)
 
-You can close a channel to indicate that no more values are to be added to it:
+You can close a channel to inform receivers that no more values will be sent to it:
 
   close(ch)
 
@@ -3913,6 +4045,17 @@ Review the functions that accept a channel parameter, and determine whether a ch
 
 
 
+* Channels are FIFO
+
+Channels have first-in/first-out semantics.
+
+.image https://i.imgflip.com/68zdq9.jpg 300 _
+
+Of course, in the face of multiple goroutines sending values to a channel, the order in which values are received is only partial. See [[https://go.dev/play/p/6kpQq0hhlun][this Playground]].
+
+
+
+
 * Select statement
 
 The `select` keyword forms a trifecta with goroutines and channels!
@@ -3934,10 +4077,11 @@ A `select` statement is a multiway concurrent control switch: it allows you to s
     // ...
   }
 
-- Each of the "normal" (non-default) cases correspond to a channel communication (send or receive).
-- The first normal case that can proceed gets selected.
-- If more than one normal cases can proceed, one of them is chosen in a uniform pseudo-random fashion.
-- If no normal case can proceed, the default case (if any) gets selected; otherwise, the `select` statement blocks.
+- Each of the "normal" (non-default) cases correspond to a _channel_communication_ (send or receive).
+- The first normal case that is non-blocking gets selected and its instructions executed.
+- If more than one normal cases are non-blocking, one of them is chosen in a uniform pseudo-random fashion.
+- If all normal cases are blocking, the default case (if any) gets selected; otherwise, the `select` statement blocks for as long as its cases remain blocking.
+- You can use the `break` keyword within a case to escape from the `select`.
 
 
 
