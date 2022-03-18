@@ -95,6 +95,8 @@ Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0z
 
 .image https://imgs.xkcd.com/comics/compiling.png
 
+See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]].
+
 
 
 * History of the Go project
@@ -1101,7 +1103,8 @@ More about `defer` later in the course!
 
 * Namecheck project: validation of Twitter usernames
 
-Use the `regexp` package to write a function that implements the second rule:
+Use the `regexp` package to write a function that implements the second rule
+(a valid username contains between 4 and 15 alphanumeric or underscore characters):
 
   func looksGood(username string) (bool, error)
 
@@ -1377,6 +1380,22 @@ Let's learn how to create a library package and use it in our `main` package.
 
 
 
+* Main packages
+
+A package named "main" is called a _main_package_ and produces an executable.
+
+The package *must* declare a `main` function that takes no params and returns no results.
+
+The name of the enclosing folder is arbitrary.
+
+If a project produces several executables, put each of the main packages in a subfolder of a folder named "cmd" located at the root of your project.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+
+: cmd folder: we'll do this ourselves
+
+
+
 * Library packages
 
 Any package not named "main" is a _library_package_, i.e. a package meant to be imported in other programs.
@@ -1395,22 +1414,6 @@ There's one exception to this rule that relates to testing. More on that later.
 : only should, because _test package exception and also not enforced by tooling, but otherwise confusing
 : in most cases, the last segment of the package path should match the package name as declared in package clause
 : Two kinds of packages
-
-
-
-* Main packages
-
-A package named "main" is called a _main_package_ and produces an executable.
-
-The package *must* declare a `main` function that takes no params and returns no results.
-
-The name of the enclosing folder is arbitrary.
-
-If a project produces several executables, put each of the main packages in a subfolder of a folder named "cmd" located at the root of your project.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
-
-: cmd folder: we'll do this ourselves
 
 
 
@@ -1722,13 +1725,13 @@ From within a package's folder, you can execute its tests by running
 
  go test
 
-Passing tests are not mentioned in the output; use the `-v` flag to change that:
-
-  go test -v
-
 To execute the tests for a package and all of its subpackages, run
 
   go test ./...
+
+Passing tests are not mentioned in the output; use the `-v` flag to change that:
+
+  go test -v ./...
 
 You can also selectively run some test functions by specifying a regexp, e.g.:
 
@@ -3083,11 +3086,12 @@ See [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m36s][Dave Cheney - SOLID 
 
 * Avoid premature abstraction
 
-As Rob Pike puts it: don’t design with interfaces, discover them.
+An aphorism attributed to Rob Pike is: don’t design with interfaces, discover them.
+See [[https://www.youtube.com/watch?v=YXV7sa4oM4I&t=14m][Rob Pike - The Go Programming Language and Environment]].
 
 You should resist the temptation to declare interface types upfront.
 
-Instead, start with concrete types and let interfaces emerge naturally when needed
+Instead, start with concrete types and let interfaces emerge organically, as needed
 (e.g. for testability purposes).
 
 Note that we declared the `twitter.Twitter` and `github.GitHub` struct types first,

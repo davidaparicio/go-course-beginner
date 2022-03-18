@@ -11,10 +11,10 @@ You can run them in your browser after following a few simple steps.
     go version
     ```
 
-2. Install the `present` tool:
+2. Install the [`present` tool](https://pkg.go.dev/golang.org/x/tools/cmd/present):
 
     ```shell
-    go install golang.org/x/tools/cmd/present
+    go install golang.org/x/tools/cmd/present@latest
     ```
 
 3. Clone this repository and `cd` to the clone:
