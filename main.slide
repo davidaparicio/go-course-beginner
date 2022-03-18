@@ -10,7 +10,7 @@ https://jub0bs.com
 
 * Setup
 
-Make sure you have the latest version of Go (1.17.3) installed by running
+Make sure you have the latest version of Go (1.18.x) installed by running
 
   go version
 
@@ -252,7 +252,7 @@ The Go Playground ([[https://go.dev/play/][https://go.dev/play/]]) is a Web app 
 a small Go program from your browser. Features include:
 
 - permalinks (convenient for sharing code snippets)
-- automatic formating
+- automatic formatting
 - automatic imports (from the core library)
 - basic static analysis with `go`vet`
 - [[https://go.dev/play/p/lEDjyvhttIB][limited support for modules and multiple packages]]
@@ -2538,7 +2538,7 @@ If you're interested in the gory details, check out the [[https://go.googlesourc
 
 However, you don't need to master generics at this stage of your Go learning.
 
-: generic binary tree: https://go.dev/play/p/hViMHc2nEpR?v=gotip
+: generic binary tree: https://go.dev/play/p/hViMHc2nEpR
 
 
 
