@@ -1,5 +1,5 @@
 Formation Go
-16 February 2022
+17 March 2022
 
 Julien Cretel
 jcretel-infosec@protonmail.com
@@ -25,7 +25,11 @@ Also make sure you have Git installed.
 
 * Running these slides
 
-A README at the root of this Git repository explains how to run the slides using the `present` tool.
+A README at the root of this repo explains how to run the slides using the `present` tool.
+
+Some of these slides contain editable and executable code snippets.
+
+If you need to add a line break somewhere in the code, make sure to type Shift + Enter.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 300 _
 
@@ -42,6 +46,10 @@ A README at the root of this Git repository explains how to run the slides using
 - cooking analogies
 
 : the source code of my solution will be available on GitHub
+
+* TODO
+
+.image img/difficulty_vs_time.svg 400 _
 
 
 
@@ -320,7 +328,7 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
   namecheck
   └── main.go
 
-2. Write a "Hello World" programme in main.go
+2. Write a "Hello World" program in main.go
 
 3. Compile it by running the following command, which creates an executable
 (named `main` on *nix systems or `main.exe` on Windows):
@@ -614,7 +622,6 @@ The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility
 
 .image https://go.dev/blog/store/gophers.jpg 200 _
 
-: We won't mention relative imports again because they are best avoided.
 : goimports should run every time you save a file in VS Code
 
 
@@ -629,7 +636,7 @@ You used a normal import in your Hello-World program:
 
 To access an identifier exported by a different package (`fmt`, here), you must qualify it using the default package name as prefix (`fmt.Println`).
 
-Importing a package without consuming it causes a compilation error!
+Importing a package without using it causes a compilation error! This was [[https://talks.golang.org/2016/refactor.article#TOC_2.][a conscious design decision]] to prevent code bloat.
 
 
 
@@ -813,13 +820,12 @@ The scope of such variables is restricted to the if(-else) statement.
 
 * If-else statements
 
-Braces around the `else` body are also mandatory.
+Braces around the body of an `else` (not followed by an `if` statement) are also mandatory. No [[https://groups.google.com/g/golang-nuts/c/S9WcFsjd5WU/m/npuRiwRIjNoJ][dangling-else ambiguity]] in Go!
 
 .play -edit src/if_else.go /^//START/,/^//END/
 
-`else` is one of the least popular keyword in Go!
 
-If-else chains are considered non-idiomatic, and can often be advantageously replaced by a _tagless_ `switch`.
+If-else chains are considered non-idiomatic, and can often be advantageously replaced by a _tagless_ `switch`. `else` is one of the least popular keyword in Go!
 
 
 
@@ -892,15 +898,17 @@ The familiar loop syntax from the C-family languages is back.
 
 Again, no parentheses needed around the init/condition/post part.
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
+
 
 
 * for-range loop
 
-The `range` keyword can be used in conjunction with `for` to iterate over some data structures, such as a string:
+The `range` keyword can be used in conjunction with `for` to iterate over some data structures, such as a _slice_:
 
 .play -edit src/forrange.go /^//START/,/^//END/
 
-A for-range loop can also be used to iterate over arrays, slices, maps, channels. More about that in due time.
+A for-range loop can also be used to iterate over strings, arrays, maps, and channels. More about that in due time.
 
 
 
@@ -969,7 +977,7 @@ can have the same name but different signatures.
 
 * Namecheck project: validation of Twitter usernames
 
-A prospective username is valid on Twitter if it
+A prospective username is [[https://help.twitter.com/ca/managing-your-account/twitter-username-rules][valid on Twitter]] if it
 
 - does not contain any case-insensitive match of "twitter" (e.g. "TwItTEr"),
 - contains between 4 and 15 alphanumeric or underscore characters.
@@ -1145,11 +1153,11 @@ A non-nil `error` result indicates that the function failed in some way and that
 Few errors should be ignored. You can deviate from this general rule in some cases,
 particularly with `fmt.Println` and friends.
 
-You simply cannot assume success of a fallible function and the soundness
-of its other results (if any) if you don't check the error it returns!
+You simply cannot assume success of a fallible function and the soundness of its other results (if any) if you don't check the error it returns!
 
-Error handling in Go is very explicit; it can be perceived as repetitive and tedious,
-but that's actually [[https://changelog.com/gotime/16#transcript-68][a strength of the language]]. You will grow to love it!
+Go forces you to think about failure cases. Error handling in Go can be perceived as repetitive and tedious, but that's actually [[https://changelog.com/gotime/16#transcript-68][a strength of the language]]. Many software outages [[https://yonglezh-purdue.github.io/files/osdi14-simpletesting.pdf][can indeed be attributed]] to improper error handling.
+
+You may hate Go's stance on error handling but, in time, you will grow to love it!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
@@ -1294,7 +1302,7 @@ A panic is a run-time event that indicates an exceptional and fatal failure.
 
 It can be triggered by a run-time error (such as calling a `nil` function) or some direct or indirect call to built-in function `panic`.
 
-A panic stops the programme's normal execution, runs deferred function calls as it unwinds the stack, prints an error message and goroutine traces, and exit the program with a non-zero status:
+A panic stops the program's normal execution, runs deferred function calls as it unwinds the stack, prints an error message and goroutine traces, and exit the program with a non-zero status:
 
 .play -edit src/panic.go /^//START/,/^//END/
 
@@ -1369,24 +1377,39 @@ Let's learn how to create a library package and use it in our `main` package.
 
 
 
-* Two kinds of packages
+* Library packages
 
-*Library*packages*
+Any package not named "main" is a _library_package_, i.e. a package meant to be imported in other programs.
 
-- A library package produces a library meant to be imported in other packages.
-- The package name *must*not* be "main".
-- The name of the enclosing folder should match the package name.
+The name of the enclosing folder must (in general) match the package's default name. For instance, all the source files constituting the `fmt` package are stored on the disk in a folder named "fmt":
 
-*Main*packages*
+  fmt
+  ├── doc.go
+  ├── errors.go
+  ├── format.go
+  ├── print.go
+  └── scan.go
 
-- A main package produces an executable.
-- The package name *must* be "main".
-- The package *must* declare a `main` function without any parameters or results.
-- The name of the enclosing folder is arbitrary.
-- If a project produces several executables, put each of the main packages in a subfolder of a folder named "cmd" located at the root of your project.
+There's one exception to this rule that relates to testing. More on that later.
 
 : only should, because _test package exception and also not enforced by tooling, but otherwise confusing
 : in most cases, the last segment of the package path should match the package name as declared in package clause
+: Two kinds of packages
+
+
+
+* Main packages
+
+A package named "main" is called a _main_package_ and produces an executable.
+
+The package *must* declare a `main` function that takes no params and returns no results.
+
+The name of the enclosing folder is arbitrary.
+
+If a project produces several executables, put each of the main packages in a subfolder of a folder named "cmd" located at the root of your project.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+
 : cmd folder: we'll do this ourselves
 
 
@@ -1407,39 +1430,54 @@ Each source file must import the packages that it needs.
 
 
 
-* Designing a package
+* Naming a package
 
-*Naming*a*package*
-
-[[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=5m45s][A well-designed package starts with its name]]. The name of a package should be
+[[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=5m45s][A well-designed package starts with its name]]! The name of a package should be
 
 - lowercase alphanumeric (no underscores!),
-- concise ("net", not "network") but descriptive (avoid "util", "helpers", "common"),
+- concise (_net_ rather not _network_, _strconv_ rather than _stringconversion_)
+- descriptive (avoid painfully generic names like "util", "helpers", or "common"),
 - a noun rather than a verb,
 - a clue to its purpose (rather than its content).
 
+Don't prevent clients of your package from using a good name in their code.
+If you name your package "user", your clients cannot name a variable "user"
+without shadowing the name of your package.
+
+: concise: fmt, not format; strconv, not stringconversion
+: avoid painfully generic (!) names / catchall names
+
+
+
+* Designing a package
+
 *Strive*for*cohesion*
 
-A package should provide a focused set of related features. Let the name guide you!
+- A package should provide a focused set of related features.
+- Let the name of the package guide you!
 
 *Keep*the*conceptual*surface*area*small*
 
-Don't export identifiers by default; be deliberate about what you export.
+- Don't default to exporting everything.
+- Be deliberate about what you export.
 
-: concise: fmt, not format; strconv, not stringconversion
+
 
 
 
 * Good naming practices for package identifiers
 
-Remember: exported identifiers will be prefixed by their package name in client code.
+Bear in mind that identifiers will be prefixed by their package name in client code.
 
-Avoid _stutter_, if possible. (Any counterexamples in the core library?)
+Avoid stutter in package-level identifiers (see [[https://www.youtube.com/watch?v=MzTcsI6tn-0&t=23m40s][Brian Ketelsen - Go best practices]]):
 
-  log.LogInfo // not great
-  log.Info  // much better
+  log.LogInfo // bad
+  log.Info    // good
 
-Avoid redundancy in factory functions:
+  strings.StringReader // bad
+  strings.Reader       // good
+
+Avoid redundancy in factory functions if the package exports a single type:
 
   twitter.NewTwitter // redundant
   twitter.New        // much better
@@ -2157,9 +2195,9 @@ The second index is exclusive and, if unspecified, defaults to the length of the
 
 2. Identify a member of that package that will allow you to get the program's command-line arguments as a slice of strings.
 
-3. Check the length of that slice; terminate the programme (with a friendly error message) if no username was specified.
+3. Check the length of that slice; terminate the program (with a friendly error message) if no username was specified.
 
-4. If a username was specified, use it as before in the rest of your programme.
+4. If a username was specified, use it as before in the rest of your program.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2368,7 +2406,7 @@ You can iterate over a map using `for` and `range`:
 At each iteration, the variables yielded by the `range` expression hold copies of
 the key and value.
 
-Maps are unordered collections. Not only is the iteration order unspecified, but it is also undeterministic! Try running the code snippet above a few times: the iteration order will typically change from one program execution to the next.
+Maps are unordered collections. Not only is the iteration order unspecified, but it is also undeterministic! Try running the code snippet above a few times: the iteration order will typically change from one program execution to the next. See [[https://www.hyrumslaw.com/][Hyrum's Law]].
 
 
 
@@ -2376,7 +2414,7 @@ Maps are unordered collections. Not only is the iteration order unspecified, but
 
 To range over a map in a certain order, you must
 
-- collect all map keys in a slice,
+- collect all of the map's keys in a slice,
 - sort the slice as desired,
 - access the map values as you range over the sorted slice of keys.
 
@@ -2907,7 +2945,9 @@ For the gory details, see [[https://research.swtch.com/interfaces][Russ Cox - Go
 
 
 
-* An interface's zero value
+* Comparability and zero value
+
+Interface types are comparable (but you already knew that).
 
 Interfaces are reference types; therefore, manipulating pointers to interface is rare.
 
@@ -2947,13 +2987,11 @@ More details about this subtlety are available in the [[https://go.dev/doc/faq#n
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
 
-: Interface types are comparable, but you already know that... How?
-
 
 
 * Interface vs. nil: spot the bug
 
-The following programme contains a subtle bug. Can you identify it?
+The following program contains a subtle bug. Can you identify it?
 
 .play -edit src/interface_nil.go /^//START/,/^//END/
 
@@ -2977,7 +3015,7 @@ See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=14m12s][Francesc Campoy Flor
 
 * Interface vs. nil: spot the bug again
 
-The following programme contains a subtle bug. Can you identify it?
+The following program contains a subtle bug. Can you identify it?
 
 .play -edit src/interface_nil_concrete_var.go /^//START/,/^//END/
 
@@ -3094,6 +3132,8 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
+: Get function calls the Get method on DefaultClient, which is a package-level singleton of type *http.Client
+: see https://golang.org/pkg/net/http/#Get
 
 
 * Namecheck project: mocking the HTTP client (cont'd)
@@ -3165,7 +3205,7 @@ We'll experiment with concurrency inside another `main.go`. Later, we'll write a
 
 * What do we mean by "concurrency"?
 
-The art of composing a programme in terms of independent computations
+The art of composing a program in terms of independent computations
 
 Go has native support (i.e. in the language and runtime) for concurrency.
 
@@ -3190,13 +3230,15 @@ Disclaimer: many cooking metaphors ahead!
 
 *Concurrency*
 
-- the art of structuring a programme in terms of independenly executing computations
-- a property of the programme's code
+- the art of structuring a program in terms of independenly executing computations
+- a property of the program's code
 
 *Parallelism*
 
 - the simultaneous execution of multiple things on multiple cores
 - a property of the running program
+
+: if you are making a pasta dish, you can bring the pot of water to a boil on the stove while you do 15 minutes of other prep work
 
 
 
@@ -3234,25 +3276,13 @@ Two fundamental mechanisms:
 
 A goroutine is a concurrent function execution.
 
-It can be thought of as a very lightweight thread: it's common for programmes to have 1000s of goroutines, even on a single core.
+It can be thought of as a very lightweight thread: it's common for programs to have 1000s of goroutines, even on a single core.
 
-The `main` function is itself a goroutine that is created when the programme starts.
+The `main` function is itself a goroutine that is created when the program starts.
 
 Each goroutine gets its own stack, which starts small and grows/shrinks as required.
 
 .image https://go.dev/blog/store/gophers.jpg 300 _
-
-
-
-* Goroutines execute in the same address space
-
-For example, a goroutine can pass a pointer to another goroutine, and the latter can dereference that pointer without causing an access violation.
-
-[[https://golang.org/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid _data_races_!
-
-A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location in a concurrent fashion (i.e. at the "same" time).
-
-.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
 
 
 * The Go scheduler
@@ -3265,7 +3295,50 @@ No need for you to think about it yet; for now, simply picture the Go scheduler 
 
 .image https://rrsg.s3.amazonaws.com/wp-content/uploads/2020/03/25180622/90517519_1171371749860657_3506201698723816143_n.jpg 250 _
 
-: scheduler mechanics discussed in the advanced course
+: switching goroutines is much cheaper than switching OS threads
+: also OS threads typically take 1Mo of memory compared to 2kb
+
+
+
+* Goroutines execute in the same address space
+
+For example, a goroutine can pass a pointer to another goroutine, and the latter can dereference that pointer without causing an access violation.
+
+[[https://golang.org/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid _data_races_!
+
+A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location in a concurrent fashion (i.e. at the "same" time).
+
+Programs that modify data being simultaneously accessed by multiple goroutines must serialize such access. See [[https://go.dev/ref/mem#tmp_1][The Go Memory Model]].
+
+.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
+
+
+
+* Concurrency safety
+
+_Concurrency_safety_ is a property of a given operation on a variable of a given type.
+
+An operation is said to be _concurrency-safe_ if it can be safely performed in a concurrent fashion from multiple goroutines and consistently produces predictable results.
+
+Here are a few examples of operations that are *not* concurrency-safe:
+
+- updating a package-level variable
+- incrementing an `int` variable
+- appending to a slice
+
+
+
+* Concurrency safety (cont'd)
+
+When all the methods on a given type are safe for concurrent use by multiple goroutines, the type itself is said to be _concurrency-safe_.
+
+An example of concurrency-safe type is [[https://pkg.go.dev/net/http#Client][`http.Client`]]: you can safely send HTTP requests using the same client from multiple goroutines.
+
+Unless a type is documented to be concurrency-safe, do not assume it is!
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
+
+: consult the doc
 
 
 
@@ -3350,20 +3423,21 @@ Call them concurrently in the `main` function.
 
 .play -edit src/goroutines_without_waitgroup.go /^//START/,/^//END/
 
-Does the programme behave as you expected? Why or why not?
+Does the program behave as you expected? Why or why not?
 
 
 
 * main does not wait!
 
-Nothing gets written to stdout because
+In general, nothing gets written to stdout because
 
-- the two `go` statements _immediately_ transfer control back to `main`, and
-- `main` terminates _before_ your two goroutines themselves terminate!
+- the two `go` statements _immediately_ transfer control back to `main`,
+- `main` terminates _before_ your two goroutines can terminate normally,
+- and when `main` terminates, all goroutines are killed and the program ends.
 
-We need a way to tell `main` to "wait" until the two goroutines terminate.
+We must tell `main` to "wait" until the two goroutines terminate normally. Any ideas?
 
-Any ideas?
+.image https://go.dev/blog/store/gophers.jpg 300 _
 
 
 
@@ -3392,7 +3466,7 @@ Sleeping is simply not a reliable and efficient way of coordinating goroutines!
 
 We need another mechanism...
 
-: there are legitimate use cases for `time.Sleep` in a Go programme, but...
+: there are legitimate use cases for `time.Sleep` in a Go program, but...
 
 
 
@@ -3412,6 +3486,8 @@ Wait groups are particularly useful when the number of goroutines to spawn is no
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/upright.svg 200 _
 
 : e.g. if you're spawning a goroutine for each line of a file that you're reading, or for each element received from a channel
+: wait groups not needed in fan-out/fan-in if number of tasks known in advance
+: compare https://go.dev/play/p/cnXXJFTUPO1 to https://go.dev/play/p/MHjuGwsP_hJ
 
 
 
@@ -3480,11 +3556,11 @@ A `sync.WaitGroup` must not be copied after first use. If a function needs to op
 
 * Closures running as goroutines: spot the bug
 
-Can you spot the bug in the following programme?
+Can you spot the bug in the following program?
 
 .play -edit src/goroutine_func_quiz.go /^//START/,/^//END/
 
-: ask them first how they expect the programme to behave
+: ask them first how they expect the program to behave
 : sometimes prints 10, not 9! because iteration variable goes beyond bound before loop can end
 
 
@@ -3497,7 +3573,7 @@ More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture
 
 .play -edit src/goroutine_func_answer.go /^//START/,/^//END/
 
-Consequently, the programme is undeterministic: the results are unpredictable.
+Consequently, the program is undeterministic: the results are unpredictable.
 
 : before learning how to fix it, let's see how we can get help for detecting it
 
@@ -3511,13 +3587,13 @@ We've identified the data race by inspection, but some static- and dynamic-analy
 
 This subcommand analyzes the code and can detect issues that the compiler does not.
 
-Try running `go` `vet` on the programme.
+Try running `go` `vet` on the program.
 
 *race*detector*
 
 The Go CLI provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution.
 
-Try running the programme with the `-race` flag.
+Try running the program with the `-race` flag.
 
 Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][not guaranteed to catch all data races]].
 
@@ -3627,7 +3703,7 @@ A channel whose element type is `T` has type `chan`T`.
 
   var ch chan string // channel of strings
 
-: channels only exist within the confines of your programme; they can't be used to communicate between different processes, be they written in Go.
+: channels only exist within the confines of your program; they can't be used to communicate between different processes, be they written in Go.
 
 
 
@@ -3693,7 +3769,7 @@ A freshly initialized channel starts its life in an "open" state, but can later 
 
 A channel's capacity corresponds to the size of its _buffer_, i.e. the maximum number of elements that the channel can contain at any give time.
 
-Choosing it wisely is important, as it usually affects the correctness and/or the performance of your programme.
+Choosing it wisely is important, as it usually affects the correctness and/or the performance of your program.
 
 Built-in function `cap` can be used to query a channel's capacity:
 
@@ -3730,7 +3806,7 @@ on the serving hatch's platform at any one time.
 
 Choosing the capacity of a channel can be delicate!
 
-In some cases, that choice directly impacts program correctness. If you choose unwisely, the program will typically deadlock or won't produce the correct results.
+In some cases, that choice directly impacts program correctness. An inappropriately buffered channel can cause the program to deadlock.
 
 In other cases, it has no impact on correctness, but an unwise choice causes some _goroutine_leaks_, which in turn can cause performance degradation and even crashes.
 
@@ -3850,7 +3926,7 @@ Note: variable `ok` is assigned the value `false`, not as soon as the channel ge
 
 .play -edit src/deadlock_example.go /^//START/,/^//END/
 
-This programme deadlocks. Can you guess why? How would you fix it?
+This program deadlocks. Can you guess why? How would you fix it?
 
 Add sends and receives to fix ideas. Discuss.
 
@@ -3860,6 +3936,7 @@ Add sends and receives to fix ideas. Discuss.
 : an incorrect approach: go func() { fmt.Println(<-ch) }() then ch <- 42 ...
 : ... because <-ch can execute and main terminate before the Println does
 : correct: go func() { ch <- 42}() and in main: fmt.Println(<-ch)
+: https://twitter.com/jub0bs/status/1400387164358197254
 
 
 
@@ -3881,12 +3958,7 @@ Closing a channel is definitive; a closed channel cannot be "re-opened".
 
 .image img/close_semantics.svg _ 800
 
-Note that both
-
-- attempting to close a `nil` channel
-- attempting to close an already closed channel
-
-cause a panic.
+When closing a channel, you must guarantee that no more values will even be sent to it!
 
 
 
@@ -3896,9 +3968,9 @@ One common misconception is that channels _must_ be closed. Not so!
 
 Channels are not resources; closing a channel is not a way to reclaim or clean up resources (memory, etc.).
 
-Channels will get garbage-collected like any other variable once they become unreachable from the rest of the programme.
+Channels will get garbage-collected like any other variable once they become unreachable from the rest of the program.
 
-Only close a channel if the semantics of your programme demand it.
+Only close a channel if the semantics of your program demand it.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
@@ -4002,19 +4074,21 @@ those parameters would instead need to be pointers to channels.)
 
 * Channel directions
 
-You can mark a channel as _send-only_ or _receive-only_ by adding the optional `<-` operator on the right or left (respectively) of the `chan` keyword.
+By adding an arrow on either side of the `chan` keyword, you can mark a channel as
 
-This is particularly useful for locally restricting the operations possible on a channel parameter within a function:
+- _send-only_ (no receiving allowed)
+- _receive-only_ (no sending or closing allowed)
 
-  func produce(c chan<- string) {} // c is send-only within produce
-  func consume(c <-chan string) {} // c is receive-only within consume
+This is useful to restrict what can be done with a channel passed to a function,
+
+  func produce(c chan<- string) {} // c is send-only
+  func consume(c <-chan string) {} // c is receive-only
+
+or with a channel resulting from a function,
+
+  func Done() <-chan struct{}
 
 You can pass a bidirectional channel wherever a unidirectional channel is expected.
-
-The compiler disallows
-
-- receiving from a send-only channel, and
-- sending to or closing a receive-only channel.
 
 
 
@@ -4116,7 +4190,7 @@ In that case, prefer a "while" loop to an infinite loop, to avoid the need for l
 
 4. In your `main` function, use a for-select to receive from both channels.
 
-5. As soon as you receive one error, print it and terminate the programme.
+5. As soon as you receive one error, print it and terminate the program.
 
 .image https://go.dev/blog/gopher/plush.jpg 200 _
 
@@ -4224,7 +4298,7 @@ The solution is available on the [[https://go.dev/play/p/bJeIioSOTIV][Go Playgro
 
 2. The game ends with a deadlock. Can you see why?
 
-3. Discuss and fix the programme.
+3. Discuss and fix the program.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 

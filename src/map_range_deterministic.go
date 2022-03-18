@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"sort"
+
+	"golang.org/x/exp/maps"
 )
 
 func main() {
@@ -12,10 +14,7 @@ func main() {
 		"blue":  "#0000ff",
 		"green": "#00ff00",
 	}
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
+	keys := maps.Keys(m) // golang.org/x/exp/maps
 	sort.Strings(keys)
 	for _, k := range keys {
 		fmt.Printf("%s: %q\n", k, m[k])
