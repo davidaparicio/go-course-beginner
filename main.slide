@@ -225,7 +225,7 @@ See also
 
 Functions are first-class citizens. They can
 
-- take other functions as parameters,
+- have other functions as parameters,
 - return functions as results,
 - be stored in variables,
 - be stored in struct fields.
@@ -304,7 +304,7 @@ A package named `main` produces an executable program (as opposed to a library).
 
 Imports specify _package_paths_ in double quotes.
 
-The `main` function of a `main` package is the program's entrypoint; it takes no parameters and returns no results.
+The `main` function of a `main` package is the program's entrypoint; it has no parameters and returns no results.
 
 
 
@@ -337,7 +337,7 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
 
   go build main.go
 
-4. Execute the executable.
+4. Execute the executable (then delete it).
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -347,7 +347,7 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
 
 * Compiling and executing a program in one fell swoop
 
-If you just want to run the program without keeping the executable, run
+If you just want to run the program without retaining an executable, run
 
   go run main.go
 
@@ -386,7 +386,7 @@ Go's solution to dependency management is known as the _module_system_.
 The terms _package_ and _module_ are confusingly similar, but don't conflate the two!
 
 - _Packages_ are composed of one or more source files.
-- A _module_ is a set of packages that are versioned together.
+- You can think of a _module_ as a mechanism for managing dependencies within a project.
 
 You *must* initialize a module at the root of your project in order to manage dependencies, including packages within the same project!
 
@@ -405,9 +405,9 @@ The `go`mod` subcommand allows you to interact with the module system. You can i
 
    go mod init <your-module-path>
 
-Doing do will create a text file named `go.mod` at the root of your project.
+Doing so will create a text file named `go.mod` at the root of your project.
 
-Don't edit the `go.mod` file manually; instead, you can interact with it solely through the `go`mod` subcommand.
+Don't edit the `go.mod` file manually; instead, you can interact with it solely through the use of the `go`mod` subcommand.
 
 
 
@@ -1384,7 +1384,7 @@ Let's learn how to create a library package and use it in our `main` package.
 
 A package named "main" is called a _main_package_ and produces an executable.
 
-The package *must* declare a `main` function that takes no params and returns no results.
+The package *must* declare a `main` function that has no params and returns no results.
 
 The name of the enclosing folder is arbitrary.
 
@@ -1665,7 +1665,7 @@ A test function is a regular Go function, but its name and signature must adhere
 to a strict convention:
 
 - It must be prefixed by `Test` and the following character must be uppercase.
-- It takes a single parameter of type `*testing.T` and returns no results.
+- It has a single parameter of type `*testing.T` and returns no results.
 
 Respect this convention, or your test functions will be ignored by `go`test`.
 
@@ -2073,7 +2073,7 @@ A function taking, as a parameter, an array of a given length cannot accept an a
 
 * Direct use of arrays can be expensive
 
-Remember that Go's evaluation strategy is call by value. Accordingly, functions that take an array as parameter operate on a full copy of that array!
+Remember that Go's evaluation strategy is call by value. Accordingly, functions that have an array as parameter operate on a full copy of that array!
 
 .play -edit src/array_expensive.go  /^//START/,/^//END/
 
@@ -2313,7 +2313,7 @@ The key type *must* be comparable:
 
 * Maps are reference types
 
-A function that takes a parameter of some map type only gets a copy of a reference
+A function that has a parameter of some map type only gets a copy of a reference
 to the underlying data structure (hash table).
 
 The zero value of map types is `nil`.
@@ -2589,7 +2589,7 @@ Live demo in Playground
 
 2. Turn `IsValid` and `IsAvailable` into methods on that type (use a pointer receiver).
 
-3. Declare a third method named `String` on the `Twitter` type; it should take no parameter and return a string corresponding to the name of the platform: `"Twitter"`.
+3. Declare a third method named `String` on the `Twitter` type; it should have no parameter and return a string corresponding to the name of the platform: `"Twitter"`.
 
 4. Adjust your tests in `twitter_test.go` and `main.go`.
 
@@ -2860,7 +2860,7 @@ Because the empty interface is the least specific type in Go, you should use it 
 
 [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=7m36s][As Rob Pike puts it]], the empty interface says nothing.
 
-If you declare a function that takes a parameter of type `interface{}`, Go's type checker can't provide any compile-time guarantees about the nature of that parameter.
+If you declare a function that has a parameter of type `interface{}`, Go's type checker can't provide any compile-time guarantees about the nature of that parameter.
 
 Therefore, peppering empty interfaces all over the business layer of your application (where being very specific pays off) is a bad idea!
 
@@ -3065,7 +3065,7 @@ The latter is more flexible, easier to test, promotes decoupling, and guides you
 
 If what's of interest is behavior rather than implementation, your functions shouldn't ask for behaviors that they don't need.
 
-In other words, if a function takes an interface parameter, that interface type should be as "small" as possible.
+In other words, if a function has an interface parameter, that interface type should be as "small" as possible.
 
 Don't do this:
 
@@ -3412,7 +3412,7 @@ If you're careless and spawn goroutines willy-nilly, you expose yourself to corr
 
 Write two functions, `grindCoffeeBeans` and `frothMilk`, that
 
-- take no parameters and return no results,
+- have no parameters and return no results,
 - simply write an informative message to stdout.
 
 Call them concurrently in the `main` function.
@@ -4331,7 +4331,7 @@ The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playgro
 
 .play -edit src/server_helloworld.go /^//START/,/^//END/
 
-You can define a HTTP handler as a package-level function. It must take two params:
+You can define a HTTP handler as a package-level function. It must have two params:
 
 - a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface for you to compose the HTTP response.
 - a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.

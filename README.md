@@ -1,49 +1,46 @@
 # Go course (beginner)
 
-## To run the slides in your browser
+This course is an introduction to Go for people
+who already have some programming experience.
 
-The course material consists of slides containing executable examples.
-You can run them in your browser after following a few simple steps.
+The course material consists of slides,
+some of which contain editable and executable code samples.
+You can run the slideshow on your machine after following a few simple steps:
 
-1. Make sure Go is installed on your machine:
+1. If you haven't already installed Go on your machine, do so by
+    following the official [installation instructions][install].
+
+2. Important: make sure that the directory where Go installs binaries
+    is in your `PATH` environment variable.
+    The directory in question is usually given by the following command:
 
     ```shell
-    go version
+    echo `go env GOPATH`/bin
     ```
 
-2. Install the [`present`](https://pkg.go.dev/golang.org/x/tools/cmd/present) tool:
+3. Install the [`present`][present] tool:
 
     ```shell
     go install golang.org/x/tools/cmd/present@latest
     ```
 
-3. Clone this repository and `cd` to the clone:
+4. Clone this repository and `cd` to the clone:
 
     ```shell
-    git clone https://github.com/jub0bs/go-course-beginner && cd go-course-beginner
+    git clone https://github.com/jub0bs/go-course-beginner
+    cd go-course-beginner
     ```
 
-4. Run the present tool:
+5. Run the present tool:
 
     ```shell
     present
     ```
 
-## Troubleshooting
+    The output should contain some local URL (like `http://127.0.0.1:3999`).
 
-If the `present` binary cannot be found, run the following command:
+6. Visit the URL from step 5 in your browser,
+    then click on `main.slide` to start the slideshow.
 
-```
-go env GOBIN
-```
-
-Make sure the path in the output is on your `PATH`.
-If the output is empty, run the following command:
-
-```shell
-echo "$(go env GOPATH)/bin"
-```
-
-Make sure the path in the output is on your `PATH`.
-
-
+[install]: https://go.dev/doc/install
+[present]: https://pkg.go.dev/golang.org/x/tools/cmd/present
