@@ -7,6 +7,11 @@ https://jub0bs.com
 @jub0bs
 
 
+* What you need to know about Jitsi
+
+.image img/jitsi.png 500 _
+
+
 
 * Setup
 
@@ -23,31 +28,47 @@ To learn Go, I recommend Visual Studio Code and its [[https://code.visualstudio.
 Also make sure you have Git installed.
 
 
-* Running these slides
+
+* About the course material
+
+*Licence*
+
+These slides are freely available at [[https://github.com/jub0bs/go-course-beginner][https://github.com/jub0bs/go-course-beginner]] and are subject to a TODO licence.
+
+*Why*English*rather*than*French?*
+
+The French terminology about Go isn't yet firmly established.
+
+Moreover, most of the Go learning resources available online are in English.
+
+*How*to*run*these*slides*locally*
 
 A README at the root of this repo explains how to run the slides using the `present` tool.
 
 Some of these slides contain editable and executable code snippets.
 
-If you need to add a line break somewhere in the code, make sure to type Shift + Enter.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 300 _
+If you need to add a line break somewhere, make sure [[https://github.com/golang/go/issues/9011][to type Shift + Enter]].
 
 
 
-* What to expect from the course
+* What to expect from the course (TODO)
 
+- morning: 9:00-12:30; afternoon: 14:00-17:30
+- 10-minute breaks every hour
 - interaction
-- regular breaks
 - learn the fundamentals
 - emphasis on practice over theory
 - long-running project
 - gophers
 - cooking analogies
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 200 _
+
 : the source code of my solution will be available on GitHub
 
-* TODO
+
+
+* Expected difficulty curve
 
 .image img/difficulty_vs_time.svg 400 _
 
@@ -64,12 +85,27 @@ A forcing function for learning Go: we'll introduce new concepts as needed.
 
 *Business* *case*
 
-- Ability to choose a brand name consistent across multiple platforms.
-- Username squatting!
+- Ability to choose a name consistent across multiple platforms 😇
+- [[https://en.wikipedia.org/wiki/Cybersquatting#Social_media][Username squatting]] 😈
 
 .image https://raw.githubusercontent.com/nielsing/yar/master/images/yargopher3.png 150 _
 
 : mention Newsweaver's rebranding to Poppulo, missed claiming @Poppulo on Twitter
+
+
+
+* Who I am
+
+- Julien Cretel (a.k.a. [[https://twitter.com/jub0bs][@jub0bs]])
+- self-employed since 2019
+- Go developer since 2017
+- Web-security researcher & consultant
+- (occasional) bug-bounty hunter
+- trainer (Go & security)
+- blogger (at [[https://jub0bs.com][jub0bs.com]])
+
+: pentests, vulnerability evaluation, code audits
+: present yourselves!
 
 
 
@@ -89,27 +125,29 @@ Go was created in 2007 at Google by Robert Griesemer, Rob Pike, and Ken Thompson
 
 
 
-* Genesis
+* Go's genesis
 
-Robert, Rob, and Ken started working on Go [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][largely out of frustration with C++]]: language complexity, long build times, poor support for concurrency, etc.
+Robert, Rob, and Ken share their [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][frustration about having to use C++]] as a language for distributed systems at Google: language complexity, long build times, poor support for concurrency, etc.
 
-.image https://imgs.xkcd.com/comics/compiling.png
+They decide to work on a new language during their Google 20% time...
 
 See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]].
 
+.image https://imgs.xkcd.com/comics/compiling.png 300 _
 
 
-* History of the Go project
 
-- 2007: the project starts at Google.
+
+* Brief history of the Go project
+
+- 2007: Griesemer, Pike & Thompson start working on Go.
+- ????: Ian Lance Taylor & Russ Cox (also from Google) join the Go team.
 - 2009: Go is open-sourced.
-- 2012: Go 1.0 released.
+- 2012: Go 1.0 gets released. The language's adoption rises sharply.
 - 2015: The go compiler (`gc`) becomes self-hosted.
-- ...
-- 2021: Go 1.17 is released.
-- ...
-- 2022: Go 1.18 is released. Generics are added to the language.
+- 2022: Go 1.18 gets released (adding generics to the language).
 
+.image https://go.dev/blog/gopher/gopher.png 200 _
 
 
 * What you should know about Go
@@ -165,7 +203,7 @@ See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
 
 : multiple returns allow principled error handling
-: packages: no ifdef guards, no required ordering of top-level declarations
+: packages: no ifdef guards, no required ordering of top-level declarations, encapsulation
 : also syntax differences: type name comes after variable name
 
 
@@ -177,6 +215,7 @@ The `go` toolchain comes with tools for
 - cross-compilation
 - code formatting (`gofmt`)
 - automatic package imports (`goimports`)
+- documentation generation
 - testing & code coverage
 - microbenchmarks
 - profiling & tracing
@@ -192,13 +231,13 @@ Moreover, the core library is pretty extensive; see [[https://pkg.go.dev/std][pk
 
 * Go is object-oriented... with a twist!
 
-The ability to define custom types (and methods on them) promote _abstraction_.
+The ability to define custom types (and methods on them) promote [[https://en.wikipedia.org/wiki/Abstraction_(computer_science)#Abstraction_in_object_oriented_programming][_abstraction_]].
 
-Go's interfaces (and, soon, generics) enable _polymorphism_.
+Go's interfaces (and, soon, generics) enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]].
 
-Go's packages enable _encapsulation_.
+Go's packages enable [[https://en.wikipedia.org/wiki/Encapsulation_(computer_programming)][_encapsulation_]].
 
-Go has no concept of _inheritance_, but facilitates _composition_ instead.
+Go has no concept of [[https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)][_inheritance_]], but facilitates [[https://en.wikipedia.org/wiki/Object_composition][_composition_]] instead.
 
 .image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 300 _
 
@@ -332,7 +371,7 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
 
 2. Write a "Hello World" program in main.go
 
-3. Compile it by running the following command, which creates an executable
+3. Compile it by running the following command, which creates a standalone native binary
 (named `main` on *nix systems or `main.exe` on Windows):
 
   go build main.go
@@ -520,14 +559,15 @@ A package is identified by its _path_, which must be globally unique.
   net/http
   github.com/jub0bs/missilelauncher
 
-The _default_name_ of a package typically corresponds to the last component of its path:
+The path of a third-party package typically is a schemeless URL that corresponds to the location where clients can download the package.
+
+The _default_name_ of a package corresponds to the last component of its path:
 
   fmt
   http
   missilelauncher
 
-Compiling a package whose default name is `main` produces an executable
-(and a library otherwise).
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 150 _
 
 : first two are part of core library; third one is third-party
 : "usually": the exception is for a package whose enclosing folder doesn't mach the package name; best avoided
@@ -539,50 +579,33 @@ Compiling a package whose default name is `main` produces an executable
 
 A package is composed of one or more source files that are compiled together.
 
-All of a package's source files (and no other!) must
+All of a package's source files start with the same _package_clause_ and are located in the same folder on the disk.
 
-- be in the same folder (e.g. foo),
-- start with the same package clause (e.g. `package`foo`).
+For instance, all source files constituting the `fmt` package start with
 
-Each source file of a package must import the packages it consumes.
+  package fmt
 
-.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
+and are located in a folder corresponding to `${go`env`GOROOT}/src/fmt`:
 
-: imports are not "shared" across source files.
-
-
-
-* Exercise: a closer look at the fmt package with go list
-
-`go`list` allows you to ask questions about packages at the command line.
-
-Run the following command in your shell to list the production source files that make up the `fmt` package:
-
-  go list -f "{{ join .GoFiles \"\\n\" }}" fmt
-
-Run the following command in your shell to determine where the `fmt` package lives
-on your machine, and check the contents of the folder:
-
-  go list -f "{{ .Dir }}" fmt
-
-Note that the folder also contains test files.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+  /usr/local/Cellar/go/1.17.8/libexec/src/fmt
+  ├── doc.go
+  ├── errors.go
+  ├── format.go
+  ├── print.go
+  └── scan.go
 
 
 
-* Exercise: a closer look at the fmt package
+* Package documentation
 
-Consult the documentation of the `fmt` package.
-
-The documentation is available offline via the `go`doc` subcommand:
+The documentation of a package installed locally can be consulted at the command line with the `doc` subcommand:
 
   go doc fmt
   go doc fmt Println
 
-It's also available online at [[https://pkg.go.dev/fmt][https://pkg.go.dev/fmt]].
+The documentation for core-library and third-party packages is available online at [[https://pkg.go.dev/fmt][https://pkg.go.dev/fmt]].
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
 
 
 
@@ -604,6 +627,8 @@ Whether a package-level identifier is exported depends on the case of its first 
   const qux = 42                    // starts with a lowercase q:  unexported by package foo
   func quux() { /* ... */ }         // starts with a lowercase q:  unexported by package foo
 
+: you can tell just by looking at a package-level identifier whether it's public or private
+
 
 
 * Importing packages
@@ -618,8 +643,6 @@ The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility
     // core-library packages
 
     // third-party packages
-
-    // project packages
   )
 
 .image https://go.dev/blog/store/gophers.jpg 200 _
@@ -646,21 +669,19 @@ Importing a package without using it causes a compilation error! This was [[http
 
 Named imports allows you to use the imported package under a different name.
 
-A named import is handy when you perceive the default package name as inappropriate:
+A named import is convenient when you perceive the default name as inappropriate:
 
   import ml "github.com/jub0bs/missilelauncher"
 
-But named imports are especially useful
-
-- when your code imports multiple packages whose default names collide:
+Moreover, named imports are especially useful when your code imports multiple packages whose default names collide,
 
   import "math/rand"
   import crand "crypto/rand"
 
-- when your code uses multiple major versions of a _module_ within the same file:
+or when one of your source files uses multiple major versions of a _module_:
 
-  import "github.com/jub0bs/missilelauncher"
-  import mlv2 "github.com/jub0bs/missilelauncher/v2"
+  import "github.com/jub0bs/foo"
+  import foov2 "github.com/jub0bs/foo/v2"
 
 : more on this later
 
@@ -672,28 +693,45 @@ But named imports are especially useful
 
 * Basic types
 
-Go provides basic types:
+Go provides the following basic types.
 
-- booleans
-- numeric (integer and floating-point)
-- strings
+*Booleans*
+
+The type is named `bool` and comes with the usual operators: `&&` (AND), `||` (OR), `!` (NOT).
+
+*Numeric*Types*
+
+- signed integers: `int8`, `int16`, `int32`, `int64`, `int`
+- unsigned integers: `uint8`, `uint16`, `uint32`, `uint64`, `uint`, `uintptr`
+- floating-point numbers: `float32`, `float64`
+- complex numbers: `complex64`, `complex128`
+
+Integer types support the increment & decrement operators but only in suffix form: `i++`
+
+*Strings*
+
+More about strings in Appendix A.
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
+: fixed-size integers
+: the size of int, uint, and uintptr is either 32 or 64 bits: it depends on the compiler and the target architecture.
 
 
 
 * Composites types
 
-Go also provides composite types, which are composed of other existing types:
+Go also provides composite types, which are composed of other existing types.
+Here are some examples:
 
-- pointers
-- functions
-- channels
-- interfaces
-- arrays
-- slices
-- maps
-- structs
+    *int                              // pointer
+    func (string) bool                // function
+    [7]int                            // array
+    []int                             // slice
+    map[string]string                 // map
+    struct {Lat string; Long string}  // struct
+    interface{ String() string }      // interface
+    chan error                        // channel
 
 
 
@@ -979,18 +1017,22 @@ can have the same name but different signatures.
 
 * Namecheck project: validation of Twitter usernames
 
-A prospective username is [[https://help.twitter.com/ca/managing-your-account/twitter-username-rules][valid on Twitter]] if it
+A prospective username [[https://help.twitter.com/ca/managing-your-account/twitter-username-rules][must satisfy two conditions]] to be valid on Twitter:
 
-- does not contain any case-insensitive match of "twitter" (e.g. "TwItTEr"),
-- contains between 4 and 15 alphanumeric or underscore characters.
+1. It does not contain any case-insensitive match of "twitter" (e.g. "TwItTEr").
 
-Write a function that implements the first rule:
+2. It contains between 4 and 15 alphanumeric or underscore characters.
+
+Write a function that implements Twitter's first validation rule:
 
   func containsNoIllegalPattern(username string) bool
+
+It should return true if its parameter does _not_ contain any case-insensitive match of "twitter" (e.g. "TwItTEr"), and false otherwise.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : hint: keep it simple
+
 
 
 * Named results
@@ -1071,6 +1113,7 @@ The zero value of function types is `nil`.
 
 Be careful: calling a `nil` function causes a panic!
 
+: functions as parameters: useful for decorators/middleware
 : function-typed results can also be useful for cleaning up; see Mat Ryer's talk
 
 
@@ -1103,16 +1146,13 @@ More about `defer` later in the course!
 
 * Namecheck project: validation of Twitter usernames
 
-Use the `regexp` package to write a function that implements the second rule
-(a valid username contains between 4 and 15 alphanumeric or underscore characters):
+Write a function that implements Twitter's second validation rule:
 
   func looksGood(username string) (bool, error)
 
-Does the function's signature satisfy you?
+It should return true if its parameter is composed of 4 to 15 alphanumeric or underscore characters, and false otherwise. Hint: use the [[https://pkg.go.dev/regexp][`regexp` package]].
 
-What signature would you prefer? Why?
-
-How would you achieve that?
+Does the function's signature satisfy you? What signature would you prefer? Why?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/adventure/hiking.svg 200 _
 
@@ -1133,7 +1173,7 @@ A function that can fail returns an additional `error` result (the last one, by 
 
   func Get(url string) (resp *http.Response, err error)
 
-A non-nil `error` result indicates that the function failed in some way and that its "normal" results are unusable.
+A non-nil `error` result indicates to the caller that the function failed in some way and that its "normal" results are unusable.
 
 "err" is a conventional name for error values and the following nil-check idiom is typical:
 
@@ -1227,6 +1267,7 @@ See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat R
 *Inspecting*it*(before*deciding*what*to*do)*
 
 - comparing it to some sentinel error value (e.g. `io.EOF`)
+- inquiring about the concrete type of the error value
 - looking up its underlying cause (if any)
 
 The best way of treating an error value is highly context-dependent.
@@ -1275,8 +1316,6 @@ By convention, error messages
 - should not contain linebreaks.
 
 You can also create your own error types (i.e. types that satisfy the `error` interface).
-
-: more on custom error types later
 
 
 
@@ -1425,11 +1464,13 @@ All of a package's source files must be placed in the same folder.
 
 Source files from different packages cannot be in the same folder!
 
-All package members are accessible to all of the package's source files.
+All of the members of a package are accessible to all of the package's source files.
 
 Each source file must import the packages that it needs.
 
 .image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
+
+: package-level elements are visible in all source files that make up the package, not just in the source file that contains their declaration
 
 
 
@@ -1509,6 +1550,8 @@ A package doesn't have any special relationship with its subpackages:
 - `foo/bar` does not have access to identifiers not exported by `foo`;
 - `foo` does not have access to identifiers not exported by `foo/bar`.
 
+: encoding defines a general interface that all the subpackages implement
+
 
 
 * No dependency cycles allowed by the compiler
@@ -1536,6 +1579,7 @@ For example, here is a partial view of the `encoding` package and its subpackage
 .image img/dep_arrows_dont_point_down.svg _ 1000
 
 Note that no dependency arrows points down.
+
 
 
 * Flat is better
@@ -1759,6 +1803,9 @@ Alternatively, for a browser-based breakdown of the coverage by statement, run
 
 What would a low coverage say about your tests? What about a high coverage? Discuss.
 
+: a high code coverage doesn't guarantee that the covered code is well-tested
+: a low code coverage does tell you that you need to write more tests
+
 
 
 * Namecheck project: code coverage of twitter package
@@ -1843,7 +1890,9 @@ where USERNAME stands for the username whose availability we'd like to check.
 
 * defer
 
-[[https://pkg.go.dev/net/http/#pkg-overview][The documentation of the `net/http` package]] warns that the client must close the response body when finished with it. Note that the defer keyword is used:
+[[https://pkg.go.dev/net/http/#pkg-overview][The documentation of the `net/http` package]] warns that the client must close the response body when finished with it. Otherwise, the client risks a [[https://stackoverflow.com/questions/33238518/what-could-happen-if-i-dont-close-response-body/33238755#33238755][_resource_leak_]].
+
+Note that the defer keyword is used:
 
   defer resp.Body.Close()
 
@@ -1851,7 +1900,7 @@ where USERNAME stands for the username whose availability we'd like to check.
 
 It's similar in spirit to the `finally` keyword from other languages, but it's much more convenient to use. You'll grow to love it!
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 150 _
 
 : Along with concurrency primitives and interfaces, this keyword is a highlight of Go!
 
@@ -1970,6 +2019,22 @@ For now, just stub `IsAvailable` in Twitter:
   func IsAvailable(username string) (bool, error) {
     return false, nil
   }
+
+
+
+* Namecheck project: check a username on twitter and github
+
+Flesh out your `main` function:
+
+1. Check the validity of the username of interest on Twitter. Print the result to stdout.
+
+2. If the username is valid, check its availability on Twitter. Print the result to stdout.
+
+3. Repeat steps 1 & 2 for GitHub.
+
+4. Does the code in your `main` function not suffer from duplication?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
@@ -3089,79 +3154,110 @@ See [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m36s][Dave Cheney - SOLID 
 An aphorism attributed to Rob Pike is: don’t design with interfaces, discover them.
 See [[https://www.youtube.com/watch?v=YXV7sa4oM4I&t=14m][Rob Pike - The Go Programming Language and Environment]].
 
-You should resist the temptation to declare interface types upfront.
+In other words, you should resist the temptation to declare interface types upfront.
 
 Instead, start with concrete types and let interfaces emerge organically, as needed
-(e.g. for testability purposes).
+(e.g. for abstraction purposes).
 
 Note that we declared the `twitter.Twitter` and `github.GitHub` struct types first,
-and only then did we declare the interface types they satisfy.
+and only then did we declare the interface types that they satisfy.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 
-* Using interfaces for test doubles
+* Namecheck project: any way of mocking the HTTP client?
 
-[[https://www.martinfowler.com/bliki/TestDouble.html][_Test_doubles_]] are substitutes for objects whose side effects are undesirable in tests. Depending on the role they play within a test, people call them _mocks_, _stubs_, _fakes_, etc.
+The `IsAvailable` method still isn't easily testable...
 
-You now know that you can you declare an interface _after_the_fact_ for your own types.
+It unconditionally sends a HTTP request to the social network of interest, which means we cannot write unit tests (in the strict sense of the term) for it.
 
-But even if you use a concrete type that you do not own and for which no interface type is provided, you can always declare your own interface type that this concrete type automatically satisfies!
+We still need a way of somehow injecting the real HTTP client in our production code and injecting a "mock" HTTP client in our tests... Any ideas?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+
+
+* Implicit satisfaction makes "mocking" easy!
+
+You can declare an interface type that will be satisfied by your own existing types.
+
+But you can even create your own interface type for concrete types that you do not own and for which no useful interface is readily provided!
+
+Therefore, you can create a "hole" or "placeholder" to be filled
+
+- by the real thing in your production code, and
+- by some [[https://www.martinfowler.com/bliki/TestDouble.html][_test_double_]] (mock, stub, fake, etc.) in your test code!
 
 See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-tests-in-golang-619653f90742#e976][Mat Ryer's - 5 simple tips and tricks for writing unit tests in #golang]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 200 _
 
-: we defined Validator, Availabler, Checker after declaring Twitter and GitHub struct types
+
+
+* Namecheck project: declare an interface for http.Client
+
+1. Inspect the source code of `http.Get`. That function simply calls the `Get` method on `http.DefaultClient`, which is a singleton of type `*http.Client`.
+
+2. Consult the documentation for `http.Client`. Does the `http` package provide an interface for that concrete type? If not, is that a problem? What about in other languages like Java?
+
+3. In `namecheck.go`, judiciously declare a useful interface named "Getter" that values of type `*http.Client`, such as `http.DefaultClient`, already satisfy.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: see https://golang.org/pkg/net/http/#Get
+
+
+
+* Namecheck project: declare an interface for http.Client (cont'd)
+
+4. Carve a hole for a `namecheck.Getter` in your `Twitter` and `GitHub` struct types:
+
+  type Twitter struct {
+    Getter namecheck.Getter
+  }
+
+5. In `IsAvailable`, replace the call to `http.Get` by a call to the `Getter`'s method.
+
+6. In your `main` function, inject the actual HTTP client when you instantiate the `Twitter` and `GitHub` struct types.
+
+Can you guess what's coming next?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+: TODO: move elsewhere
 : unit test: no I/O, limit site effects
 : email sender: you don't want to send an email every time
 : payment system: unless e2e tests, don't want to trigger a real payment in unit tests
 
 
 
-* Namecheck project: mocking the HTTP client
+* Namecheck project: "mock" the HTTP client
 
-1. Inspect the source code for `http.Get`.
-
-2. In `namecheck.go`, judiciously declare a useful `Getter` interface that `*http.Client` already satisfies.
-
-3. Create a `stub` package and, in `stub.go`, declare the following struct type:
+1. Create a `stub` package. In it, declare the following struct type:
 
   type SuccessfulGetter struct {
     StatusCode int
   }
 
-4. Make `stub.SuccessfulGetter` satisfy your `namecheck.Getter` interface; its `Get` method should always succeed and return the specified status code
+2. Make `stub.SuccessfulGetter` satisfy your `namecheck.Getter` interface. Its `Get` method should unconditionally succeed and return the specified status code.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+3. Now write a few unit tests for `github.GitHub`'s `IsAvailable` method and run them.
 
-: Get function calls the Get method on DefaultClient, which is a package-level singleton of type *http.Client
-: see https://golang.org/pkg/net/http/#Get
+4. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method?
+If not, what would you change?
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 150 _
 
-* Namecheck project: mocking the HTTP client (cont'd)
-
-5. Add a field of type `namecheck.Getter` to your `Twitter` and `GitHub` struct types.
-
-  type Twitter struct {
-    Getter namecheck.Getter
-  }
-
-6. Adjust your `main.go`
-
-7. Write a few test cases for `github.GitHub`'s `IsAvailable` method and run them.
-
-8. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method? If not, what would you change?
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
-
+: https://www.martinfowler.com/articles/mocksArentStubs.html
 : You may get some panics. If you do, can you figure out why and fix it?
 : need a non-nil request body: use http.NoBody
 
 
 
-* Namecheck project: simulating support for many platforms
+* Namecheck project: simulate support for many platforms
 
 1. In `main.go`, judiciously populate your `[]Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
 
@@ -3605,7 +3701,7 @@ Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-
 
 * Fixing the data race
 
-One way to fix the data race consists in shadowing the iteration variable inside the loop, before the `go` statement.
+One way to fix the data race consists in [[https://en.wikipedia.org/wiki/Variable_shadowing][_shadowing_]] the iteration variable inside the loop, before the `go` statement.
 
 .play -edit src/goroutine_func_redecl.go /^//START/,/^//END/
 
@@ -4138,7 +4234,7 @@ Of course, in the face of multiple goroutines sending values to a channel, the o
 
 The `select` keyword forms a trifecta with goroutines and channels!
 
-A `select` statement is a multiway concurrent control switch: it allows you to select one of several channel communications (send or receive).
+A `select` statement is a multiway communication selector: it allows you to select one of several _channel_communications_ (send or receive).
 
 .image https://pbs.twimg.com/media/DDWqkrFUMAAbIyL?format=png&name=large 300 _
 
@@ -4255,7 +4351,7 @@ The solution is available on the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playgro
 
 * Canceling goroutines with context
 
-The `context` package [[https://vimeo.com/115309491#t=10m][formalizes this idea]] of broadcasting a signal by closing a channel.
+The `context` package [[https://vimeo.com/115309491#t=10m][formalizes and expands upon this idea]] of closing a channel in order to broadcast a signal.
 
 It exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
 
@@ -4273,6 +4369,8 @@ It exports an interface type named `Context` that is convenient for terminating 
   }
 
 By convention, the `context.Context` parameter (if any) is always first.
+
+: contexts form a tree, canceling one context also cancels its descendants
 
 
 
@@ -4415,17 +4513,51 @@ For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andre
 
 
 
+* Adding third-party dependencies to your project
+
+So far, you've only relied on Go's core library but, thanks to Go's module system,
+you can of course bring in third-party dependencies.
+
+To add a third-party HTTP router like [[https://github.com/gorilla/mux][gorilla/mux]] as a dependency to your project, run
+
+  go get github.com/gorilla/mux
+
+Running that command adds the following line to your `go.mod` file:
+
+  require github.com/gorilla/mux v1.8.0 // indirect
+
+Once you actually use package `github.com/gorilla/mux` in your code, you can run
+
+  go mod tidy
+
+to get rid of that "indirect" comment.
+
+
+
+* The go.sum file
+
+Running
+
+  go get github.com/gorilla/mux
+
+also causes the creation (or update) of a file named `go.sum`.
+
+That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues in the dependency.
+
+That file is precious; you should track changes to the it in your version-control system.
+
+
+
 * Namecheck project: use a third-party package for routing
 
-Let's use [[https://github.com/gorilla/mux][gorilla/mux]], a popular alternative to `net/http` for defining routes.
 
 1. Run the following command within your project to download the dependency:
 
   go get github.com/gorilla/mux
 
-2. Inspect the changes in your `go.mod` file and notice the creation of a `go.sum` file.
+2. Inspect the contents of the `go.mod` file and of the newly created `go.sum` file.
 
-3. Import `gorilla/mux` in your server's `main.go` and redefine your route with it.
+3. Import `gorilla/mux` in your server's `main.go` and define your routes with it instead.
 
 4. Run the following command to clean up your `go.mod` file:
 
@@ -4479,7 +4611,7 @@ However, sharing memory can sometimes be simpler and/or more performant.
 
 Go's standard library provides two main mechanisms for sharing memory:
 
-- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync/][the `sync` package]],
+- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync[the `sync` package]],
 - synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
@@ -4488,11 +4620,37 @@ Go's standard library provides two main mechanisms for sharing memory:
 
 
 
+* Using sync.Mutex
+
+A [[https://en.wikipedia.org/wiki/Mutual_exclusion][_mutual_exclusion_]] (a.k.a. _mutex_) allows you to define a block of code to be executed by at most one goroutine at a time.
+
+Such a block of code to be executed in mutual exclusion is known as [[https://en.wikipedia.org/wiki/Critical_section][_critical_section_]].
+
+The [[https://pkg.go.dev/sync][`sync` package]] provides two types of mutexes, the simplest of which is [[https://pkg.go.dev/sync#Mutex][`sync.Mutex`]].
+That type requires no initialization, because its zero value is readily usable:
+
+  var mu sync.Mutex
+
+Simply surround the critical section by calls to the mutex's `Lock` and `Unlock` methods:
+
+  mu.Lock()
+  // critical section
+  mu.Unlock()
+
+To avoid [[https://en.wikipedia.org/wiki/Resource_contention][_contention_]], you should keep the critical section short and free of I/O operations!
+
+: A popular name for a mutex variable is "mu".
+: in some cases, defer can be useful to Unlock
+: at most one goroutine at a time can acquire the lock
+
+
+
+
 * Namecheck project: count of checks per username
 
 1. Study the documentation of `sync.Mutex`.
 
-2. Guard reads from and writes to the map with a mutex.
+2. Guard accesses (both writes *and* reads!) to the map with a mutex.
 
 3. Run the server again with the race detector on. Any issue this time?
 
