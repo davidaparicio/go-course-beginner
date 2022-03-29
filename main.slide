@@ -1077,7 +1077,7 @@ You've already used a variadic function... Which one? Check its signature in the
 
 The type of identically typed consecutive parameters can be factored out:
 
-  func Split(s, sep string) []string { // see the strings package
+  func Split(s, sep string) []string
 
 Similarly, the type of identically typed consecutive results can be factored out:
 
@@ -1087,11 +1087,13 @@ Similarly, the type of identically typed consecutive results can be factored out
 
 * Recursion
 
-Go supports recursion: a function can call itself (directly or indirectly).
+Go supports recursion: a function can call itself (either directly or indirectly).
+
+Here is a recursive implementation of the [[https://en.wikipedia.org/wiki/Factorial][factorial function]] from mathematics:
 
 .play -edit src/recursion.go /^//START/,/^//END/
 
-Recursion is useful for traversing recursive data structures, such as trees.
+Recursion is particularly useful for traversing recursive data structures, such as linked lists and trees. However, it requires a bit of getting used to!
 
 Because call stacks grow and shrink as needed, unless you have a bug somewhere,
 you're less likely to cause a stack overflow by recursing than in other languages.
@@ -1122,7 +1124,7 @@ Be careful: calling a `nil` function causes a panic!
 
 Go supports anonymous functions but lacks a concise "lambda" notation:
 
-  incr := func (i int) int { return i + 1 }
+  incr := func(i int) int { return i + 1 }
 
 An anonymous functions can _capture_ variables that are accessible to it:
 
@@ -1134,7 +1136,7 @@ Anonymous functions are often conveniently used in conjunction with the `go` key
 
 * And one more thing: defer
 
-*defer* allows you to unconditionnaly execute some code at the end of a function call.
+*defer* allows you to unconditionally execute some code at the end of a function call.
 
 It's particularly useful for cleaning up, reclaiming resources, etc.
 
@@ -1908,7 +1910,7 @@ It's similar in spirit to the `finally` keyword from other languages, but it's m
 
 * Mechanics of the defer keyword
 
-`defer` causes the function call to which it's applied to unconditionnaly execute when the enclosing function terminates (whether normally or because of a panic).
+`defer` causes the function call to which it's applied to unconditionally execute when the enclosing function terminates (whether normally or because of a panic).
 
 .play -edit src/defer_unconditional.go /^//START/,/^//END/
 
@@ -2044,7 +2046,7 @@ Our project is starting to take shape, but it still suffers from limitations...
 
 One issue is that, although the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, nothing relates them.
 
-It would be nice to have a common abstration to manipulate one or the other indiscriminately...
+It would be nice to have a common abstraction to manipulate one or the other indiscriminately...
 
 Interfaces will allow us to do that!
 
@@ -2661,6 +2663,8 @@ Live demo in Playground
 5. Repeat steps 1-4 for the `github` package.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: timing: end of day2 morning
 
 
 
@@ -3572,7 +3576,7 @@ We need another mechanism...
 
 * Wait groups
 
-The [[https://pkg.go.dev/sync/#WaitGroup][`sync` package]] provides a mechanism for orchestrating goroutines: _wait_groups_.
+The [[https://pkg.go.dev/sync][`sync` package]] provides a mechanism for orchestrating goroutines: _wait_groups_.
 
 A wait group is little more than a glorified counter with _concurrency-safe_ operations.
 
@@ -3593,7 +3597,7 @@ Wait groups are particularly useful when the number of goroutines to spawn is no
 
 * Using a wait group
 
-Initialize a variable of type `sync.WaitGroup`, whose the zero value is readily usable.
+Declare a variable of type [[https://pkg.go.dev/sync#WaitGroup][`sync.WaitGroup`]], whose the zero value is readily usable.
 
 A wait group supports three operations:
 
@@ -4429,7 +4433,7 @@ The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playgro
 
 .play -edit src/server_helloworld.go /^//START/,/^//END/
 
-You can define a HTTP handler as a package-level function. It must have two params:
+You can define a handler as a package-level function. It must have two parameters:
 
 - a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface for you to compose the HTTP response.
 - a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.
