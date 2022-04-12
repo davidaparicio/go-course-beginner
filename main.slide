@@ -4117,15 +4117,16 @@ Ranging over a channel amounts to iteratively receiving from it:
 
 Note that, when ranging over a channel, only one iteration variable is available. It takes the successive values sent on the channel until the channel is both closed and empty.
 
-The code above is an exact equivalent to the following:
+The code above is exactly equivalent to the following:
 
-  for {
-    v, ok := <-ch
-    if !ok {
-      break
+  loop:
+    for {
+      v, ok := <-ch
+      if !ok {
+        break loop
+      }
+      // do something with v
     }
-    // do something with v
-  }
 
 : There's no notion of indexing with channels.
 
