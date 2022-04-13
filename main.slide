@@ -371,8 +371,7 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
 
 2. Write a "Hello World" program in main.go
 
-3. Compile it by running the following command, which creates a standalone native binary
-(named `main` on *nix systems or `main.exe` on Windows):
+3. Compile it by running the following command, which creates a standalone native binary (named `main` on *nix systems or `main.exe` on Windows):
 
   go build main.go
 
@@ -1838,7 +1837,7 @@ A prospective username is valid on GitHub if it
 
 - contains between 3 and 39 alphanumeric or hyphen characters,
 - doesn't start or end (or both) with a hyphen,
-- doesn't contain two hyphens in a row.
+- doesn't contain two consecutive hyphens.
 
 
 
@@ -2046,9 +2045,7 @@ Our project is starting to take shape, but it still suffers from limitations...
 
 One issue is that, although the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, nothing relates them.
 
-It would be nice to have a common abstraction to manipulate one or the other indiscriminately...
-
-Interfaces will allow us to do that!
+It would be nice to have a common abstraction to manipulate one or the other indiscriminately... Interfaces will allow us to do that!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
@@ -2080,13 +2077,31 @@ Contrary to other languages, Go encodes the length of an array in its type name.
 
 The built-in function `len` yields the length of an array.
 
-You can omit to specify the length in array literals and let the compiler infer it.
-
-An array is comparable if the type of its elements is itself comparable.
+You can omit the length in array literals and let the compiler infer it from the number of elements listed in the literal.
 
 .play -edit src/arrays.go  /^//START/,/^//END/
 
 : the [0]func() trick is actually used to make types non-comparable w/o compromising memory footprint
+
+
+
+* An array's zero value
+
+Arrays are _not_ reference types. They cannot take the value `nil`.
+
+The zero value of an array type is an array full of zero values of its element type.
+
+.play -edit src/array_zero.go  /^//START/,/^//END/
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
+
+
+
+* Array comparability
+
+An array type is comparable only if the type of its elements is itself comparable:
+
+.play -edit src/array_comparability.go  /^//START/,/^//END/
 
 
 
@@ -2113,18 +2128,6 @@ The first iteration variable corresponds to the index of the current element.
 The second iteration variable is only a copy of the array's current element.
 
 .play -edit src/array_range.go  /^//START/,/^//END/
-
-
-
-* An array's zero value
-
-Arrays are _not_ reference types. They cannot take the value `nil`.
-
-The zero value of an array type is an array full of zero values of its element type.
-
-.play -edit src/array_zero.go  /^//START/,/^//END/
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
 
 
 
@@ -2182,53 +2185,25 @@ of a given length.
 
 
 
-* Slices under the hood TODO
+* A slice's zero value
 
-A slice is essentially a resizable view inside a backing array.
+Slice are reference types. Their zero value is `nil`.
 
-The backing array may extend past the end of the slice.
+A `nil` slice is distinct from, but functionally equivalent to, an empty slice. [[https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices][Convention]] dictates that you do not differentiate a `nil` slice from an empty slice in your code.
 
+.play -edit src/slice_zero.go  /^//START/,/^//END/
 
-
-The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
-
-When using the `make` function to create a slice, you can specify the length and capacity independently. Doing this is often useful when you're about to add elements to the slice
-
-Built-in functions `len` and `cap` yield the _length_ and _capacity_ of a slice.
-
-: show make([]string, l, c) now
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
 
 
 
-* Slices under the hood (cont'd) TODO
+* Slices are not comparable
 
-In memory, a slice is a data structure composed of three machine words:
+Regardless of their element type, slices are not comparable: the compiler won't allow you to use the `==` operator to test the equality of two arbitrary slice values.
 
-  ------------------------
-  | ptr to backing array |
-  ------------------------
-  |        length        |
-  ------------------------
-  |       capacity       |
-  ------------------------
+The only legal comparison is to a literal `nil` value.
 
-
-
-* Slice function parameters are cheap and flexible
-
-The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the underlying array!
-
-Moreover, a slice parameter is much more flexible than an array parameter.
-
-.play -edit src/slice_cheap.go  /^//START/,/^//END
-
-: 24 bytes on a 64-bit architecture
-
-
-
-* Slices are not comparable TODO
-
-Slices are _not_ comparable; the only allowed comparison is to the `nil` value.
+.play -edit src/slice_incomparable.go  /^//START/,/^//END/
 
 
 
@@ -2245,6 +2220,50 @@ Be careful: indexing a slice in the negatives or beyond its _length_ causes a pa
 So does indexing a `nil` slice:
 
 .play -edit src/slice_indexing.go  /^//START2/,/^//END2/
+
+
+
+
+* Slices under the hood
+
+A slice is essentially a resizable view (or window) into a backing array.
+
+Under the hood, a slice is a data structure simply composed of three machine words:
+
+- a pointer to the backing array
+- an int corresponding to the _length_ of the slice
+- an int corresponding to the _capacity_ of the slice
+
+Built-in functions `len` and `cap` yield the _length_ and _capacity_ of a slice.
+
+  roles := []string{"Viewer", "Editor", "Admin"}
+  fmt.Println(len(roles)) // 3
+  fmt.Println(cap(roles)) // 3
+
+
+
+* Slices under the hood (cont'd)
+
+The backing array may extend past the end of the slice.
+
+The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
+
+When using the `make` function to create a slice, you can specify the length and capacity independently. Doing this is often useful when you're about to add elements to the slice
+
+: show make([]string, l, c) now
+
+
+
+* Slice function parameters are cheap and flexible
+
+The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the underlying array!
+
+Moreover, a slice parameter is much more flexible than an array parameter.
+
+.play -edit src/slice_cheap.go  /^//START/,/^//END
+
+: 24 bytes on a 64-bit architecture
+
 
 
 * Slicing operator
