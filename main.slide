@@ -311,7 +311,7 @@ Limitations include:
 
 - single executable
 - no networking allowed
-- no command-line arguments
+- no way of specifying command-line arguments
 - poor support for third-party packages
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
@@ -767,7 +767,7 @@ In some places (map keys, switch expressions, etc.), only comparable types can b
 
 * Type definitions
 
-The `type` keyword lets you define a type based on some existing _underlying_type_:
+The `type` keyword lets you define a type based on some existing [[https://go.dev/ref/spec#Underlying_types][_underlying_type_]]:
 
   type Celsius int
   type Fahrenheit int
@@ -802,9 +802,7 @@ However, Go requires many conversions from one type to another to be explicit
 
 * Variables
 
-Go's declaration syntax departs from C's in many ways.
-Rob Pike clarified the motivations behind this departure in
-[[https://go.dev/blog/declaration-syntax][a post entitled _Go's_Declaration_Syntax_]].
+Go's declaration syntax departs from C's in many ways. Rob Pike clarified the motivations behind this departure in [[https://go.dev/blog/declaration-syntax][a post entitled _Go's_Declaration_Syntax_]].
 
 [[https://go.dev/play/p/GTMUrroC0lz][Playground]]
 
@@ -1022,6 +1020,12 @@ A prospective username [[https://help.twitter.com/ca/managing-your-account/twitt
 
 2. It contains between 4 and 15 alphanumeric or underscore characters.
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* Namecheck project: validation of Twitter usernames (cont'd)
+
 Write a function that implements Twitter's first validation rule:
 
   func containsNoIllegalPattern(username string) bool
@@ -1145,7 +1149,7 @@ More about `defer` later in the course!
 
 
 
-* Namecheck project: validation of Twitter usernames
+* Namecheck project: validation of Twitter usernames (cont'd)
 
 Write a function that implements Twitter's second validation rule:
 
@@ -1155,10 +1159,10 @@ It should return true if its parameter is composed of 4 to 15 alphanumeric or un
 
 Does the function's signature satisfy you? What signature would you prefer? Why?
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/adventure/hiking.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : transition: we need to learn about error handling in Go, and for that we need to learn about if and switch statements
-: ^[0-9A-Z_a-z]{4,15}$
+: ^\w{4,15}$
 
 
 
@@ -1482,7 +1486,7 @@ Each source file must import the packages that it needs.
 - lowercase alphanumeric (no underscores!),
 - concise (_net_ rather not _network_, _strconv_ rather than _stringconversion_)
 - descriptive (avoid painfully generic names like "util", "helpers", or "common"),
-- a noun rather than a verb,
+- a noun rather than a verb (usually),
 - a clue to its purpose (rather than its content).
 
 Don't prevent clients of your package from using a good name in their code.
@@ -1638,7 +1642,9 @@ The [[https://pkg.go.dev/testing/][`testing` package]] allows you to test your p
 - example tests (executable examples that end up in the package's documentation),
 - micro-benchmarks (laser-focused performance tests for CPU-bound functions).
 
-You can run tests by invoking the `go`test` subcommand.
+You can run tests by invoking the following subcommand:
+
+  go test
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
@@ -2045,23 +2051,26 @@ Our project is starting to take shape, but it still suffers from limitations...
 
 One issue is that, although the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, nothing relates them.
 
-It would be nice to have a common abstraction to manipulate one or the other indiscriminately... Interfaces will allow us to do that!
+We seem to be missing a common abstraction to indiscriminately use the functionalities from the `twitter` and `github` packages... Interfaces will allow us to do that!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
 
 
-* Namecheck project: no way of mocking the HTTP client
+* Namecheck project: IsAvailable's lack of testability
 
-Another issue is the lack of testability of function `IsAvailable`.
+`IsAvailable` unconditionally sends a HTTP request to the social network of interest, which considerable hinders its testability.
 
-At the moment, it unconditionally sends a HTTP request to the social network of interest. Explain why this is problematic if you want to write unit tests for `IsAvailable`.
+Unit tests are supposed to operate purely in memory, not talk to the real world.
 
-We'd need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests.
+You may also write a unit test that checks that, if the client returns a 200 OK response, then IsAvailable returns `false,`nil`.
 
-Again, interfaces will allow us to solve this issue. Patience!
+We'd need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests. Again, interfaces will allow us to solve this issue. Patience!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+: need Internet access to run that unit test
+: success/failure of unit test depends on GitHub
 
 
 
@@ -2205,6 +2214,8 @@ The only legal comparison is to a literal `nil` value.
 
 .play -edit src/slice_incomparable.go  /^//START/,/^//END/
 
+However, you can use [[https://pkg.go.dev/golang.org/x/exp/slices#Equal][the `Equal` function]] from [[https://pkg.go.dev/golang.org/x/exp/slices][the `golang.org/x/exp/slices` package]] to compare two slices whose element type is comparable.
+
 
 
 * Slice indexing
@@ -2256,7 +2267,7 @@ When using the `make` function to create a slice, you can specify the length and
 
 * Slice function parameters are cheap and flexible
 
-The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the underlying array!
+The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the backing array!
 
 Moreover, a slice parameter is much more flexible than an array parameter.
 
@@ -2507,7 +2518,11 @@ To range over a map in a certain order, you must
 - sort the slice as desired,
 - access the map values as you range over the sorted slice of keys.
 
-.play -edit src/map_range_deterministic.go /^//START/,/^//END/
+.code -edit src/map_range_deterministic.go /^//START/,/^//END/
+
+See [[https://go.dev/play/p/UwzU1ZKpVNP][this Playground]].
+
+The `Keys` function (and other useful generic functions that operate on maps) are provided by [[https://pkg.go.dev/golang.org/x/exp/maps][the `golang.org/x/exp/maps` package]].
 
 
 
@@ -2616,7 +2631,7 @@ Types and functions can now be parameterized by types:
   func Size(t *Tree[E]) int
   func Sum(t *Tree[E]) E
 
-(The `any` type is simply an alias for `interface{}`.)
+The `any` type is simply a predeclared alias for `interface{}`.
 
 Generics promote code reusability while providing some compile-time guarantees.
 
@@ -2637,14 +2652,14 @@ Implement `IsAvailable` in the `twitter` package:
     endpoint := fmt.Sprintf(tmpl, username)
     resp, err := http.Get(endpoint)
     if err != nil {
-      return false, errors.New("unknown availability")
+      return false, err
     }
     defer resp.Body.Close()
     if resp.StatusCode != http.StatusOK {
       return false, errors.New("unknown availability")
     }
     var dto struct {
-      Data interface{} `json:"data"`
+      Data any `json:"data"`
     }
     dec := json.NewDecoder(resp.Body)
     if err := dec.Decode(&dto); err != nil {
@@ -2669,9 +2684,9 @@ Live demo in Playground
 
 * Namecheck project: turn IsValid and IsAvailable into methods
 
-1. In the `twitter` package, declare a `Twitter` type based on an empty struct:
+Rather than having package-level functions, let's create some object dedicated to checking the validity and availability of usernames on each platform.
 
-  type Twitter struct{}
+1. In the `twitter` package, declare a `Twitter` type based on an empty struct.
 
 2. Turn `IsValid` and `IsAvailable` into methods on that type (use a pointer receiver).
 
@@ -2681,9 +2696,9 @@ Live demo in Playground
 
 5. Repeat steps 1-4 for the `github` package.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
-: timing: end of day2 morning
+: value or pointer receiver for String method?
 
 
 
@@ -2824,7 +2839,7 @@ declare the following interface:
     IsValid(string) bool
   }
 
-2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
+2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it? If not, make it so!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2840,7 +2855,7 @@ declare the following interface:
     IsAvailable(string) (bool, error)
   }
 
-2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
+2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it? If not, make it so!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2856,7 +2871,7 @@ declare the following interface:
 
 That interface governs how functions from the `fmt` package represent values of the concrete type in question.
 
-2. Do `twitter.Twitter` and `github.GitHub` satisfy it? If not, make it so!
+2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it? If not, make it so!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2908,7 +2923,7 @@ You can declare a larger interface type simply by listing the more elementary in
 - an `Availabler`
 - a `fmt.Stringer`
 
-2. Do `twitter.Twitter` and `github.GitHub` satisfy it?
+2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2935,10 +2950,12 @@ The empty interface is an interface that requires no method:
 
 Therefore, it is automatically satisfied by _all_ types (no exception) in Go.
 
+Go 1.18 [[https://go.dev/doc/go1.18#generics][introduced]] `any` as a predeclared alias for `interface{}`.
+
 The empty interface is useful for maximum flexibility in very generic functions,
 such as `fmt.Println`:
 
-  func Println(a ...interface{}) (int, error)
+  func Println(a ...any) (int, error)
 
 
 
@@ -2948,7 +2965,7 @@ Because the empty interface is the least specific type in Go, you should use it 
 
 [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=7m36s][As Rob Pike puts it]], the empty interface says nothing.
 
-If you declare a function that has a parameter of type `interface{}`, Go's type checker can't provide any compile-time guarantees about the nature of that parameter.
+If you declare a function that has a parameter of type `any`, Go's type checker can't provide any compile-time guarantees about the nature of that parameter.
 
 Therefore, peppering empty interfaces all over the business layer of your application (where being very specific pays off) is a bad idea!
 
@@ -3220,7 +3237,7 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 * Namecheck project: declare an interface for http.Client
 
-1. Inspect the source code of `http.Get`. That function simply calls the `Get` method on `http.DefaultClient`, which is a singleton of type `*http.Client`.
+1. Inspect the source code of function `http.Get`. That function simply calls the `Get` method on `http.DefaultClient`, which is a singleton of type `*http.Client`.
 
 2. Consult the documentation for `http.Client`. Does the `http` package provide an interface for that concrete type? If not, is that a problem? What about in other languages like Java?
 
@@ -3758,17 +3775,19 @@ Defining a dedicated named function can help:
 
 * Namecheck project: check each user name concurrently
 
-1. Extract the body of the for-range loop on your `[]Checker` slice as a function in your `main` package:
+1. Extract the body of the for-range loop that iterates on your `[]Checker` slice as a function in your `main` package:
 
-  func check(checker namecheck.Checker, username string, wg *sync.WaitGroup)
+  func check(checker namecheck.Checker, username string)
 
-2. Within the loop, apply the `go` keyword to your `check` function.
+2. Add a parameter of type `*sync.WaitGroup` to your `check` function.
 
-3. Use a wait group in order to wait, at the end of the `main` function, for all the goroutines that you spawned to terminate.
+3. Within the for-range loop, apply the `go` keyword to your `check` function.
 
-Does user experience improve?
+4. Use a wait group in order to wait, at the end of the `main` function, for all the goroutines that you spawned to terminate.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+5. Time the program's execution. Does user experience improve?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 
 
@@ -4288,19 +4307,26 @@ A `select` statement is a multiway communication selector: it allows you to sele
 `select` is often used in conjunction with `for` to form a so-called _event_loop_.
 
 For instance, if you want to continually receive from two (or more) channels,
-a simple for-range loop won't do; you'll need to nest a `select` inside a loop:
+a simple for-range loop won't do; you'll need to nest a `select` inside a loop.
 
+In that case, prefer a "while" loop to an infinite loop, to avoid the need for [[https://go.dev/ref/spec#Label][labels]]:
+
+  var finished bool
   for !finished {
     select {
-    case  err, ok := <-errorCh:
+    case  err := <-errorCh:
+      fmt.Fprintln(os.Stderr, err)
       finished = true
       continue
-    case v, ok := <-resultCh:
-      // ...
+    case res, ok := <-resultCh:
+      if !ok {
+        finished = true
+        continue
+      }
+      // do something interesting with res
     }
   }
 
-In that case, prefer a "while" loop to an infinite loop, to avoid the need for labels.
 
 
 
@@ -4375,7 +4401,7 @@ The solution is available on the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playgro
 
 * Canceling goroutines with context
 
-The `context` package [[https://vimeo.com/115309491#t=10m][formalizes and expands upon this idea]] of closing a channel in order to broadcast a signal.
+The `context` package [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this idea]] of closing a channel in order to broadcast a signal.
 
 It exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
 
@@ -4605,25 +4631,21 @@ Let's keep track (in memory) of how many times each username has been checked.
 
 4. Register your `handleStats` handler on a route named `/stats`.
 
-5. Run your server (with `--race`) and exercise it. Do you notice any problem?
+5. Run your server and exercise it.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
-* One problem: we've introduced a synchronization bug
+* One problem: a synchronization bug
 
 The HTTP server provided by `net/http` is concurrent: it handles each incoming request in a separate goroutine.
 
 However, maps are *not* concurrency-safe: carelessly updating a map from multiple goroutines yields unpredictable results!
 
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
+The Go runtime [[https://go.dev/doc/go1.6#runtime][may be able to detect concurrent map writes]] and intentionally crash the program (see [[https://go.dev/play/p/NMDVMeaVLLx][this Playground]]), or the runtime may miss the data race and you may silently lose some updates to the map.
 
-
-
-* Maps are not concurrency-safe
-
-.play -edit src/map_not_concurrency_safe.go /^//START/,/^//END/
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
 
 
 
@@ -4635,7 +4657,7 @@ However, sharing memory can sometimes be simpler and/or more performant.
 
 Go's standard library provides two main mechanisms for sharing memory:
 
-- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync[the `sync` package]],
+- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync][the `sync` package]],
 - synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _

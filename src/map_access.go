@@ -14,6 +14,8 @@ func main() {
 	v, ok := m[k] // HL
 	if ok {
 		fmt.Printf("key %q is in the map and has value %q\n", k, v)
+	} else {
+		fmt.Printf("key %q is not in the map\n", k)
 	}
 	// END OMIT
 }
