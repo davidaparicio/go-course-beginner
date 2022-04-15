@@ -769,11 +769,11 @@ In some places (map keys, switch expressions, etc.), only comparable types can b
 
 The `type` keyword lets you define a type based on some existing [[https://go.dev/ref/spec#Underlying_types][_underlying_type_]]:
 
-  type Celsius int
-  type Fahrenheit int
-  type Kelvin int
+  type Celsius float64
+  type Fahrenheit float64
+  type Kelvin float64
 
-`Celsius`, `Fahrenheit`, and `Kelvin` are three _defined_types_ all based on type `int`.
+`Celsius`, `Fahrenheit`, and `Kelvin` are _named_types_ all based on type `float64`.
 
 The four types share the same zero value (`0`, in this case).
 
@@ -786,7 +786,6 @@ However, they are distinct types and are *not* interchangeable.
 :   - struct types useful for JSON encoding/decoding
 :   - interface types useful for asserting on behaviour
 : few restrictions on the underlying type
-: You can define types at package level or within functions.
 
 
 
@@ -802,28 +801,145 @@ However, Go requires many conversions from one type to another to be explicit
 
 * Variables
 
-Go's declaration syntax departs from C's in many ways. Rob Pike clarified the motivations behind this departure in [[https://go.dev/blog/declaration-syntax][a post entitled _Go's_Declaration_Syntax_]].
-
-[[https://go.dev/play/p/GTMUrroC0lz][Playground]]
 
 
+* Variables in a nutshell
 
-* var vs. short variable declaration
+You can declare variables at the top level or within functions (_local_variables_):
 
-Short variable declaration is only allowed for local variables, declared within functions.
+.play -edit src/variables.go
 
-Moreover, you have to use `var` rather than `:=` when the default type of the initializing expression won't do or cannot be inferred:
+A _local_variable_ *must* be used, or compilation will fail.
 
-  var f Fahrenheit = 32   // more idiomatic than f := Fahrenheit(32)
+Go's declaration syntax departs from C's in many ways. Rob Pike clarified the motivations behind this departure in [[https://go.dev/blog/declaration-syntax][a post entitled _Go's_Declaration_Syntax_]]. 
 
-  userptr := nil          // won't compile: untyped nil
-  var userptr *user = nil // fine
+Two alternative declaration syntaxes exist: the `var` keyword and the `:=` operator.
 
-In other cases, the choice between the two syntaxes is up to you.
 
-However, convention favors using `var` rather than `:=` when the variable's initial value must be the zero value or simply doesn't matter. Favor `:=` in all other cases.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
+* Variable declaration with var
+
+The `var` keyword affords maximum flexibility for declaring variables:
+
+  var s1 string = "Hello, World!"
+
+If the variable's type can be inferred from the right-hand side, you can omit the type:
+
+  var s1 = "Hello, World!"
+
+If the variable's initial value doesn't matter or should be the type's zero value, you can simply omit the equal sign and right-hand-side expression:
+
+  var s1 string
+
+However, you cannot omit both the type and the right-hand-side expression, because the compiler doesn't have enough information to determine the variable's type:
+
+  var s1 // compilation error
+
+
+
+* Short variable declaration with :=
+
+The `:=` operator allows you to declare a variable by specifying only its initial value and letting the compiler infer the type from the right-hand-side expression:
+
+  msg := "Hello, World"
+
+This [[https://go.dev/ref/spec#Short_variable_declarations][short-variable-declaration syntax]] makes Go feel a bit like a dynamic language!
+
+If the expression is compatible with multiple types, the compiler uses a default type.
+For instance, the default type for integer constants is `int`:
+
+.play -edit src/integer_default_type.go /^//START/,/^//END/
+
+
+
+* Short variable declaration with := (cont'd)
+
+The `:=` operator is convenient for saving the results of a function in variables:
+
+  i, err := strconv.Atoi(s) // declares i and err
+
+If a variable on the left-hand side is already declared in the same scope,
+the `:=` operator simply updates it:
+
+  i, err := strconv.Atoi(s)
+  j, err := strconv.Atoi(s) // declares j, but only updates err
+
+However, `:=` must introduce at least one new variable on the left-hand side:
+
+  i, err := strconv.Atoi(s)
+  i, err := strconv.Atoi(s) // compilation error: no new variables on left side of :=
+
+If you only care about some of the results, assign the others to the _blank_identifier_:
+
+  _, err := strconv.Atoi(s) // declares err, but discards the first result
+
+
+
+* Variable naming
+
+Identifiers in Go [[https://go.dev/ref/spec#Identifiers][must]] start with a Unicode letter followed by an arbitrary number of Unicode letters and Unicode digits:
+
+  identifier = letter { letter | unicode_digit } .
+
+Strive for conciseness; the smaller the scope, the shorter the name.
+
+  var index int // meh
+  var i int     // better
+
+Use lower camel case for local variables and unexported top-level variables:
+    
+  var maxOutstanding int
+  var nbOfVisits uint
+
+Use upper camel case (Pascal case) for exported top-level variables:
+
+  var ErrUnknownAvailability = errors.new("namecheck: unknown availability")
+
+Aside from the _blank_identifier_, don't use underscores in variable names.
+
+: same conventions with constants
+: Go treats all characters in any of the Letter categories Lu, Ll, Lt, Lm, or Lo as Unicode letters
+: ...and those in the Number category Nd as Unicode digits.
+: _ is considered a letter
+
+
+* The var keyword versus the := operator
+
+Since there are two syntaxes for declaring variables, you may be wondering which one to use in a given situation...
+
+Convention dictactes that `:=` be used whenever possible, *except* when the variable's initial value doesn't matter or should be the variable type's zero value:
+
+  finished := false // not great
+  var finished bool // better
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
+
+* The var keyword versus the := operator (cont'd)
+
+In many cases, you have no option but to use the `var` keyword...
+
+*To*declare*a*top-level*variable*
+
+  package main
+  
+  maxConcurrent := 16    // syntax error: non-declaration statement outside function body
+  var maxConcurrent = 16 // works fine
+
+*To*declare*a*variable*whose*type*cannot*be*inferred*by*the*initializing*expression*
+
+  userptr := nil          // compilation error: untyped nil
+  var userptr *user = nil // works fine
+
+*To*declare*a*variable*whose*inferred*type*doesn't*suit*you*
+
+  type Fahrenheit float64
+  freezing := 32                // type int :(
+  var freezingF Fahrenheit = 32 // type Fahrenheit :)
+
+: a nil value carries no type information
+: more idiomatic than freezing := Fahrenheit(32)
 
 
 
@@ -1380,7 +1496,7 @@ if some programming error renders the package unusable.
 
 1. In the documentation of the `regexp` package, identify a function that compiles a regular expression and panics if the pattern is invalid.
 
-2. Use that function to declare a variable of type `*regexp.Regexp` at package level.
+2. Use that function to declare a variable of type `*regexp.Regexp` at the top level.
 
 3. Adapt `looksGood`'s implementation to make use of that variable, and simplify `looksGood`'s signature to
 
@@ -4307,14 +4423,34 @@ A `select` statement is a multiway communication selector: it allows you to sele
 `select` is often used in conjunction with `for` to form a so-called _event_loop_.
 
 For instance, if you want to continually receive from two (or more) channels,
-a simple for-range loop won't do; you'll need to nest a `select` inside a loop.
+a simple for-range loop won't do; you'll need to nest a `select` inside a loop:
 
-In that case, prefer a "while" loop to an infinite loop, to avoid the need for [[https://go.dev/ref/spec#Label][labels]]:
+  loop:
+    for {
+      select {
+      case err := <-errorCh:
+        fmt.Fprintln(os.Stderr, err)
+        break loop
+      case res, ok := <-resultCh:
+        if !ok {
+          break loop
+        }
+        // do something interesting with res
+      }
+    }
+
+Note that a [[https://go.dev/ref/spec#Label][label]] (named `loop`) is required in order to break out of the infinite loop rather than out of the `select` statement nested within.
+
+
+
+* Event loop: a select nested inside a loop (cont'd)
+
+To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][labeled statements]], you may prefer a "while" loop controlled by a boolean variable:
 
   var finished bool
   for !finished {
     select {
-    case  err := <-errorCh:
+    case err := <-errorCh:
       fmt.Fprintln(os.Stderr, err)
       finished = true
       continue
@@ -4326,7 +4462,6 @@ In that case, prefer a "while" loop to an infinite loop, to avoid the need for [
       // do something interesting with res
     }
   }
-
 
 
 
@@ -4623,7 +4758,7 @@ That file is precious; you should track changes to the it in your version-contro
 
 Let's keep track (in memory) of how many times each username has been checked.
 
-1. Declare a variable of a suitable type at package level.
+1. Declare a variable of a suitable type at the top level.
 
 2. In `handleCheck`, increment the count associated to the username being checked.
 
