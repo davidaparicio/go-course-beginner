@@ -4388,6 +4388,154 @@ Of course, in the face of multiple goroutines sending values to a channel, the o
 
 
 
+* HTTP server
+
+
+
+* Your very first Go server
+
+.play -edit src/server_helloworld.go /^//START/,/^//END/
+
+You can define a handler as a package-level function. It must have two parameters:
+
+- a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface for you to compose the HTTP response.
+- a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.
+
+You can then register your handler for a given route using [[https://pkg.go.dev/net/http#HandleFunc][function `http.HandleFunc`]].
+
+Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][function `http.ListenAndServe`]], which blocks for as long as the server stays up. Don't forget to check the error it returns.
+
+: http.HandleFunc registers the handler on the DefaultServeMux (package-level variable)
+: ListenAndServe: it last arg is nil, serves the DefaultServeMux
+: important to capture error from http.ListenAndServe, because otherwise fails silently if port collision (e.g. ":80")
+
+
+
+* Namecheck project: turn your CLI tool into a Web server
+
+1. Copy `cmd/cli/main.go` to `cmd/server/main.go`. In the latter, rename the `main` function to `handleCheck`.
+
+2. Adjust `handleCheck`'s signature and implementation:
+
+- If the client provided no username via a query param, send a `400` response.
+- Otherwise, write (using `fmt.Fprint`) your slice of results in the response.
+
+3. Register your `handleCheck` handler on a route named `/check`.
+
+4. Start your server and hit the `/check` endpoint.
+
+You'll work in `cmd/server` for the remainder of the course.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
+* JSON encoding
+
+Use [[https://pkg.go.dev/encoding/json/][the `encoding/json` package]] to encode some Go value to JSON.
+
+_Field_tags_ are used to map the correspondance between the names of a struct's fields (which must be exported!) and the property names of the resulting JSON object:
+
+.code -edit src/json_encoding.go /^//START1/,/^//END1/
+
+Create a `json.Encoder` that writes to the handler's `http.ResponseWriter`,
+then pass the value to its `Encode` method:
+
+.play -edit src/json_encoding.go /^//START2/,/^//END2/
+
+: w is the http.ResponseWriter
+: don't forget to inspect the resulting error
+
+
+
+* Namecheck project: write the results as JSON in the response
+
+1. Instead of writing a Go-specific textual representation of the slice of checkers in the HTTP response, encode the slice to JSON. If encoding fails, send a `500` response.
+
+2. Add field tags in the declaration of your `Result` struct type so that property names in the resulting JSON be lowercase.
+
+3. Make sure you specify an appropriate content type.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* JSON decoding
+
+Decoding some JSON object to a Go variable words in a similar way:
+
+.play -edit src/json_encoding.go /^//START3/,/^//END3/
+
+The use of a local variable whose type is an anynomous struct is pretty common.
+
+Create a `json.Decoder` that reads from the body of the handler's `*http.Request`,
+then pass a pointer to the variable to its `Decode` method.
+
+[[https://twitter.com/mholt6][Matt Holt]]'s [[https://mholt.github.io/json-to-go/][JSON-to-Go converter]] is a time-saving tool for JSON decoding.
+
+For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andrew Gerrand - JSON and Go]].
+
+: don't forget to inspect the resulting error
+: curl -v -XPOST -H "Content-Type: application/json" --data '{"name": "Bob"}' http://localhost:8080/admin/new
+: no exercise for JSON decoding, but you could retrieve the username to test from the request's JSON body instead of a query param
+
+
+
+* Adding third-party dependencies to your project
+
+So far, you've only relied on Go's core library but, thanks to Go's module system,
+you can of course bring in third-party dependencies.
+
+To add a third-party HTTP router like [[https://github.com/gorilla/mux][gorilla/mux]] as a dependency to your project, run
+
+  go get github.com/gorilla/mux
+
+Running that command adds the following line to your `go.mod` file:
+
+  require github.com/gorilla/mux v1.8.0 // indirect
+
+Once you actually use package `github.com/gorilla/mux` in your code, you can run
+
+  go mod tidy
+
+to get rid of that "indirect" comment.
+
+
+
+* The go.sum file
+
+Running
+
+  go get github.com/gorilla/mux
+
+also causes the creation (or update) of a file named `go.sum`.
+
+That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues in the dependency.
+
+That file is precious; you should track changes to it in your version-control system.
+
+
+
+* Namecheck project: use a third-party package for routing
+
+
+1. Run the following command within your project to download the dependency:
+
+  go get github.com/gorilla/mux
+
+2. Inspect the contents of the `go.mod` file and of the newly created `go.sum` file.
+
+3. Import `gorilla/mux` in your server's `main.go` and define your routes with it instead.
+
+4. Run the following command to clean up your `go.mod` file:
+
+  go mod tidy
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+: we don't really need mux here; nothing fancy; just for practice
+
+
 
 * Select statement
 
@@ -4465,9 +4613,11 @@ To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][la
 
 
 
-* Namecheck project: fail early
+* Namecheck project: fail early if an availability check fails
 
-1. Remove the `Err` field from your `Result` type
+Modify your `cmd/server/main.go` as follows:
+
+1. Remove the `Err` field from your `Result` type.
 
 2. Declare another channel named `errorCh` dedicated to `error` values. Choose the capacity of that channel wisely.
 
@@ -4475,9 +4625,9 @@ To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][la
 
 4. In your `main` function, use a for-select to receive from both channels.
 
-5. As soon as you receive one error, print it and terminate the program.
+5. As soon as you receive one error from `errorCh`, send a `500` response and return.
 
-.image https://go.dev/blog/gopher/plush.jpg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 : smallest channel capacity to prevent goroutine leaks: len(checkers) - 1
 : use a bool variable to control the termination of the loop
@@ -4487,56 +4637,61 @@ To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][la
 
 * Canceling goroutines
 
-Spawning goroutines is easy, but making sure they terminate sometimes requires more effort. One common recipe for making a function cancellable consists of
+Spawning goroutines is easy, but making sure they terminate sometimes requires more effort. For example, consider the following function:
+
+.code -edit src/uncancellable.go /^//START1/,/^//END1/
+
+If you start it as a goroutine, that goroutine will live on until your program ends:
+
+.play -edit src/uncancellable.go /^//START2/,/^//END2/
+
+However, you may want to force that goroutine to terminate that goroutine earlier...
+
+
+
+* Canceling goroutines (cont'd)
+
+One common recipe for making a function cancellable consists of
 
 - a `select` statement, and
-- a channel of type `<-chan`struct{}`.
+- a channel of type `<-chan`struct{}` passed as a parameter to the function.
 
-  func cancellable(quit <-chan struct{}) {
+  func cancellable(done <-chan struct{}) {
     for {
         select {
-        case <-quit: // becomes non-blocking as soon as channel 'quit' is closed!
+        case <-done:
           return
         default:
-          // do something, and maybe sleep a bit
+          fmt.Println("still alive...")
+          time.Sleep(500 * time.Millisecond)
         }
     }
   }
 
-If function `cancellable` is launched as a goroutine, you can trigger its eventual termination simply by closing the `quit` channel.
+If function `cancellable` is launched as a goroutine, you can trigger its eventual termination simply by closing the `done` channel. Why?
 
+: closing a channel unblocks all receives on it!
 : can be used to broadcast a signal to multiple goroutines!
-: 'done' is another common name for such a channel
 
 
 
 * Exercise: render a function cancellable
 
-.play -edit src/uncancellable.go /^//START/,/^//END/
+1. Open this [[https://go.dev/play/p/yWEVD1G7Oix][Playground]]. Note that function `printInts` never terminates.
 
-Function `printInts` never terminates...
+2. Modify the program to make `printInts` cancellable.
 
-1. Modify the program to make `printInts` cancellable.
+3. Cancel the goroutine from `main` after one second.
 
-2. Cancel the goroutine from `main` after one second.
-
-You can do this exercise in the [[https://go.dev/play/p/yWEVD1G7Oix][Go Playground]].
+(A solution is available in this [[https://go.dev/play/p/Tny8a5VyY-i][Playground]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 
 
-* Exercise: render a function cancellable (solution)
-
-The solution is available on the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playground]].
-
-: mention that closing the channel broadcasts a signal to all goroutines that receive from it
-
-
-
 * Canceling goroutines with context
 
-The `context` package [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this idea]] of closing a channel in order to broadcast a signal.
+The `context` package [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this idea]] of closing a channel in order to broadcast a signal to one or more goroutines.
 
 It exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
 
@@ -4561,21 +4716,18 @@ By convention, the `context.Context` parameter (if any) is always first.
 
 * Exercise: cancelling a goroutine with context.Context
 
+You can do this exercise in the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playground]].
+
 1. Study the documentation of [[https://pkg.go.dev/context/][the `context` package]].
 
 2. Modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
 
-You can do this exercise in the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playground]].
+(A solution is available in this [[https://go.dev/play/p/bJeIioSOTIV][Playground]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
+: we won't be using context in our project but...
 : extra exercise: make IsAvailable cancellable
-
-
-
-* Exercise: cancelling a goroutine with context.Context (solution)
-
-The solution is available on the [[https://go.dev/play/p/bJeIioSOTIV][Go Playground]].
 
 
 
@@ -4587,6 +4739,8 @@ The solution is available on the [[https://go.dev/play/p/bJeIioSOTIV][Go Playgro
 
 3. Discuss and fix the program.
 
+(A solution is available in this [[https://go.dev/play/p/mollK937Rzo][Playground]].)
+
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : two goroutines exchanging one value over and over
@@ -4597,160 +4751,6 @@ The solution is available on the [[https://go.dev/play/p/bJeIioSOTIV][Go Playgro
 : non-blocking send by adding a select statement (with an additional case <-ctx.Done())
 : easy solution: referee receive ball from main after cancel()
 : https://talks.golang.org/2013/advconc.slide#6
-
-
-
-* Exercise: debug this ping-pong game (solution)
-
-The solution is available on the [[https://go.dev/play/p/mollK937Rzo][Go Playground]].
-
-
-
-* HTTP server
-
-
-
-* Your very first Go server
-
-.play -edit src/server_helloworld.go /^//START/,/^//END/
-
-You can define a handler as a package-level function. It must have two parameters:
-
-- a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface for you to compose the HTTP response.
-- a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.
-
-You can then register your handler for a given route using [[https://pkg.go.dev/net/http#HandleFunc][function `http.HandleFunc`]].
-
-Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][function `http.ListenAndServe`]], which blocks for as long as the server stays up. Don't forget to check the error it returns.
-
-: http.HandleFunc registers the handler on the DefaultServeMux (package-level variable)
-: ListenAndServe: it last arg is nil, serves the DefaultServeMux
-: important to capture error from http.ListenAndServe, because otherwise fails silently if port collision (e.g. ":80")
-
-
-
-* Namecheck project: turn your CLI tool into a Web server
-
-1. Copy `cmd/cli/main.go` to `cmd/server/main.go`. In the latter, rename the `main` function to `handleCheck`.
-
-2. Adjust `handleCheck`'s signature and implementation:
-
-- If the client provided no username via a query param, return a `400` response.
-- If an error occurs during an availability check, return a `500` response.
-- Otherwise, write (using `fmt.Fprint`) your slice of results in the response.
-
-3. Register your `handleCheck` handler on a route named `/check`.
-
-4. Start your server and hit the `/check` endpoint.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
-
-
-
-* JSON encoding
-
-Use [[https://pkg.go.dev/encoding/json/][the `encoding/json` package]] to encode some Go value to JSON.
-
-_Field_tags_ are used to map the correspondance between the names of a struct's fields (which must be exported!) and the property names of the resulting JSON object:
-
-.code -edit src/json_encoding.go /^//START1/,/^//END1/
-
-Create a `json.Encoder` that writes to the handler's `http.ResponseWriter`,
-then pass the value to its `Encode` method:
-
-.play -edit src/json_encoding.go /^//START2/,/^//END2/
-
-: w is the http.ResponseWriter
-: don't forget to inspect the resulting error
-
-
-
-* Namecheck project: write the results as JSON in the response
-
-1. Instead of writing a Go-specific textual representation of the slice of checkers in the HTTP response, encode the slice to JSON.
-
-2. Add field tags in the declaration of your `Result` struct type so that property names in the resulting JSON be lowercase.
-
-3. Make sure you specify an appropriate content type.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
-* JSON decoding
-
-Use [[https://pkg.go.dev/encoding/json/][the `encoding/json` package]] to decode some JSON to a Go variable.
-
-.play -edit src/json_encoding.go /^//START3/,/^//END3/
-
-Declaring a local variable whose type is an anynomous struct is pretty common.
-
-Create a `json.Decoder` that reads from the body of the handler's `*http.Request`,
-then pass a pointer to the variable to its `Decode` method.
-
-[[https://twitter.com/mholt6][Matt Holt]]'s [[https://mholt.github.io/json-to-go/][JSON-to-Go converter]] is a time-saving tool for JSON decoding.
-
-For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andrew Gerrand - JSON and Go]].
-
-: don't forget to inspect the resulting error
-: curl -v -XPOST -H "Content-Type: application/json" --data '{"name": "Bob"}' http://localhost:8080/admin/new
-: no exercise for JSON decoding, but you could retrieve the username to test from the request's JSON body instead of a query param
-
-
-
-* Adding third-party dependencies to your project
-
-So far, you've only relied on Go's core library but, thanks to Go's module system,
-you can of course bring in third-party dependencies.
-
-To add a third-party HTTP router like [[https://github.com/gorilla/mux][gorilla/mux]] as a dependency to your project, run
-
-  go get github.com/gorilla/mux
-
-Running that command adds the following line to your `go.mod` file:
-
-  require github.com/gorilla/mux v1.8.0 // indirect
-
-Once you actually use package `github.com/gorilla/mux` in your code, you can run
-
-  go mod tidy
-
-to get rid of that "indirect" comment.
-
-
-
-* The go.sum file
-
-Running
-
-  go get github.com/gorilla/mux
-
-also causes the creation (or update) of a file named `go.sum`.
-
-That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues in the dependency.
-
-That file is precious; you should track changes to the it in your version-control system.
-
-
-
-* Namecheck project: use a third-party package for routing
-
-
-1. Run the following command within your project to download the dependency:
-
-  go get github.com/gorilla/mux
-
-2. Inspect the contents of the `go.mod` file and of the newly created `go.sum` file.
-
-3. Import `gorilla/mux` in your server's `main.go` and define your routes with it instead.
-
-4. Run the following command to clean up your `go.mod` file:
-
-  go mod tidy
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
-
-: we don't really need mux here; nothing fancy; just for practice
 
 
 
