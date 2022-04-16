@@ -4388,7 +4388,7 @@ Of course, in the face of multiple goroutines sending values to a channel, the o
 
 
 
-* HTTP server
+* Web server
 
 
 
@@ -4539,9 +4539,11 @@ That file is precious; you should track changes to it in your version-control sy
 
 * Select statement
 
-The `select` keyword forms a trifecta with goroutines and channels!
+Along with goroutines and channels, the `select` keyword forms a concurrency trifecta!
 
-A `select` statement is a multiway communication selector: it allows you to select one of several _channel_communications_ (send or receive).
+`select` is a multiway communication selector: it's reminiscent of a `switch`, but each of its cases correspond to a _channel_communication_ (send or receive).
+
+Remember that, depending on the channel's state, channel communications may block.
 
 .image https://pbs.twimg.com/media/DDWqkrFUMAAbIyL?format=png&name=large 300 _
 
@@ -4549,20 +4551,42 @@ A `select` statement is a multiway communication selector: it allows you to sele
 
 * Mechanics of select
 
+
   select {
-  case v, ok:= <-ch1:
-    // do something with v and ok
-  case ch2 <- 42:
+  case out <- 42:
     // ...
-  default:
-    // ...
+  case v, ok:= <-in:
+    if !ok {
+      break
+    }
+    // do something with v
   }
 
-- Each of the "normal" (non-default) cases correspond to a _channel_communication_ (send or receive).
-- The first normal case that is non-blocking gets selected and its instructions executed.
-- If more than one normal cases are non-blocking, one of them is chosen in a uniform pseudo-random fashion.
-- If all normal cases are blocking, the default case (if any) gets selected; otherwise, the `select` statement blocks for as long as its cases remain blocking.
-- You can use the `break` keyword within a case to escape from the `select`.
+If all cases are blocking, the `select` statement itself blocks.
+
+As soon case becomes non-blocking, it gets selected and its instructions are executed.
+
+If more than one cases are non-blocking, one of them gets selected in a pseudo-random uniform fashion.
+
+You can use the `break` keyword within a case to break out of the `select` statement.
+
+
+
+* Mechanics of select (cont'd)
+
+  select {
+  case out <- 42:
+    // ...
+  case v, ok:= <-in:
+    if !ok {
+      break
+    }
+    // do something with v
+  default:
+    time.Sleep(200 * time.Millisecond)
+  }
+
+A `select` statement can contain an optional `default` case, which isn't associated to any channel communication and gets selected if all the other normal cases are blocking.
 
 
 
