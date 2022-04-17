@@ -1292,7 +1292,7 @@ There are no exceptions in Go! Anticipated failures are reported as [[https://ww
 
 A function that can fail returns an additional `error` result (the last one, by convention):
 
-  func Get(url string) (resp *http.Response, err error)
+  func Fetch(uri string) ([]Item, time.Time, error)
 
 A non-nil `error` result indicates to the caller that the function failed in some way and that its "normal" results are unusable.
 
@@ -4122,7 +4122,10 @@ A channel send is a statement, not an expression.
 
 .image img/send_semantics.svg _ 900
 
-Note: buffered channels accept a limited number of values without a corresponding receive for those values.
+Notes:
+
+- Buffered channels accept a limited number of values without a corresponding receive for those values.
+- When you send to a channel, the channel better not already be closed!
 
 
 
@@ -4137,56 +4140,47 @@ The syntax of a _channel_receive_ consists in a left-pointing arrow (`<-`) follo
 The `gofmt` tool removes any whitespace between the arrow the channel; don't fight it.
 
 A channel receive is an expression: you can store the received value in a variable,
-or pass it to a function.
+or even pass it directly to a function:
 
-  v := <-ch
-  fmt.Println(v)
+  fmt.Println(<-ch)
 
-The value received is only a copy of the value that was sent to the channel.
+A channel is _not_ a [[https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern][pub/sub]] topic: a value received by a goroutine from a channel is removed from the channel and no other goroutines can receive that value.
 
 
 
 * Semantics of a channel receive
 
-.image img/receive_semantics.svg 450 _
-
-Note: the value received from a channel by a goroutine is only accessible to that goroutine; it is removed from the channel for all the other goroutines.
+.image img/receive_semantics.svg 500 _
 
 
 
-* Receive ambiguity
 
-As shown by the diagram on the previous slide, when a channel is closed and empty, receiving from that channel yields the zero value of the channel's element type...
+* Dispelling the ambiguity on receive
 
-How can we tell whether the value we're receiving is from a closed channel or whether someone really sent a zero value of the element's type to the channel?
+If we receive the zero value of the channel's element type, how can we tell whether the value we're receiving is from a closed and empty channel or whether someone really sent that value to the channel?
 
-.image https://go.dev/blog/gopher/plush.jpg 300 _
-
-
-
-* Dispelling the ambiguity
-
-There is a special form of channel receive that yields an additional boolean value (named "ok", by convention):
+There is a special form of channel receive that yields an additional boolean value for lifting that ambiguity. It uses the familiar "comma-ok" idiom:
 
    v, ok := <-ch
 
-
 The value of variable `ok` is
 
-- `true` if the value received was delivered by a send operation to the channel, or
-- `false` if it is a zero value generated because the channel is closed and empty.
-
-Note: variable `ok` is assigned the value `false`, not as soon as the channel gets closed, but only when the channel has been drained.
+- `true` if the value received was actually sent to the channel, or
+- `false` if the channel is both closed and fully drained (empty).
 
 
 
-* Exercise: fixing a deadlock
+* Exercise: resolving a deadlock
+
+Here is a short but instructive code snippet about channel semantics:
 
 .play -edit src/deadlock_example.go /^//START/,/^//END/
 
-This program deadlocks. Can you guess why? How would you fix it?
+1. Run this program, and note that it ends in a deadlock. Can you guess why?
 
-Add sends and receives to fix ideas. Discuss.
+2. How would you resolve the issue?
+
+3. Can you think of naive and incorrect ways of resolving the issue?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -4204,11 +4198,16 @@ A freshly initialized channel starts its life in an "open" state.
 
   ch := make(chan string) // ch is open (until closed)
 
-You can close a channel to inform receivers that no more values will be sent to it:
+You can inform receivers on a channel that no more items will be sent to the channel
+by _closing_ the channel. To do so, simply pass the channel to the built-in `close` function:
 
   close(ch)
 
 Closing a channel is definitive; a closed channel cannot be "re-opened".
+
+Closing a channel doesn't make it `nil`.
+
+: not to be confused with Close methods, e.g. on the body of a http.Response
 
 
 
@@ -4216,7 +4215,7 @@ Closing a channel is definitive; a closed channel cannot be "re-opened".
 
 .image img/close_semantics.svg _ 800
 
-When closing a channel, you must guarantee that no more values will even be sent to it!
+Note that you must structure your program in such a way that, when a channel get closed, no more values will ever be sent to that channel!
 
 
 
@@ -4237,27 +4236,14 @@ Only close a channel if the semantics of your program demand it.
 
 * Closing a channel doesn't drain it
 
-Closing a channel neither makes it `nil` and nor drains it!
+Closing a channel is akin to a restaurant announcing the end of service:
 
-Closing a channel is akin to a restaurant announcing the end of service.
-
-- After that, the restaurant accepts no new patrons for the day.
+- After the end of service, the restaurant accepts no new patrons for the day.
 - However, the staff doesn't push all the patrons out and lock the door; patrons can finish their meal before paying and leaving.
 
 .image https://rew-online.com/wp-content/uploads/2019/10/restaurantCLOSED.jpg 250 _
 
-
-
-* Closing a channel doesn't drain it (cont'd)
-
-Similarly, closing a channel only means that no more values can be sent to it
-(at least, not without causing a panic).
-
-Closing a channel doesn't amount to flushing it out.
-
-Some goroutine(s) can still consume the elements left in a closed channel.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
+Similarly, closing a channel doesn't drain it from the elements it contains. Some goroutine(s) can still consume the elements left in a closed channel.
 
 
 
@@ -4392,7 +4378,7 @@ Of course, in the face of multiple goroutines sending values to a channel, the o
 
 
 
-* Your very first Go server
+* A simple Web server
 
 .play -edit src/server_helloworld.go /^//START/,/^//END/
 
@@ -4707,7 +4693,7 @@ If function `cancellable` is launched as a goroutine, you can trigger its eventu
 
 3. Cancel the goroutine from `main` after one second.
 
-(A solution is available in this [[https://go.dev/play/p/Tny8a5VyY-i][Playground]].)
+(A solution is available in this [[https://go.dev/play/p/xnQuBCAOVLL][Playground]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -4715,24 +4701,22 @@ If function `cancellable` is launched as a goroutine, you can trigger its eventu
 
 * Canceling goroutines with context
 
-The `context` package [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this idea]] of closing a channel in order to broadcast a signal to one or more goroutines.
+The [[https://pkg.go.dev/context#Context][`context.Context` interface]] [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this "done channel" trick]] and can be used to terminate goroutines via cancellations or timeouts.
 
-It exports an interface type named `Context` that is convenient for terminating goroutines via cancellation and/or timeouts.
+Its `Done` method returns the channel in question, and its `Err` method returns a sentinel error value when the context is [[https://pkg.go.dev/context#Canceled][canceled]] or [[https://pkg.go.dev/context#DeadlineExceeded][times out]]:
 
-`Context`'s cancellation mechanism is based on the same quit-channel trick; the channel is accessible via `Context`'s `Done` method:
-
-  func cancellable(ctx context.Context) {
+  func cancellable(ctx context.Context) error {
     for {
         select {
         case <-ctx.Done():
-          return
+          return ctx.Err()
         default:
           // do something, and maybe sleep a bit
         }
     }
   }
 
-By convention, the `context.Context` parameter (if any) is always first.
+By convention, a function that has a `context.Context` parameter should feature it at the beginning of its parameter list and should return the context's error.
 
 : contexts form a tree, canceling one context also cancels its descendants
 
@@ -4740,13 +4724,13 @@ By convention, the `context.Context` parameter (if any) is always first.
 
 * Exercise: cancelling a goroutine with context.Context
 
-You can do this exercise in the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playground]].
+You can do this exercise in the [[https://go.dev/play/p/xnQuBCAOVLL][Go Playground]].
 
 1. Study the documentation of [[https://pkg.go.dev/context/][the `context` package]].
 
 2. Modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
 
-(A solution is available in this [[https://go.dev/play/p/bJeIioSOTIV][Playground]].)
+(A solution is available in this [[https://go.dev/play/p/fpneA8J6DyU][Playground]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -4757,16 +4741,17 @@ You can do this exercise in the [[https://go.dev/play/p/WXQTEzx8TlY][Go Playgrou
 
 * Exercise: debug this ping-pong game
 
-1. Open [[https://go.dev/play/p/n7XQ_TdOY4t][this Playground]] (adapted from [[https://www.youtube.com/watch?v=QDDwwePbDtw&t=2m54s][one of Sameer Ajmani's talk]]). The program models a simple ping-pong game.
+1. Open [[https://go.dev/play/p/EMYdWA6keT0][this Playground]] (adapted from [[https://www.youtube.com/watch?v=QDDwwePbDtw&t=2m54s][one of Sameer Ajmani's talk]]). The program models a simple ping-pong game.
 
 2. The game ends with a deadlock. Can you see why?
 
 3. Discuss and fix the program.
 
-(A solution is available in this [[https://go.dev/play/p/mollK937Rzo][Playground]].)
+(A solution is available in this [[https://go.dev/play/p/IwCS6LlVfBx][Playground]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
+: The `main` goroutine plays the role of the umpire.
 : two goroutines exchanging one value over and over
 : pointer element to reduce memory footprint
 : show that deadlock if you never throw the ball on the table
