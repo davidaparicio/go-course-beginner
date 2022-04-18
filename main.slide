@@ -7,11 +7,6 @@ https://jub0bs.com
 @jub0bs
 
 
-* What you need to know about Jitsi
-
-.image img/jitsi.png 500 _
-
-
 
 * Setup
 
@@ -33,7 +28,7 @@ Also make sure you have Git installed.
 
 *Licence*
 
-These slides are freely available at [[https://github.com/jub0bs/go-course-beginner][https://github.com/jub0bs/go-course-beginner]] and are subject to a TODO licence.
+These slides are freely available at [[https://github.com/jub0bs/go-course-beginner][https://github.com/jub0bs/go-course-beginner]] and are subject to a [[https://creativecommons.org/licenses/by-nc-sa/3.0/][CC BY-NC-SA 4.0 licence]].
 
 *Why*English*rather*than*French?*
 
@@ -109,67 +104,58 @@ A forcing function for learning Go: we'll introduce new concepts as needed.
 
 
 
-* Go's history
+* Introduction
 
 
 
-* Genesis
+* Genesis of the language
 
 Go was created in 2007 at Google by Robert Griesemer, Rob Pike, and Ken Thompson.
 
 .image https://miro.medium.com/max/1256/0*pCC5UI7QqThjdBvm.png _ 800
 
-: Griesemer: V8 JS engine, Hot Spot JVM
-: Pike: predecessors to Go (Newsqueak), Plan 9, Unicode
-: Thompson: recipient of Turing Award, UNIX (with Dennis Ritchie), Unicode (with Pike), Plan 9 (with Pike), increment/decrement operators (https://en.wikipedia.org/wiki/B_(programming_language)#History)
+: Griesemer: V8 JS engine, Hot Spot JVM, supervised by Niklaus Wirth (inventor of Pascal) during this thesis
+: Pike: predecessors to Go (Newsqueak, Alef, Limbo), Plan 9, Unicode
+: Thompson: recipient of Turing Award, worked at Bell Labs on UNIX (with Dennis Ritchie), rewrote UNIX in C, Unicode (with Pike), Plan 9 (with Pike), increment/decrement operators (https://en.wikipedia.org/wiki/B_(programming_language)#History)
 
 
 
-* Go's genesis
+* Genesis of the language (cont'd)
 
-Robert, Rob, and Ken share their [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][frustration about having to use C++]] as a language for distributed systems at Google: language complexity, long build times, poor support for concurrency, etc.
+C++'s increasing complexity, slow compilation, and poor support for concurrency are [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][recurring sources of frustration]] for the two Roberts at Google, where C++ is used for implementing distributed systems.
 
-They decide to work on a new language during their Google 20% time...
+.image https://imgs.xkcd.com/comics/compiling.png 250 _
 
-See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]].
+They enlist the help of Ken Thompson and start working on a new language...
 
-.image https://imgs.xkcd.com/comics/compiling.png 300 _
-
-
+See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]] and [[https://www.youtube.com/watch?v=6oF0UblqkGs&t=465s][Carmen Andoh - 10 Years of Go (GopherConAU 2019)]].
 
 
-* Brief history of the Go project
+
+* A brief history of Go
 
 - 2007: Griesemer, Pike & Thompson start working on Go.
-- ????: Ian Lance Taylor & Russ Cox (also from Google) join the Go team.
+- ----: Ian Lance Taylor & Russ Cox (both from Google) join the Go team.
 - 2009: Go is open-sourced.
-- 2012: Go 1.0 gets released. The language's adoption rises sharply.
+- 2012: Go 1.0 is released. The language becomes stable. Adoption rises sharply.
+- 2013: Docker
+- 2014: Kubernetes; first GopherCon conference
 - 2015: The go compiler (`gc`) becomes self-hosted.
-- 2022: Go 1.18 gets released (adding generics to the language).
+- 2022: Go 1.18 adds generics to the language.
+
+.image https://go.dev/blog/gopher/gopher.png 150 _
+
+
+
+* Logo & mascot
+
+Go's logo is unremarkable:
+
+.image https://go.dev/blog/go-brand/logos.jpg 200 _
+
+However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.org/wiki/Gopher][gopher]], enjoys widespread recognition:
 
 .image https://go.dev/blog/gopher/gopher.png 200 _
-
-
-* What you should know about Go
-: answer some questions you may have straight away
-: manage your expectations
-
-
-
-* Go's mascot
-
-\... [[https://go.dev/blog/gopher][is a gopher]].
-
-.image https://go.dev/blog/gopher/gopher.png 400 _
-
-: more popular than the language's logo
-
-
-* Go's logo
-
-\... [[https://go.dev/blog/go-brand][is not the gopher!]]
-
-.image https://go.dev/blog/go-brand/logos.jpg 400 _
 
 : Lapins Crétins vibe!
 
@@ -187,7 +173,7 @@ See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
 
 : compiled, but type inference, so feels like a dynamic language
-: memory safety: pointers, but no pointer arithmetic; no dangling pointers; no uninitialized variables
+: memory safety: pointers, but no pointer arithmetic; no dangling pointers; no uninitialized variables; run-time bound checks
 : mention heap-overflow vuln discovered in curl
 
 
@@ -226,6 +212,7 @@ Moreover, the core library is pretty extensive; see [[https://pkg.go.dev/std][pk
 
 : gofmt: enforced specific style. flattens learning curve and reduces friction for code reviews
 : goimports: imports in canonical order and in alphabetical order per section
+: typically run on save
 
 
 
@@ -237,24 +224,13 @@ Go's interfaces (and, soon, generics) enable [[https://en.wikipedia.org/wiki/Pol
 
 Go's packages enable [[https://en.wikipedia.org/wiki/Encapsulation_(computer_programming)][_encapsulation_]].
 
-Go has no concept of [[https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)][_inheritance_]], but facilitates [[https://en.wikipedia.org/wiki/Object_composition][_composition_]] instead.
+Go has no concept of [[https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)][_inheritance_]], but facilitates [[https://en.wikipedia.org/wiki/Object_composition][_composition_]] instead. For more on the topic, see [[https://golang.org/doc/faq#Is_Go_an_object-oriented_language][Is Go an object-oriented language? (golang.org FAQ)]]
 
 .image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 300 _
 
-
-
-* Object orientation without inheritance
-
-Can a language without inheritance be described as object-oriented? Sure!
-
-.image https://i.redd.it/2dpp8t6mk7641.png 200 _
-
-See also
-
-- [[https://www.infoworld.com/article/2073649/why-extends-is-evil.html][Allen Holub - Why extends is evil (InfoWorld 2003)]]
-- [[https://www.quora.com/What-does-Alan-Kay-think-about-inheritance-in-object-oriented-programming][What does Alan Kay think about inheritance in object-oriented programming? (Quora)]]
-- [[https://golang.org/doc/faq#Is_Go_an_object-oriented_language][Is Go an object-oriented language? (golang.org FAQ)]]
-
+: Can a language without inheritance be described as object-oriented? Sure!
+: [[https://www.infoworld.com/article/2073649/why-extends-is-evil.html][Allen Holub - Why extends is evil (InfoWorld 2003)]]
+: [[https://www.quora.com/What-does-Alan-Kay-think-about-inheritance-in-object-oriented-programming][What does Alan Kay think about inheritance in object-oriented programming? (Quora)]]
 : James Gosling (Java): "I'd leave classes out."
 : No concept of inheritance in Alan Kay's Simula... a Web of objects
 
@@ -270,6 +246,8 @@ Functions are first-class citizens. They can
 - be stored in struct fields.
 
 However, despite having anonymous functions, Go has no concise "lambda" notation.
+
+.image https://i.redd.it/2dpp8t6mk7641.png 200 _
 
 
 
@@ -312,12 +290,13 @@ Limitations include:
 - single executable
 - no networking allowed
 - no way of specifying command-line arguments
-- poor support for third-party packages
+- limited support for third-party packages
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
 
 : In this course, we'll only use the Playground to solve simple exercises.
 : An alternative with more features, incl. syntax highlighting: https://goplay.space/
+: support for 3rd-party libraries added in May 2019: https://www.youtube.com/watch?v=6oF0UblqkGs&t=36m50s
 
 
 
@@ -345,9 +324,11 @@ Imports specify _package_paths_ in double quotes.
 
 The `main` function of a `main` package is the program's entrypoint; it has no parameters and returns no results.
 
+: import paths require quotes like in Ruby: require 'json'
 
 
-* More observations about our Hello-World program
+
+* Observations about our Hello-World program (cont'd)
 
 .play -edit src/helloworld.go
 
@@ -474,7 +455,7 @@ Inspect its contents.
   const           fallthrough       if            range           type
   continue        for               import        return          var
 
-Discuss. Which keywords are new to you? Which one(s) seem to be missing?
+Which keywords are new to you? Which one(s) seem to be missing?
 
 .image https://go.dev/blog/5years/gophers5th.jpg 300 _
 
@@ -488,7 +469,7 @@ Discuss. Which keywords are new to you? Which one(s) seem to be missing?
 
 *go* is used to spawn goroutines.
 
-*goto* is present in the language, but you shouldn't have to ever use it.
+*goto* [[https://tip.golang.org/src/cmd/go/internal/str/str.go#L44][has its uses]], but it's not for the average Go developer.
 
 *range*, used in conjunction with `for`, allows you to iterate over various data structures.
 
@@ -498,8 +479,28 @@ No `try`/`catch`/`finally` keywords in Go: errors are reported as normal values.
 
 *defer* allows you to unconditionally execute some code at the end of a function.
 
-
 : defer: a cleaner alternative to finally
+
+
+
+* Declaration blocks
+
+Some keywords allow you to declare things in blocks delimited by parentheses. Grouping similar declarations is useful for conveying to the reader that things are related or meant to be used together:
+
+  const (
+    minLen = 4
+    maxLen = 15
+  )
+
+  var (
+    m = make(map[string]uint)
+    mu sync.Mutex
+  )
+
+  type (
+    Area float64
+    Volume float64
+  )
 
 
 
@@ -973,7 +974,7 @@ The scope of such variables is restricted to the if(-else) statement.
 
 * If-else statements
 
-Braces around the body of an `else` (not followed by an `if` statement) are also mandatory. No [[https://groups.google.com/g/golang-nuts/c/S9WcFsjd5WU/m/npuRiwRIjNoJ][dangling-else ambiguity]] in Go!
+Braces around the body of an `else` (not followed by an `if` statement) are also mandatory.
 
 .play -edit src/if_else.go /^//START/,/^//END/
 
@@ -1113,7 +1114,7 @@ Here is a simple example of a named function:
     return len(strings.Fields(s))
   }
 
-A function can return multiple results (whose types must be specified within parens):
+A function can return multiple results, whose types must be specified within parens:
 
   func CountWordsInFile(path string) (int, error) {
     var count int
@@ -1123,8 +1124,10 @@ A function can return multiple results (whose types must be specified within par
 
 Multiple function results are key to error reporting in Go!
 
-There's no function overloading in Go: no two functions within the same scope
+There's [[https://go.dev/doc/faq#overloading][no function overloading in Go]]: no two functions within the same scope
 can have the same name but different signatures.
+
+: however, no tuples in Go!
 
 
 
@@ -1140,7 +1143,7 @@ A prospective username [[https://help.twitter.com/ca/managing-your-account/twitt
 
 
 
-* Namecheck project: validation of Twitter usernames (cont'd)
+* Namecheck project: Twitter's first validation rule
 
 Write a function that implements Twitter's first validation rule:
 
@@ -1175,7 +1178,6 @@ The code above is roughly equivalent to the following:
   }
 
 Named results can be useful for documenting the results' roles and simplifying some implementations, but use them sparingly.
-
 
 
 
@@ -1239,23 +1241,26 @@ Be careful: calling a `nil` function causes a panic!
 
 
 
-* Anonymous functions and lexical closures
+* Anonymous functions & lexical closures
 
 Go supports anonymous functions but lacks a concise "lambda" notation:
 
   incr := func(i int) int { return i + 1 }
 
-An anonymous functions can _capture_ variables that are accessible to it:
+An anonymous functions can _capture_ variables from its lexical environment:
 
 .play -edit src/function_closure.go /^//START/,/^//END/
 
 Anonymous functions are often conveniently used in conjunction with the `go` keyword to launch goroutines.
 
+: lexical closure: the combination of a function and the lexical environment within which the function was declared
+: the anonymous function closes over such and such variables
+
 
 
 * And one more thing: defer
 
-*defer* allows you to unconditionally execute some code at the end of a function call.
+*defer* allows you to make sure that something unconditionally happens when a function returns, regardless of its point of exit.
 
 It's particularly useful for cleaning up, reclaiming resources, etc.
 
@@ -1265,7 +1270,7 @@ More about `defer` later in the course!
 
 
 
-* Namecheck project: validation of Twitter usernames (cont'd)
+* Namecheck project: Twitter's second validation rule
 
 Write a function that implements Twitter's second validation rule:
 
@@ -1359,15 +1364,18 @@ Do this instead:
 
 This idiom greatly contributes to the readability of Go code.
 
-By avoiding the `else` keyword and eliminating error cases as they arise,
+By avoiding the `else` keyword and eliminating failure cases as they arise,
 
 - you [[https://golang.org/doc/effective_go#if][keep the "happy path" on the left]],
-- you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]] (your code reads like columns of a broadsheet newspaper),
+- you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]] (your code reads like columns of a [[https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg][broadsheet newspaper]]),
 - you [[https://www.youtube.com/watch?v=yd_rtwYaXps&t=33m30s][reduce the cognitive load]] required to read and understand your code.
 
-See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer's]] and [[https://dave.cheney.net/2019/07/09/clear-is-better-than-clever][Dave Cheney's]] posts on the topic.
+More reading material about this idiom:
 
-.image https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg 200 _
+- [[https://github.com/golang/go/wiki/CodeReviewComments#indent-error-flow][Go Code Review Comments - Indent Error Flow]]
+- [[https://talks.golang.org/2013/bestpractices.slide#3][Francesc Campoy Flores - Twelve Go Best Practices]]
+- [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer - Code: Align the happy path to the left edge]]
+- [[https://dave.cheney.net/2019/07/09/clear-is-better-than-clever][Dave Cheney - Clear is better than clever]]
 
 : also about cognitive load: https://talks.golang.org/2013/bestpractices.slide#3
 
@@ -1387,7 +1395,7 @@ See also [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat R
 
 *Inspecting*it*(before*deciding*what*to*do)*
 
-- comparing it to some sentinel error value (e.g. `io.EOF`)
+- comparing it to some sentinel error value (e.g. [[https://pkg.go.dev/context#DeadlineExceeded][`context.DeadlineExceeded`]])
 - inquiring about the concrete type of the error value
 - looking up its underlying cause (if any)
 
@@ -1461,7 +1469,7 @@ You can also create your own error types (i.e. types that satisfy the `error` in
 
 * Panic
 
-A panic is a run-time event that indicates an exceptional and fatal failure.
+A panic is a run-time event that indicates an exceptional and irrecoverable failure.
 
 It can be triggered by a run-time error (such as calling a `nil` function) or some direct or indirect call to built-in function `panic`.
 
@@ -1469,7 +1477,7 @@ A panic stops the program's normal execution, runs deferred function calls as it
 
 .play -edit src/panic.go /^//START/,/^//END/
 
-Panics can (but rarely, if ever, should) be [[https://go.dev/blog/defer-panic-and-recover][_recovered_]].
+Panics can (but rarely should) be [[https://go.dev/blog/defer-panic-and-recover][_recovered_]].
 
 : recover: if you consume a third-party package that panic willy-nilly
 
@@ -1489,6 +1497,8 @@ However, panicking during the initialization of your package is legitimate
 if some programming error renders the package unusable.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+: examples: invalid regexp pattern, template compilation failure
 
 
 
@@ -1542,7 +1552,7 @@ Let's learn how to create a library package and use it in our `main` package.
 
 * Main packages
 
-A package named "main" is called a _main_package_ and produces an executable.
+A package named "main" is called a _main_package_ and produces a standalone program.
 
 The package *must* declare a `main` function that has no params and returns no results.
 
@@ -2449,17 +2459,41 @@ The second iteration variable is only a copy of the slice's current element.
 
 
 
+* Table-driven subtests
+
+One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_subtests_]], an approach to writing test cases that drastically reduce test-logic duplication:
+
+  func TestIsValid(t *testing.T) {
+    testCases := []struct {
+      desc     string
+      username string
+      want     bool
+    }{
+      {"contains two consecutive hyphens", "jub0--bs", false},
+      // other test cases...
+    }
+    var gh github.GitHub
+    for _, tc := range testCases {
+      f := func(t *testing.T) {
+        got := gh.IsValid(tc.username)
+        if got != tc.want {
+          t.Errorf("github.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
+        }
+      }
+      t.Run(tc.desc, f)
+    }
+  }
+
+
+
+
 * Namecheck project: use table-driven subtests
 
-Have you noticed that the logic is duplicated across our test functions? Let's fix this!
+1. Write a `TestIsValid` test function that uses table-driven subtests. If the anonymous struct confuses you, you can declare a `TestCase` struct type at the top of your function.
 
-1. Read the section entitled "Table-driven tests using subtests" [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][of this blog post]].
+2. Move all the test cases for the `IsValid` function inside the slice of test cases within your `TestIsValid` test function.
 
-2. Apply this technique in a `TestIsValid` function. If the anonymous struct confuses you, you can declare a `TestCase` struct type at the top of your function.
-
-3. Move all the test cases for the `IsValid` function inside the slice of test cases within your `TestIsValid` test function.
-
-4. You can now safely remove your original test functions.
+3. You can now safely remove your original test functions.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2595,11 +2629,15 @@ If the map is `nil` or if the key is already absent from the map, deleting the k
 
 * Implementing a set using a map
 
-Go provides no native set types, but... maps to the rescue!
+A mathematical set is an unordered collection of unique elements.
 
-You can simply implement a set of `string` as a map[string]bool:
+Unlike Python, Go doesn't yet provide a native set type, but... maps to the rescue!
+
+You can implement a set of `string` simply as a map[string]bool:
 
 .play -edit src/map_set_bool.go /^//START/,/^//END/
+
+: amortized O(1) insertion/deletion/membership
 
 
 
@@ -2640,6 +2678,7 @@ See [[https://go.dev/play/p/UwzU1ZKpVNP][this Playground]].
 
 The `Keys` function (and other useful generic functions that operate on maps) are provided by [[https://pkg.go.dev/golang.org/x/exp/maps][the `golang.org/x/exp/maps` package]].
 
+: this example systematically prints map pairs in the lexicographical order of its keys
 
 
 * Don't insert entries in a map while ranging over it
@@ -2718,13 +2757,13 @@ It should return the number of nodes in its argument.
 
 It should return the sum of the values of all the nodes in its argument.
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
 
 
 * Exercise: design a binary tree (solution)
 
-The solution is available on the [[https://go.dev/play/p/bxVmvlNAodD][Go Playground]].
-
-Is it satisfactory?
+A solution is available on the [[https://go.dev/play/p/bxVmvlNAodD][Go Playground]]. Is it satisfactory?
 
 What if we wanted to use another type for node values?
 
@@ -2736,7 +2775,7 @@ Discuss.
 
 Go 1.18 added _generics_ to the language.
 
-Types and functions can now be parameterized by types:
+Types and functions can now be parameterized by types (see [[https://go.dev/play/p/TbHjculL0Og][this Playground]]):
 
   type Tree[E any] struct {
     Elem  E
@@ -2751,11 +2790,7 @@ The `any` type is simply a predeclared alias for `interface{}`.
 
 Generics promote code reusability while providing some compile-time guarantees.
 
-If you're interested in the gory details, check out the [[https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md][_Type_Parameters_Proposal_]].
-
-However, you don't need to master generics at this stage of your Go learning.
-
-: generic binary tree: https://go.dev/play/p/hViMHc2nEpR
+You don't need to master generics at this stage of your Go learning. For more details, see [[https://go.dev/doc/tutorial/generics][Tutorial: Getting started with generics]].
 
 
 
@@ -2827,10 +2862,10 @@ Rather than having package-level functions, let's create some object dedicated t
 Interfaces (along with generics) are a mechanism for achieving [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]] in Go:
 they allow you to manipulate different concrete type that provide the same behavior(s).
 
-Contrary to all the types that we've covered so far, interfaces are abstract types. An interface is defined by a set of methods/behaviors:
+Contrary to all the types that we've covered so far, interfaces are abstract types. An interface defines a set of types that provide some (zero or more) specific methods:
 
   type Climber interface {
-    Climb(meters int) error
+    Climb(int) error
   }
 
 Interfaces, by focusing on _behavior_ rather than _implementation_, promote decoupling!
@@ -2844,9 +2879,9 @@ Interfaces, by focusing on _behavior_ rather than _implementation_, promote deco
 
 * Naming convention for interface types
 
-Resist the temptation to name your interface types with and "I" prefix and/or with an "able" suffix, as you would in other language (e.g. `IEnumerable` in C#)!
+Resist the temptation to name your interface types with an "I" prefix, as you would in other languages (e.g. `IEnumerable` in C#)!
 
-In Go, the names of interface types are typically nouns rather than adjectives.
+Also, in Go, the names of interface types are typically nouns rather than adjectives.
 
 For a single-method interface types, convention dictates that its name be derived by appending "er" to the name of its method, even if doing so yields a weird name:
 
@@ -2948,14 +2983,13 @@ We're about to create a `namecheck` package at the root of our project, but our 
 
 * Namecheck project: declare a Validator interface
 
-1. At the root of your project, in a file named `namecheck.go`,
-declare the following interface:
+1. At the root of your project, in a file named `namecheck.go`, declare the following interface type:
 
   type Validator interface {
     IsValid(string) bool
   }
 
-2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it? If not, make it so!
+2. Do `*twitter.Twitter` and `*github.GitHub` satisfy that interface? If not, make it so!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2965,13 +2999,13 @@ declare the following interface:
 
 * Namecheck project: declare an Availabler interface
 
-1. Still in `namecheck.go`,  declare the following interface:
+1. Still in `namecheck.go`,  declare the following interface type:
 
   type Availabler interface {
     IsAvailable(string) (bool, error)
   }
 
-2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it? If not, make it so!
+2. Do `*twitter.Twitter` and `*github.GitHub` satisfy that interface? If not, make it so!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -2987,7 +3021,7 @@ declare the following interface:
 
 That interface governs how functions from the `fmt` package represent values of the concrete type in question.
 
-2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it? If not, make it so!
+2. Do `*twitter.Twitter` and `*github.GitHub` satisfy that interface? If not, make it so!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3093,9 +3127,7 @@ Therefore, peppering empty interfaces all over the business layer of your applic
 
 * Notable interfaces: error
 
-Yes, `error` is an interface!
-
-In fact, it's the only interface predeclared by the language, which explains why its name can start with a lowercase "e".
+`error` is a interface type predeclared by the language:
 
   type error interface {
     Error() string
@@ -3147,116 +3179,6 @@ The `io` package provides two complementary interface types:
 `io.Writer` represents a _sink_ of bytes: it's satisfied by `os.Stdout`, `*os.File`, etc.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/network-side.svg 200 _
-
-
-
-* Interfaces under the hood
-
-  ----------------------
-  | pointer to itable  |
-  ----------------------
-  |  pointer to value  |
-  ----------------------
-
-Under the hood, an interface value is a two-word data structure:
-
-- a pointer to an _itable_, which contains metadata about the concrete type stored in the interface value: name, set of methods, etc.
-- generally, a pointer to the value of the concrete type stored in the interface value.
-
-For the gory details, see [[https://research.swtch.com/interfaces][Russ Cox - Go Data Structures: Interfaces]].
-
-.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 150 _
-
-
-
-* Comparability and zero value
-
-Interface types are comparable (but you already knew that).
-
-Interfaces are reference types; therefore, manipulating pointers to interface is rare.
-
-An interface type's zero value is `nil`:
-
-.play -edit src/interface_zero.go /^//START/,/^//END/
-
-An interface value is considered `nil` if and only if
-
-- *it*isn't*associated*to*any*concrete*type* (!), and
-- it does contain or point to the value of a concrete type.
-
-  ---------------------------------------
-  |                 nil                 |
-  ---------------------------------------     ==     nil
-  |                 nil                 |
-  ---------------------------------------
-
-: pointers to interfaces useful for decoding JSON to an interface value
-: see https://blog.golang.org/json-and-go
-
-
-
-* Pitfall: interface vs. nil
-
-Be careful: an interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
-
-  ---------------------------------------
-  | pointer to twitter.Twitter's itable |
-  ---------------------------------------     !=     nil
-  |                 nil                 |
-  ---------------------------------------
-
-Developers who fail to account for this distinction expose themselves to subtle bugs...
-
-More details about this subtlety are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
-
-
-
-* Interface vs. nil: spot the bug
-
-The following program contains a subtle bug. Can you identify it?
-
-.play -edit src/interface_nil.go /^//START/,/^//END/
-
-
-
-* Interface vs. nil: spot the bug (solution)
-
-  -----------------------------------------
-  | pointer to *ErrLaunchFailure's itable |
-  -----------------------------------------     !=     nil
-  |                 nil                   |
-  -----------------------------------------
-
-To indicate failure, a fallible function should return a result of type `error`, as opposed to a result of a concrete type that happens to satisfy the `error` interface!
-
-.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
-
-See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=14m12s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
-
-
-
-* Interface vs. nil: spot the bug again
-
-The following program contains a subtle bug. Can you identify it?
-
-.play -edit src/interface_nil_concrete_var.go /^//START/,/^//END/
-
-
-* Interface vs. nil: spot the bug again (solution)
-
-  -----------------------------------------
-  | pointer to *ErrLaunchFailure's itable |
-  -----------------------------------------     !=     nil
-  |                 nil                   |
-  -----------------------------------------
-
-.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
-
-Avoid declaring variables of a concrete type that happens to satisfy `error`!
-
-See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=13m20s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
 
 
 
@@ -3498,9 +3420,21 @@ Disclaimer: many cooking metaphors ahead!
 
 
 
+* Metaphor: a cheeseburger recipe
+
+You can describe a recipe in a sequential manner or in a _concurrent_ manner.
+
+.image img/burger.svg _ 700
+
+If you've got help in the kitchen, you can _parallelize_ and finish the dish faster.
+
+
+
+
+
 * Parallelism is not the goal of concurrency
 
-Concurrency _enables_ parallelism, but parallelism isn't the goal.
+Concurrency enables scalability through parallelism, but parallelism isn't the goal.
 
 Writing concurrent code is valuable regardless of whether that code will run in parallel.
 
@@ -3517,14 +3451,17 @@ See also
 
 * Go's concurrency model
 
-Largely inspired by [[https://dl.acm.org/doi/10.1145/359576.359585][Tony Hoare's  _Communicating_Sequential_Processes_ (1978)]]
+Go's approach to concurrent programming is largely inspired by [[https://dl.acm.org/doi/10.1145/359576.359585][Tony Hoare's  _Communicating_Sequential_Processes_ (1978)]], a paper that was decades ahead of its time.
 
-Two fundamental mechanisms:
-
-- goroutines: lightweight threads
-- channels: typed pipes used to communicate and synchronize between goroutines
+In CSP, concurrent programs are structured as independent processes that execute sequentially and communicate by passing messages.
 
 .image https://i.stack.imgur.com/QjsGt.png 200 _
+
+Two fundamental mechanisms for concurrency in Go are
+
+- goroutines: lightweight threads managed by the Go runtime
+- channels: typed pipes used to communicate and synchronize between goroutines
+
 
 
 
@@ -3671,7 +3608,7 @@ Call them concurrently in the `main` function.
 
 .image https://i.pinimg.com/originals/41/8b/9c/418b9cb037389f7c5b6783ced8a7156b.jpg 300 _
 
-: Q: Which message will be printed first? We can't tell. Up to the scheduler.
+: Q: Which message will be printed first? We can't tell. in an indeterminate order. Up to the scheduler.
 
 
 
@@ -3953,13 +3890,18 @@ As Rob Pike puts it: [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=4m20s][chan
 
 * Channels are typed
 
-Channels are typed conduits that allow goroutines to synchronize and exchange information.
-
-The element type of a channel is arbitrary.
+Channels are typed conduits that allow goroutines to synchronize and exchange data.
 
 A channel whose element type is `T` has type `chan`T`.
 
-  var ch chan string // channel of strings
+  ch := make(chan string) // channel of strings
+
+The element type of a channel is completely arbitrary; here is a contrived example:
+
+  type Man string
+  ch := make(chan chan Man)
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 200 _
 
 : channels only exist within the confines of your program; they can't be used to communicate between different processes, be they written in Go.
 
@@ -4005,19 +3947,22 @@ Channels are comparable.
 
 * Initializing a channel
 
-Channels are reference types; their zero value is `nil`.
+The zero value of channel types is `nil`. Uninitialized channels are not particularly useful.
 
-To initialize a channel, use built-in function `make` with two arguments:
+To initialize a channel, use the built-in function `make` with two arguments:
 
-- the first argument corresponds to the type of the channel;
-- the second argument is an (optional) `int` corresponding to the channel's desired (non-negative) _capacity_.
+- the desired type of the channel;
+- optionally (default value: `0`), the desired _capacity_ of the channel.
 
-  c1 := make(chan string, 16) // initialize a channel of strings of capacity 16
-  c2 := make(chan string)     // equivalent to make(chan string, 0)
+  c1 := make(chan string, 16)
+  c2 := make(chan string)
 
 A channel's capacity cannot be changed after initialization.
 
-A freshly initialized channel starts its life in an "open" state, but can later be _closed_.
+Some terminology:
+
+- A channel of zero capacity is said to be _unbuffered_ or _synchronous_.
+- A channel of positive capacity is said to be _buffered_.
 
 : The specified capacity (if any) must be non-negative; otherwise, you'll get a compilation error or, worse, a panic.
 
@@ -4027,17 +3972,14 @@ A freshly initialized channel starts its life in an "open" state, but can later 
 
 A channel's capacity corresponds to the size of its _buffer_, i.e. the maximum number of elements that the channel can contain at any give time.
 
-Choosing it wisely is important, as it usually affects the correctness and/or the performance of your program.
-
 Built-in function `cap` can be used to query a channel's capacity:
 
   c := make(chan string, 16) // initialize a channel of strings of capacity 16
   fmt.Println(cap(c))        // 16
 
-Some terminology:
+Choosing channel capacity wisely is important, as that choice typically affects the correctness and/or the performance of your program!
 
-- A channel of zero capacity is said to be _unbuffered_ or _synchronous_.
-- A channel of positive capacity is said to be _buffered_.
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 : The number of elements queued in a channel's buffer can also be queried via built-in function `len`, but is rarely useful. Why?
 : if more than one goroutine interact with the channel, len(ch) is stale as soon as queried
@@ -4057,6 +3999,18 @@ on the serving hatch's platform at any one time.
 
 : what does a channel of capacity 0 correspond to?
 : the analogy is imperfect because channels are FIFO and waiters don't necessarily pick up plates in the order in which they arrived
+
+
+
+* Channels are FIFO
+
+Channels have first-in/first-out semantics.
+
+.image https://i.imgflip.com/68zdq9.jpg 300 _
+
+Of course, in the face of multiple goroutines sending values to a channel, the order in which values are received is only partial.
+
+See [[https://go.dev/play/p/6kpQq0hhlun][this Playground]] (although you may only be able to fully understand the code later).
 
 
 
@@ -4087,18 +4041,15 @@ Such performance optimization is covered in [[https://www.humancoders.com/format
 
 * Operations on a channel
 
-Channels support the following operations:
+Channels support _send_ an _receive_ operations, which are collectively known as _channel_communications_.
 
-- _sending_ a value to a channel,
-- _receiving_ a value from a channel,
-- _closing_ a channel (that hasn't been closed yet).
+You can also _close_ a channel to inform receivers that no more items will be sent to it.
 
-You can also _range_ over a channel, which consists in continually receiving values from it.
+In addition, you can _range_ over a channel, a more derivative operation that consists in continually receiving values from it until the channel is closed and drained.
 
 All those operations are *concurrency-safe*.
 
-: _Channel_communications_ is a general term for describing both channel sends and receives.
-: we'll see why closing a channel is useful soon
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/adventure/hiking.svg 250 _
 
 
 
@@ -4159,7 +4110,7 @@ A channel is _not_ a [[https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_p
 
 If we receive the zero value of the channel's element type, how can we tell whether the value we're receiving is from a closed and empty channel or whether someone really sent that value to the channel?
 
-There is a special form of channel receive that yields an additional boolean value for lifting that ambiguity. It uses the familiar "comma-ok" idiom:
+To lift that ambiguity, there is a special form of channel receive that yields an additional boolean value:
 
    v, ok := <-ch
 
@@ -4167,6 +4118,8 @@ The value of variable `ok` is
 
 - `true` if the value received was actually sent to the channel, or
 - `false` if the channel is both closed and fully drained (empty).
+
+: similar comma-ok idiom for maps and type assertions
 
 
 
@@ -4205,7 +4158,7 @@ by _closing_ the channel. To do so, simply pass the channel to the built-in `clo
 
 Closing a channel is definitive; a closed channel cannot be "re-opened".
 
-Closing a channel doesn't make it `nil`.
+Contrary to a common misconception, closing a channel doesn't make it `nil`.
 
 : not to be confused with Close methods, e.g. on the body of a http.Response
 
@@ -4221,13 +4174,13 @@ Note that you must structure your program in such a way that, when a channel get
 
 * Do not systematically close channels
 
-One common misconception is that channels _must_ be closed. Not so!
+Another common misconception is that channels _must_ systematically be closed. Not so!
 
 Channels are not resources; closing a channel is not a way to reclaim or clean up resources (memory, etc.).
 
-Channels will get garbage-collected like any other variable once they become unreachable from the rest of the program.
+A channel will get garbage-collected just like any other variable once it becomes unreachable from the rest of the program.
 
-Only close a channel if the semantics of your program demand it.
+Don't guess; only close a channel if the semantics of your program demand it.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
@@ -4236,14 +4189,14 @@ Only close a channel if the semantics of your program demand it.
 
 * Closing a channel doesn't drain it
 
-Closing a channel is akin to a restaurant announcing the end of service:
+Closing a channel is akin to a restaurant announcing the end of service.
 
-- After the end of service, the restaurant accepts no new patrons for the day.
-- However, the staff doesn't push all the patrons out and lock the door; patrons can finish their meal before paying and leaving.
+- The restaurant no longer accepts customers for the day.
+- However, the staff allows already present customers to stay and finish their meal.
 
 .image https://rew-online.com/wp-content/uploads/2019/10/restaurantCLOSED.jpg 250 _
 
-Similarly, closing a channel doesn't drain it from the elements it contains. Some goroutine(s) can still consume the elements left in a closed channel.
+Similarly, closing a channel doesn't drain it from the elements it contains; and some goroutine(s) can still receive on a closed channel in order to consume its elements.
 
 
 
@@ -4361,16 +4314,6 @@ However, in cases where a function [[https://talks.golang.org/2012/10things.slid
 Review the functions that accept a channel parameter, and determine whether a channel direction could have been specified.
 
 .image https://go.dev/blog/gopher/plush.jpg 400 _
-
-
-
-* Channels are FIFO
-
-Channels have first-in/first-out semantics.
-
-.image https://i.imgflip.com/68zdq9.jpg 300 _
-
-Of course, in the face of multiple goroutines sending values to a channel, the order in which values are received is only partial. See [[https://go.dev/play/p/6kpQq0hhlun][this Playground]].
 
 
 
@@ -4525,11 +4468,12 @@ That file is precious; you should track changes to it in your version-control sy
 
 * Select statement
 
-Along with goroutines and channels, the `select` keyword forms a concurrency trifecta!
 
-`select` is a multiway communication selector: it's reminiscent of a `switch`, but each of its cases correspond to a _channel_communication_ (send or receive).
+`select` is a multiway communication selector: it's reminiscent of a `switch`, but each of its cases refers to a _channel_communication_ (either a send or a receive).
 
-Remember that, depending on the channel's state, channel communications may block.
+`select` is a powerful construct in Go; you should invest time to master it.
+
+With goroutines and channels, `select` completes the concurrency trifecta!
 
 .image https://pbs.twimg.com/media/DDWqkrFUMAAbIyL?format=png&name=large 300 _
 
@@ -4537,6 +4481,7 @@ Remember that, depending on the channel's state, channel communications may bloc
 
 * Mechanics of select
 
+Remember that, depending on the channel's state, channel communications may block.
 
   select {
   case out <- 42:
@@ -4548,9 +4493,9 @@ Remember that, depending on the channel's state, channel communications may bloc
     // do something with v
   }
 
-If all cases are blocking, the `select` statement itself blocks.
+If all the cases of a `select` are blocking, the `select` statement itself blocks.
 
-As soon case becomes non-blocking, it gets selected and its instructions are executed.
+As soon as one case is non-blocking, it gets selected and its instructions are executed.
 
 If more than one cases are non-blocking, one of them gets selected in a pseudo-random uniform fashion.
 
@@ -4728,7 +4673,7 @@ You can do this exercise in the [[https://go.dev/play/p/xnQuBCAOVLL][Go Playgrou
 
 1. Study the documentation of [[https://pkg.go.dev/context/][the `context` package]].
 
-2. Modify the solution to the previous exercise to use a `context.Context` rather than a `quit` channel.
+2. Modify the solution to the previous exercise to use a `context.Context` rather than a channel of empty structs.
 
 (A solution is available in this [[https://go.dev/play/p/fpneA8J6DyU][Playground]].)
 
@@ -5060,3 +5005,120 @@ A relative import relies on the location of the imported package relative to tha
   import ./twitter
 
 Avoid relative imports like the plague!
+
+
+
+* Appendix C: more about interfaces
+
+
+
+* Interfaces under the hood
+
+  ----------------------
+  | pointer to itable  |
+  ----------------------
+  |  pointer to value  |
+  ----------------------
+
+Under the hood, an interface value is a two-word data structure:
+
+- a pointer to an _itable_, which contains metadata about the concrete type stored in the interface value: name, set of methods, etc.
+- generally, a pointer to the value of the concrete type stored in the interface value.
+
+For the gory details, see [[https://research.swtch.com/interfaces][Russ Cox - Go Data Structures: Interfaces]].
+
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 150 _
+
+
+
+* Comparability and zero value
+
+Interface types are comparable (but you already knew that).
+
+Interfaces are reference types; therefore, manipulating pointers to interface is rare.
+
+An interface type's zero value is `nil`:
+
+.play -edit src/interface_zero.go /^//START/,/^//END/
+
+An interface value is considered `nil` if and only if
+
+- *it*isn't*associated*to*any*concrete*type* (!), and
+- it does contain or point to the value of a concrete type.
+
+  ---------------------------------------
+  |                 nil                 |
+  ---------------------------------------     ==     nil
+  |                 nil                 |
+  ---------------------------------------
+
+: pointers to interfaces useful for decoding JSON to an interface value
+: see https://blog.golang.org/json-and-go
+
+
+
+* Pitfall: interface vs. nil
+
+Be careful: an interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
+
+  ---------------------------------------
+  | pointer to twitter.Twitter's itable |
+  ---------------------------------------     !=     nil
+  |                 nil                 |
+  ---------------------------------------
+
+Developers who fail to account for this distinction expose themselves to subtle bugs...
+
+More details about this subtlety are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
+
+
+
+* Interface vs. nil: spot the bug
+
+The following program contains a subtle bug. Can you identify it?
+
+.play -edit src/interface_nil.go /^//START/,/^//END/
+
+
+
+* Interface vs. nil: spot the bug (solution)
+
+  -----------------------------------------
+  | pointer to *ErrLaunchFailure's itable |
+  -----------------------------------------     !=     nil
+  |                 nil                   |
+  -----------------------------------------
+
+To indicate failure, a fallible function should return a result of type `error`, as opposed to a result of a concrete type that happens to satisfy the `error` interface!
+
+.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
+
+See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=14m12s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
+
+
+
+* Interface vs. nil: spot the bug again
+
+The following program contains a subtle bug. Can you identify it?
+
+.play -edit src/interface_nil_concrete_var.go /^//START/,/^//END/
+
+
+* Interface vs. nil: spot the bug again (solution)
+
+  -----------------------------------------
+  | pointer to *ErrLaunchFailure's itable |
+  -----------------------------------------     !=     nil
+  |                 nil                   |
+  -----------------------------------------
+
+.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
+
+Avoid declaring variables of a concrete type that happens to satisfy `error`!
+
+See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=13m20s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
+
+
+
