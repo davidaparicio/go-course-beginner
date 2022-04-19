@@ -488,8 +488,8 @@ No `try`/`catch`/`finally` keywords in Go: errors are reported as normal values.
 Some keywords allow you to declare things in blocks delimited by parentheses. Grouping similar declarations is useful for conveying to the reader that things are related or meant to be used together:
 
   const (
-    minLen = 4
-    maxLen = 15
+    width  = 2048
+    height = 2048
   )
 
   var (
@@ -498,7 +498,7 @@ Some keywords allow you to declare things in blocks delimited by parentheses. Gr
   )
 
   type (
-    Area float64
+    Area   float64
     Volume float64
   )
 
@@ -946,7 +946,104 @@ In many cases, you have no option but to use the `var` keyword...
 
 * Pointers
 
-[[https://go.dev/play/p/AqhVJV4KlTm][Playground]]
+A [[https://en.wikipedia.org/wiki/Pointer_(computer_programming)][_pointer_]] is a type of value that stores a memory address.
+
+Like the C programming language, Go has pointers. Go pointers are less powerful but also much simpler than C pointers.
+
+Compared to other languages like Java—where almost everything is a [[https://en.wikipedia.org/wiki/Reference_(computer_science)][_reference_]] and you possibly get more indirection than you'd ideally like—Go allows you to keep more control over memory layout and the amount of garbage generated.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
+
+
+
+* Addressability and & operator
+
+If a value of type `T` is [[https://go.dev/ref/spec#Address_operators][_addressable_]], you can obtain its address using the `&` operator.
+The result is a _pointer_ of type `*T` that contains the address of the value in question.
+
+  i := 42               // int
+  p := &i               // pi points to i
+  fmt.Println(p)        // address of i: 0xc000018030
+  fmt.Printf("%T\n", p) // *int
+
+Go doesn't support [[https://go.dev/doc/faq#no_pointer_arithmetic][_pointer_arithmetic_]]:
+
+  p++ // invalid operation: p++ (non-numeric type *int)
+
+Not all values are addressable:
+
+  &42 // invalid operation: cannot take address of 42 (untyped int constant)
+
+However, the `&` operator can be applied to [[https://go.dev/ref/spec#Composite_literals][_composite_literals_]] (structs, maps, slices, etc.):
+
+  pu := &User{name "jub0bs"}
+  fmt.Println(pu)
+
+: for convenience
+
+
+
+* Pointers: zero value and comparability
+
+The zero value of all pointer types is `nil`. A `nil` pointer points to nothing.
+
+  var p *int
+  fmt.Println(p)        // <nil>
+  fmt.Println(p == nil) // true
+
+Pointers types are comparable. Two pointers of identical type are equal if and only if they point to the same variable or both are `nil`.
+
+  i := 42
+  p1 := &i
+  p2 := &i
+  fmt.Println(p1 == p2) // true
+
+
+
+* Pointer dereference
+
+You can _dereference_ a pointer (i.e. obtain the value it points to) using the `*` operator:
+
+  i := 42
+  p := &i
+  fmt.Println(*p) // 42
+
+A common source of confusion is that the asterisk is used both in the name of pointer types (e.g. `*int`) and as the pointer-dereference operator (e.g. `*i`).
+
+Assigning a value to a dereferenced pointer changes the value at that address:
+
+  i := 42
+  p := &i
+  *p++
+  fmt.Println(i) // 43
+
+Dereferencing a nil pointer causes a panic!
+
+  var p *int
+  fmt.Println(*p) // panic
+
+
+
+* new
+
+Built-in function `new(T)` returns a pointer to a value of type `T` initialized to `T`'s zero value:
+
+`new` is useful for declaring a pointer to a value without first having to declare an intermediate variable for the value in question. Compare
+
+  var b bool
+  p := &b
+  fmt.Println(*p) // false
+
+to
+
+  p := new(bool)
+  fmt.Println(*p) // false
+
+Be careful if you come from Java or C#: their `new` keyword has got nothing to do with Go's `new` built-in function.
+
+The use of `new` is somewhat controversial in Go; [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=8m10s][some influential people in the Go community]] believe that it's not really needed. Use it sparingly.
+
+
 
 
 
@@ -978,8 +1075,9 @@ Braces around the body of an `else` (not followed by an `if` statement) are also
 
 .play -edit src/if_else.go /^//START/,/^//END/
 
-
 If-else chains are considered non-idiomatic, and can often be advantageously replaced by a _tagless_ `switch`. `else` is one of the least popular keyword in Go!
+
+Go has no conditional ternary operator.
 
 
 
