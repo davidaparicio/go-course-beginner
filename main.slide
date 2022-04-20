@@ -967,10 +967,7 @@ Compared to other languages like Java—where almost everything is a [[https://e
 If a value of type `T` is [[https://go.dev/ref/spec#Address_operators][_addressable_]], you can obtain its address using the `&` operator.
 The result is a _pointer_ of type `*T` that contains the address of the value in question.
 
-  i := 42               // int
-  p := &i               // pi points to i
-  fmt.Println(p)        // address of i: 0xc000018030
-  fmt.Printf("%T\n", p) // *int
+.play -edit src/pointers_address.go /^//START/,/^//END/
 
 Go doesn't support [[https://go.dev/doc/faq#no_pointer_arithmetic][_pointer_arithmetic_]]:
 
@@ -993,16 +990,11 @@ However, the `&` operator can be applied to [[https://go.dev/ref/spec#Composite_
 
 The zero value of all pointer types is `nil`. A `nil` pointer points to nothing.
 
-  var p *int
-  fmt.Println(p)        // <nil>
-  fmt.Println(p == nil) // true
+.play -edit src/pointers_zero.go /^//START/,/^//END/
 
 Pointers types are comparable. Two pointers of identical type are equal if and only if they point to the same variable or both are `nil`.
 
-  i := 42
-  p1 := &i
-  p2 := &i
-  fmt.Println(p1 == p2) // true
+.play -edit src/pointers_comparable.go /^//START/,/^//END/
 
 
 
@@ -1010,23 +1002,17 @@ Pointers types are comparable. Two pointers of identical type are equal if and o
 
 You can _dereference_ a pointer (i.e. obtain the value it points to) using the `*` operator:
 
-  i := 42
-  p := &i
-  fmt.Println(*p) // 42
+.play -edit src/pointers_dereference.go /^//START/,/^//END/
 
 A common source of confusion is that the asterisk is used both in the name of pointer types (e.g. `*int`) and as the pointer-dereference operator (e.g. `*i`).
 
 Assigning a value to a dereferenced pointer changes the value at that address:
 
-  i := 42
-  p := &i
-  *p++
-  fmt.Println(i) // 43
+.play -edit src/pointers_assign.go /^//START/,/^//END/
 
 Dereferencing a nil pointer causes a panic!
 
-  var p *int
-  fmt.Println(*p) // panic
+.play -edit src/pointers_nil_dereference.go /^//START/,/^//END/
 
 
 
@@ -1036,16 +1022,13 @@ Built-in function `new(T)` returns a pointer to a value of type `T` initialized 
 
 `new` is useful for declaring a pointer to a value without first having to declare an intermediate variable for the value in question. Compare
 
-  var b bool
-  p := &b
-  fmt.Println(*p) // false
+.play -edit src/pointers_new_before.go /^//START/,/^//END/
 
 to
 
-  p := new(bool)
-  fmt.Println(*p) // false
+.play -edit src/pointers_new.go /^//START/,/^//END/
 
-Be careful if you come from Java or C#: their `new` keyword has got nothing to do with Go's `new` built-in function.
+If you come from Java or C#, be aware that their `new` keyword has got nothing to do with Go's `new` built-in function.
 
 The use of `new` is somewhat controversial in Go; [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=8m10s][some influential people in the Go community]] believe that it's not really needed. Use it sparingly.
 
