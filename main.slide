@@ -194,6 +194,47 @@ However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.o
 
 
 
+* Go is object-oriented... with a twist!
+
+The ability to define custom types (and methods on them) promote [[https://en.wikipedia.org/wiki/Abstraction_(computer_science)#Abstraction_in_object_oriented_programming][_abstraction_]].
+
+Go's interfaces (and, soon, generics) enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]].
+
+Go's packages enable [[https://en.wikipedia.org/wiki/Encapsulation_(computer_programming)][_encapsulation_]].
+
+Go has no concept of [[https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)][_inheritance_]], but facilitates [[https://en.wikipedia.org/wiki/Object_composition][_composition_]] instead. For more on the topic, see [[https://golang.org/doc/faq#Is_Go_an_object-oriented_language][Is Go an object-oriented language? (golang.org FAQ)]]
+
+.image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 300 _
+
+: Can a language without inheritance be described as object-oriented? Sure!
+: [[https://www.infoworld.com/article/2073649/why-extends-is-evil.html][Allen Holub - Why extends is evil (InfoWorld 2003)]]
+: [[https://www.quora.com/What-does-Alan-Kay-think-about-inheritance-in-object-oriented-programming][What does Alan Kay think about inheritance in object-oriented programming? (Quora)]]
+: James Gosling (Java): "I'd leave classes out."
+: No concept of inheritance in Alan Kay's Simula... a Web of objects
+: no classes
+: no constructors
+: no operator overloading
+: no method overloading
+: subtyping, but no covariance/contravariance
+: encapsulation at the package level rather than at the type/class level
+
+
+
+* Go also has functional aspects
+
+Functions are first-class citizens. They can
+
+- have other functions as parameters,
+- return functions as results,
+- be stored in variables,
+- be stored in struct fields.
+
+However, despite having anonymous functions, Go has no concise "lambda" notation.
+
+.image https://i.redd.it/2dpp8t6mk7641.png 200 _
+
+
+
 * Go's rich toolchain
 
 The `go` toolchain comes with tools for
@@ -213,41 +254,6 @@ Moreover, the core library is pretty extensive; see [[https://pkg.go.dev/std][pk
 : gofmt: enforced specific style. flattens learning curve and reduces friction for code reviews
 : goimports: imports in canonical order and in alphabetical order per section
 : typically run on save
-
-
-
-* Go is object-oriented... with a twist!
-
-The ability to define custom types (and methods on them) promote [[https://en.wikipedia.org/wiki/Abstraction_(computer_science)#Abstraction_in_object_oriented_programming][_abstraction_]].
-
-Go's interfaces (and, soon, generics) enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]].
-
-Go's packages enable [[https://en.wikipedia.org/wiki/Encapsulation_(computer_programming)][_encapsulation_]].
-
-Go has no concept of [[https://en.wikipedia.org/wiki/Inheritance_(object-oriented_programming)][_inheritance_]], but facilitates [[https://en.wikipedia.org/wiki/Object_composition][_composition_]] instead. For more on the topic, see [[https://golang.org/doc/faq#Is_Go_an_object-oriented_language][Is Go an object-oriented language? (golang.org FAQ)]]
-
-.image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 300 _
-
-: Can a language without inheritance be described as object-oriented? Sure!
-: [[https://www.infoworld.com/article/2073649/why-extends-is-evil.html][Allen Holub - Why extends is evil (InfoWorld 2003)]]
-: [[https://www.quora.com/What-does-Alan-Kay-think-about-inheritance-in-object-oriented-programming][What does Alan Kay think about inheritance in object-oriented programming? (Quora)]]
-: James Gosling (Java): "I'd leave classes out."
-: No concept of inheritance in Alan Kay's Simula... a Web of objects
-
-
-
-* Go also has functional aspects
-
-Functions are first-class citizens. They can
-
-- have other functions as parameters,
-- return functions as results,
-- be stored in variables,
-- be stored in struct fields.
-
-However, despite having anonymous functions, Go has no concise "lambda" notation.
-
-.image https://i.redd.it/2dpp8t6mk7641.png 200 _
 
 
 
@@ -882,7 +888,7 @@ Identifiers in Go [[https://go.dev/ref/spec#Identifiers][must]] start with a Uni
 
   identifier = letter { letter | unicode_digit } .
 
-Strive for conciseness; the smaller the scope, the shorter the name.
+You should [[https://github.com/golang/go/wiki/CodeReviewComments#variable-names][strive for conciseness]]; the smaller the scope, the shorter the name.
 
   var index int // meh
   var i int     // better
@@ -1339,20 +1345,19 @@ Be careful: calling a `nil` function causes a panic!
 
 
 
-* Anonymous functions & lexical closures
+* Anonymous functions and lexical closures
 
 Go supports anonymous functions but lacks a concise "lambda" notation:
 
   incr := func(i int) int { return i + 1 }
 
-An anonymous functions can _capture_ variables from its lexical environment:
+A _closure_ is an anonymous function that references variables from outside its body:
 
 .play -edit src/function_closure.go /^//START/,/^//END/
 
-Anonymous functions are often conveniently used in conjunction with the `go` keyword to launch goroutines.
-
-: lexical closure: the combination of a function and the lexical environment within which the function was declared
-: the anonymous function closes over such and such variables
+: lexical closure: an anonymous function that captures variables from its lexical environment
+: the anonymous function closes over / is bound to the sum variable
+: Anonymous functions are often conveniently used in conjunction with the `go` keyword to launch goroutines.
 
 
 
@@ -1460,13 +1465,19 @@ Do this instead:
 
 * Line of sight (cont'd)
 
-This idiom greatly contributes to the readability of Go code.
+This idiom greatly contributes to the readability of Go code. Your code ends up looking like a column of a broadsheet newspaper:
+
+.image https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg 250 _
 
 By avoiding the `else` keyword and eliminating failure cases as they arise,
 
 - you [[https://golang.org/doc/effective_go#if][keep the "happy path" on the left]],
-- you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]] (your code reads like columns of a [[https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg][broadsheet newspaper]]),
+- you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]],
 - you [[https://www.youtube.com/watch?v=yd_rtwYaXps&t=33m30s][reduce the cognitive load]] required to read and understand your code.
+
+
+
+* Line of sight (cont'd)
 
 More reading material about this idiom:
 
@@ -1474,6 +1485,8 @@ More reading material about this idiom:
 - [[https://talks.golang.org/2013/bestpractices.slide#3][Francesc Campoy Flores - Twelve Go Best Practices]]
 - [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer - Code: Align the happy path to the left edge]]
 - [[https://dave.cheney.net/2019/07/09/clear-is-better-than-clever][Dave Cheney - Clear is better than clever]]
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 250 _
 
 : also about cognitive load: https://talks.golang.org/2013/bestpractices.slide#3
 
@@ -1524,7 +1537,7 @@ Either consume it or report it, but not both. Why not? Discuss.
 
 
 
-* Creating error values
+* Creating error values from scratch
 
 `errors.New` allows you to create a simple error value:
 
