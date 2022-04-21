@@ -14,7 +14,7 @@ func MinAndMax(first int, rest ...int) (min, max int) { // HL
 	for _, i := range rest {
 		if i < min {
 			min = i
-		} // note: don't format your code like this
+		}
 		if i > max {
 			max = i
 		}
