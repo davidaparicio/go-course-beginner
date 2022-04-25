@@ -12,8 +12,9 @@ func main() {
 func IsAvailable(username string) (bool, error) {
 	resp, err := http.Get("https://github.com/" + username)
 	if err != nil {
-		return false, errors.New("unknown availability")
+		return false, err
 	}
+	// omitted: use the response body // HL
 	switch resp.StatusCode {
 	case http.StatusNotFound:
 		resp.Body.Close() // HL

@@ -2163,7 +2163,7 @@ Here is a version of `IsAvailable` that doesn't use `defer` to close the respons
 
 .code src/defer_IsAvailable_without_defer.go /^//START/,/^//END/
 
-Notice how we need to call `resp.Body.Close` at each possible exit point of the `IsAvailable` function.
+Notice how `resp.Body.Close` must be called at each possible exit point of the function.
 
 
 
@@ -2173,7 +2173,7 @@ And now with `defer`:
 
 .code src/defer_IsAvailable_with_defer.go /^//START/,/^//END/
 
-As soon as we know the HTTP request succeeded, we can program the closure of the response body and forget about it!
+As soon as we know the HTTP request succeeded, we can plan the closure of the response body ahead of time and forget about it!
 
 : also: allows you to colocate the acquisition and cleanup of a resource in your code.
 
@@ -2279,15 +2279,22 @@ We seem to be missing a common abstraction to indiscriminately use the functiona
 
 * Namecheck project: IsAvailable's lack of testability
 
-`IsAvailable` unconditionally sends a HTTP request to the social network of interest, which considerable hinders its testability.
+`IsAvailable` unconditionally sends a HTTP request to the social network of interest, which considerable hinders its testability:
 
-Unit tests are supposed to operate purely in memory, not talk to the real world.
+1. Unit tests (in the pure sense of the term) operate only in memory. In particular, unit tests are not supposed to communicate with the network.
 
-You may also write a unit test that checks that, if the client returns a 200 OK response, then IsAvailable returns `false,`nil`.
+2. Any test case you write will depend on the state of GitHub/Twitter. If you assert that username "babar" is available on GitHub and someone register an account with that username tomorrow, your test will start failing.
 
-We'd need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests. Again, interfaces will allow us to solve this issue. Patience!
+3. Testing some cases (other status codes, non-nil errors) is currently difficult.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+
+
+* Namecheck project: IsAvailable's lack of testability (cont'd)
+
+We need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests. Again, interfaces will allow us to solve this issue. Patience!
+
 
 : need Internet access to run that unit test
 : success/failure of unit test depends on GitHub
@@ -2353,10 +2360,13 @@ Be careful: indexing outside the bounds of an array causes either a compilation 
 You can iterate over an array using a for-range loop.
 
 The first iteration variable corresponds to the index of the current element.
-
 The second iteration variable is only a copy of the array's current element.
 
 .play -edit src/array_range.go  /^//START/,/^//END/
+
+If you only need one of the iteration variables, you can omit the other:
+
+.play -edit src/array_range2.go  /^//START/,/^//END/
 
 
 
@@ -2446,11 +2456,11 @@ Taking the address of a slice element is legal.
 
 Be careful: indexing a slice in the negatives or beyond its _length_ causes a panic:
 
-.play -edit src/slice_indexing.go  /^//START1/,/^//END1/
+.play -edit src/slice_indexing.go  /^//START/,/^//END/
 
 So does indexing a `nil` slice:
 
-.play -edit src/slice_indexing.go  /^//START2/,/^//END2/
+.play -edit src/slice_indexing2.go  /^//START/,/^//END/
 
 
 
@@ -2479,10 +2489,23 @@ The backing array may extend past the end of the slice.
 
 The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
 
-When using the `make` function to create a slice, you can specify the length and capacity independently. Doing this is often useful when you're about to add elements to the slice
+.image img/slice_under_hood.svg 400 _
 
-: show make([]string, l, c) now
+: https://excalidraw.com/#json=QGCOGCvmUmlH7oPxbCnz9,jLLT8TOo7oaNBpJxr2DTcw
 
+
+
+* Slices under the hood (cont'd)
+
+When using the `make` function to create a slice, you can specify the length and capacity independently:
+
+  roles := make([]string, 0, 1024)
+  fmt.Println(len(roles)) // 0
+  fmt.Println(cap(roles)) // 1024
+
+Doing this is useful as a micro-optimization when you're about to grow the slice and you know in advance exactly how long the slice will eventually be.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 * Slice function parameters are cheap and flexible
@@ -2499,27 +2522,14 @@ Moreover, a slice parameter is much more flexible than an array parameter.
 
 * Slicing operator
 
-You can produce a new slice that focuses on a different portion of the same backing array using the _slicing_operator_.
+The _slicing_operator_ allows you to produce a new slice that focuses on a different portion of the same backing array.
 
 .play -edit src/slicing_operator.go  /^//START/,/^//END/
 
 The first index is inclusive and, if unspecified, defaults to `0`.
-
 The second index is exclusive and, if unspecified, defaults to the length of the slice.
 
-
-
-* Namecheck project: pass a username as a command-line arg
-
-1. Consult the [[https://pkg.go.dev/os][documentation of the `os` package]].
-
-2. Identify a member of that package that will allow you to get the program's command-line arguments as a slice of strings.
-
-3. Check the length of that slice; terminate the program (with a friendly error message) if no username was specified.
-
-4. If a username was specified, use it as before in the rest of your program.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.play -edit src/slicing_operator2.go  /^//START/,/^//END/
 
 
 
@@ -2539,15 +2549,32 @@ There's also a three-index form, which can be useful in some cases, but we won't
 
 
 
+* Namecheck project: pass a username as a command-line arg
+
+1. Consult the [[https://pkg.go.dev/os][documentation of the `os` package]].
+
+2. Identify a member of that package that will allow you to get the program's command-line arguments as a slice of strings.
+
+3. Check the length of that slice; terminate the program (with a friendly error message) if no username was specified.
+
+4. If a username was specified, use it as before in the rest of your program.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
 * Ranging over a slice
 
 Just like for arrays, you can iterate over a slice using a for-range loop.
 
 The first iteration variable corresponds to the index of the current element.
-
 The second iteration variable is only a copy of the slice's current element.
 
 .play -edit src/slice_range.go  /^//START/,/^//END/
+
+If you only need one of the iteration variables, you can omit the other:
+
+.play -edit src/slice_range2.go  /^//START/,/^//END/
 
 : iteration happens over the length (not the capacity) of the slice
 
@@ -2555,21 +2582,21 @@ The second iteration variable is only a copy of the slice's current element.
 
 * Table-driven subtests
 
-One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_subtests_]], an approach to writing test cases that drastically reduce test-logic duplication:
+One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_subtests_]], an approach to writing test cases that drastically reduces test-logic duplication:
 
   func TestIsValid(t *testing.T) {
-    testCases := []struct {
+    type TestCase struct {
       desc     string
       username string
       want     bool
-    }{
+    }
+    testCases := []TestCase {
       {"contains two consecutive hyphens", "jub0--bs", false},
       // other test cases...
     }
-    var gh github.GitHub
     for _, tc := range testCases {
       f := func(t *testing.T) {
-        got := gh.IsValid(tc.username)
+        got := github.IsValid(tc.username)
         if got != tc.want {
           t.Errorf("github.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
         }
@@ -2577,6 +2604,9 @@ One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-usi
       t.Run(tc.desc, f)
     }
   }
+
+: Run method: results of each subtest detailed in output
+: use of anonymous struct for slice of test cases
 
 
 
@@ -2607,6 +2637,7 @@ Under the hood, the `append` function copies elements of the backing array to a 
 
 .play -edit src/append_grow.go  /^//START/,/^//END/
 
+: mention that s := make([]int, 0, 1024) would have prevented copies
 
 
 * Aliasing
@@ -2638,7 +2669,7 @@ After appending, the pointer may well point to an element of an old array that i
 
 * Maps
 
-A map is a built-in type that represent a unordered collection of key-value pairs.
+A map is a built-in type that represent an unordered collection of key-value pairs.
 
 The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
 
@@ -2663,19 +2694,20 @@ Map types are *not* comparable.
 
 .play -edit src/map_reference.go /^//START/,/^//END/
 
+However, you can use [[https://pkg.go.dev/golang.org/x/exp/maps#Equal][the `Equal` function]] from [[https://pkg.go.dev/golang.org/x/exp/maps][the `golang.org/x/exp/maps` package]] to compare two maps whose key type and value type are comparable.
+
 
 
 * Creating map values
 
-Invoke built-in function `make` with the desired map type to initialize an empty map:
-
-.play -edit src/map_make.go /^//START/,/^//END/
-
-Alternatively, you can create and populate a map with a _map_literal_:
+You can create and populate a map with a _map_literal_:
 
 .play -edit src/map_literal.go /^//START/,/^//END/
 
-The trailing comma is mandatory, here.
+Alternatively, you can use the built-in function `make` with the desired map type to initialize an empty map:
+
+.play -edit src/map_make.go /^//START/,/^//END/
+
 
 
 
@@ -3052,11 +3084,9 @@ Many of the interface types provided by Go's standard library are single-method:
 
 * Namecheck project: move your main.go to a cmd folder
 
-We're about to create a `namecheck` package at the root of our project, but our `main.go` (which belongs to package `main`) is getting in the way. Let's move it elsewhere.
+1. Create a folder named `cmd`; move your `main.go` file to `cmd/`.
 
-1. Create a folder named "cmd" at the root of your project.
-
-2. Move your `main.go` file to `cmd/`:
+2. Create a file `namecheck.go` that belongs to a new package itself named `namecheck`.
 
   namecheck
   ├── cmd
@@ -3065,6 +3095,7 @@ We're about to create a `namecheck` package at the root of our project, but our 
   │   ├── github.go
   │   └── github_test.go
   ├── go.mod
+  ├── namecheck.go
   └── twitter
       ├── twitter.go
       └── twitter_test.go
@@ -3073,11 +3104,13 @@ We're about to create a `namecheck` package at the root of our project, but our 
 
   go run cmd/main.go
 
+: We're about to create a `namecheck` package at the root of our project, but our `main.go` (which belongs to package `main`) is getting in the way. Let's move it elsewhere.
+
 
 
 * Namecheck project: declare a Validator interface
 
-1. At the root of your project, in a file named `namecheck.go`, declare the following interface type:
+1. In `namecheck.go`, declare the following interface type:
 
   type Validator interface {
     IsValid(string) bool
@@ -3431,7 +3464,7 @@ If not, what would you change?
 
 * Namecheck project: simulate support for many platforms
 
-1. In `main.go`, judiciously populate your `[]Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
+1. In `main.go`, judiciously populate your `[]namecheck.Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
 
 2. Similarly, populate your slice of checkers with twenty pointers to the same `github.GitHub` instance.
 
@@ -3922,7 +3955,7 @@ Defining a dedicated named function can help:
 
 * Namecheck project: check each user name concurrently
 
-1. Extract the body of the for-range loop that iterates on your `[]Checker` slice as a function in your `main` package:
+1. Extract the body of the for-range loop that iterates on your `[]namecheck.Checker` slice as a function in your `main` package:
 
   func check(checker namecheck.Checker, username string)
 
@@ -3930,7 +3963,7 @@ Defining a dedicated named function can help:
 
 3. Within the for-range loop, apply the `go` keyword to your `check` function.
 
-4. Use a wait group in order to wait, at the end of the `main` function, for all the goroutines that you spawned to terminate.
+4. Use a wait group in order to wait, at the end of the `main` function, for all the goroutines that you've spawned to terminate.
 
 5. Time the program's execution. Does user experience improve?
 
@@ -4184,8 +4217,11 @@ The syntax of a _channel_receive_ consists in a left-pointing arrow (`<-`) follo
 
 The `gofmt` tool removes any whitespace between the arrow the channel; don't fight it.
 
-A channel receive is an expression: you can store the received value in a variable,
-or even pass it directly to a function:
+A channel receive is an expression: you can store the received value in a variable...
+
+  v := <-ch
+
+\... or even pass it directly to a function:
 
   fmt.Println(<-ch)
 
@@ -4306,14 +4342,13 @@ Note that, when ranging over a channel, only one iteration variable is available
 
 The code above is exactly equivalent to the following:
 
-  loop:
-    for {
-      v, ok := <-ch
-      if !ok {
-        break loop
-      }
-      // do something with v
+  for {
+    v, ok := <-ch
+    if !ok {
+      break
     }
+    // do something with v
+  }
 
 : There's no notion of indexing with channels.
 
@@ -4354,7 +4389,7 @@ those parameters would instead need to be pointers to channels.)
 
 3. In each child goroutine, create a `Result` value and send it to the channel.
 
-4. In `main`, range over that channel and store the results in a slice, then print it.
+4. In `main`, range over that channel and store the results in a slice, then print the slice.
 
 .image https://go.dev/blog/store/gophers.jpg 150 _
 
@@ -4732,7 +4767,7 @@ If function `cancellable` is launched as a goroutine, you can trigger its eventu
 
 3. Cancel the goroutine from `main` after one second.
 
-(A solution is available in this [[https://go.dev/play/p/xnQuBCAOVLL][Playground]].)
+(A solution is available in this [[https://go.dev/play/p/7Hsz9o3MwRs]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -4763,7 +4798,7 @@ By convention, a function that has a `context.Context` parameter should feature 
 
 * Exercise: cancelling a goroutine with context.Context
 
-You can do this exercise in the [[https://go.dev/play/p/xnQuBCAOVLL][Go Playground]].
+You can do this exercise in the [[https://go.dev/play/p/7Hsz9o3MwRs][Go Playground]].
 
 1. Study the documentation of [[https://pkg.go.dev/context/][the `context` package]].
 
