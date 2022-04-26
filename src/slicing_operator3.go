@@ -5,8 +5,8 @@ import "fmt"
 func main() {
 	// START OMIT
 	names := []string{"foo", "bar", "baz"}
-	red := names[:2] // HL
-	green := red[1:] // HL
-	fmt.Println(red, green)
+	red := names[:2]
+	names = red[:cap(red)] // HL
+	fmt.Println(names)
 	// END OMIT
 }

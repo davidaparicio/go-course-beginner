@@ -752,7 +752,7 @@ When you declare a variable without initializing it, its value is the zero value
   var i int    // the value of i is 0
   var s string // the value of s is the empty string ""
 
-Types whose zero value is `nil` are known as _reference_types_: pointers, functions, channels, interfaces, slices, and maps.
+Types whose zero value is `nil` are sometimes called "reference types": pointers, functions, channels, interfaces, slices, and maps.
 
 : in French: valeur vierge
 
@@ -1565,7 +1565,7 @@ You can also create your own error types (i.e. types that satisfy the `error` in
 
 A panic is a run-time event that indicates an exceptional and irrecoverable failure.
 
-It can be triggered by a run-time error (such as calling a `nil` function) or some direct or indirect call to built-in function `panic`.
+A panic can be triggered by a run-time error (such as calling a `nil` function) or by some direct or indirect call to built-in function `panic`.
 
 A panic stops the program's normal execution, runs deferred function calls as it unwinds the stack, prints an error message and goroutine traces, and exit the program with a non-zero status:
 
@@ -1574,6 +1574,7 @@ A panic stops the program's normal execution, runs deferred function calls as it
 Panics can (but rarely should) be [[https://go.dev/blog/defer-panic-and-recover][_recovered_]].
 
 : recover: if you consume a third-party package that panic willy-nilly
+: Panics may be reminiscent of Java's run-time exceptions, but the two cultures are radically different!
 
 
 
@@ -1685,9 +1686,7 @@ There's one exception to this rule that relates to testing. More on that later.
 
 A package is composed of one to several source files.
 
-All of a package's source files must be placed in the same folder.
-
-Source files from different packages cannot be in the same folder!
+All of a package's source files must be placed in the same folder. Source files from different packages cannot be in the same folder!
 
 All of the members of a package are accessible to all of the package's source files.
 
@@ -1730,13 +1729,13 @@ without shadowing the name of your package.
 - Don't default to exporting everything.
 - Be deliberate about what you export.
 
-
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
 
 
 
 * Good naming practices for package identifiers
 
-Bear in mind that identifiers will be prefixed by their package name in client code.
+Bear in mind that identifiers will be [[https://go.dev/ref/spec#Qualified_identifiers][prefixed by their package name]] at call sites.
 
 Avoid stutter in package-level identifiers (see [[https://www.youtube.com/watch?v=MzTcsI6tn-0&t=23m40s][Brian Ketelsen - Go best practices]]):
 
@@ -2231,6 +2230,33 @@ One solution is to enclose the defer statement in a smaller function:
 
 
 
+* Namecheck project: IsAvailable's lack of testability
+
+`IsAvailable` unconditionally sends a HTTP request to the social network of interest, which considerable hinders its testability:
+
+1. Unit tests (in the pure sense of the term) operate only in memory. In particular, unit tests are not supposed to communicate with the network.
+
+2. Any test case you write will depend on the state of GitHub/Twitter. If you assert that username "babar" is available on GitHub and someone register an account with that username tomorrow, your test will start failing.
+
+3. Testing some cases (other status codes, non-nil errors) is currently difficult.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+
+
+* Namecheck project: IsAvailable's lack of testability (cont'd)
+
+We need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests.
+
+Interfaces will allow us to solve this issue. Patience!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 250 _
+
+: need Internet access to run that unit test
+: success/failure of unit test depends on GitHub
+
+
+
 * Namecheck project: availability on Twitter
 
 We cannot take the same shortcut for Twitter as we did for GitHub, because
@@ -2239,9 +2265,11 @@ We cannot take the same shortcut for Twitter as we did for GitHub, because
 
 returns a `200` response regardless of whether the user `USERNAME` actually exists.
 
-We'll need to do things properly and call the Twitter API.
+In Twitter's case, we need to do things more properly and call our to their API. However, obtaining an API key from Twitter is a long and tedious procedure.
 
-For now, just stub `IsAvailable` in Twitter:
+For your convenience, I've set up a little proxy that uses my own Twitter API key. You'll be able to call my proxy in your `IsAvailable` function, but you'll need to learn more about structs first.
+
+For now, just write a fake implementation of `IsAvailable` in your `twitter` package:
 
   func IsAvailable(username string) (bool, error) {
     return false, nil
@@ -2249,7 +2277,7 @@ For now, just stub `IsAvailable` in Twitter:
 
 
 
-* Namecheck project: check a username on twitter and github
+* Namecheck project: check a username on Twitter and Github
 
 Flesh out your `main` function:
 
@@ -2271,33 +2299,11 @@ Our project is starting to take shape, but it still suffers from limitations...
 
 One issue is that, although the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, nothing relates them.
 
-We seem to be missing a common abstraction to indiscriminately use the functionalities from the `twitter` and `github` packages... Interfaces will allow us to do that!
+We seem to be missing a common abstraction to indiscriminately use the functionalities from the `twitter` and `github` packages...
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
+Again, interfaces will allow us to solve that issue.
 
-
-
-* Namecheck project: IsAvailable's lack of testability
-
-`IsAvailable` unconditionally sends a HTTP request to the social network of interest, which considerable hinders its testability:
-
-1. Unit tests (in the pure sense of the term) operate only in memory. In particular, unit tests are not supposed to communicate with the network.
-
-2. Any test case you write will depend on the state of GitHub/Twitter. If you assert that username "babar" is available on GitHub and someone register an account with that username tomorrow, your test will start failing.
-
-3. Testing some cases (other status codes, non-nil errors) is currently difficult.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
-
-
-
-* Namecheck project: IsAvailable's lack of testability (cont'd)
-
-We need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests. Again, interfaces will allow us to solve this issue. Patience!
-
-
-: need Internet access to run that unit test
-: success/failure of unit test depends on GitHub
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 250 _
 
 
 
@@ -2323,7 +2329,7 @@ You can omit the length in array literals and let the compiler infer it from the
 
 * An array's zero value
 
-Arrays are _not_ reference types. They cannot take the value `nil`.
+Arrays are _not_ "reference types". They cannot take the value `nil`.
 
 The zero value of an array type is an array full of zero values of its element type.
 
@@ -2338,6 +2344,8 @@ The zero value of an array type is an array full of zero values of its element t
 An array type is comparable only if the type of its elements is itself comparable:
 
 .play -edit src/array_comparability.go  /^//START/,/^//END/
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 250 _
 
 
 
@@ -2392,13 +2400,15 @@ Remember that Go's evaluation strategy is call by value. Accordingly, functions 
 
 * Arrays are seldom used
 
-For the reasons discussed previously, idiomatic Go code seldom makes direct use of arrays. This is what [[https://go.dev/doc/effective_go#arrays][Effective Go]] has to say on the topic:
+Legitimate cases for direct use of arrays exist, but are relatively rare.
+
+.code src/sudoku.go  /^//START/,/^//END
+
+This is what [[https://go.dev/doc/effective_go#arrays][Effective Go]] has to say on the topic:
 
 _Arrays_are_useful_when_planning_the_detailed_layout_of_memory_and_sometimes_can_help_avoid_allocation,_but_primarily_they_are_a_building_block_for_slices_ [...]
 
-_Slices_ are an abstraction over arrays and, in most situations, using slices should be favored over using arrays.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+_Slices_ are an abstraction over arrays. In most situations, the use of slices should be favored over the use of arrays.
 
 
 
@@ -2420,13 +2430,13 @@ of a given length.
 
 .play -edit src/slices.go  /^//START/,/^//END
 
-: only make([]string, l) for now
+: similar to Java's ArrayList
 
 
 
 * A slice's zero value
 
-Slice are reference types. Their zero value is `nil`.
+Slice are "reference types". Their zero value is `nil`.
 
 A `nil` slice is distinct from, but functionally equivalent to, an empty slice. [[https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices][Convention]] dictates that you do not differentiate a `nil` slice from an empty slice in your code.
 
@@ -2472,26 +2482,28 @@ A slice is essentially a resizable view (or window) into a backing array.
 Under the hood, a slice is a data structure simply composed of three machine words:
 
 - a pointer to the backing array
-- an int corresponding to the _length_ of the slice
-- an int corresponding to the _capacity_ of the slice
+- an int corresponding to the _length_ of the slice (given by built-in function `len`)
+- an int corresponding to the _capacity_ of the slice (given by built-in function `cap`)
 
-Built-in functions `len` and `cap` yield the _length_ and _capacity_ of a slice.
-
-  roles := []string{"Viewer", "Editor", "Admin"}
+  names := []string{"foo", "bar", "baz"}
   fmt.Println(len(roles)) // 3
   fmt.Println(cap(roles)) // 3
+
+.image img/slice_under_hood0.svg 200 _
+
+: https://excalidraw.com/#json=6NCwjZHDM87KQT4ov8FOH,YVzPYpRGuz0wQ2EzslAijA
 
 
 
 * Slices under the hood (cont'd)
 
-The backing array may extend past the end of the slice.
+The backing array may extend past the end of the slice, hence the notion of _capacity_.
 
 The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
 
-.image img/slice_under_hood.svg 400 _
+.image img/slice_under_hood.svg _ 900
 
-: https://excalidraw.com/#json=QGCOGCvmUmlH7oPxbCnz9,jLLT8TOo7oaNBpJxr2DTcw
+: https://excalidraw.com/#json=QDrelIT4EykP6QR1kmh1_,jVs2RcYcsHfABXvU3SjKyQ
 
 
 
@@ -2499,20 +2511,23 @@ The _capacity_ of a slice is a measure of that extent: it is the sum of the leng
 
 When using the `make` function to create a slice, you can specify the length and capacity independently:
 
-  roles := make([]string, 0, 1024)
+  roles := make([]string, 0, 3)
   fmt.Println(len(roles)) // 0
-  fmt.Println(cap(roles)) // 1024
+  fmt.Println(cap(roles)) // 3
 
-Doing this is useful as a micro-optimization when you're about to grow the slice and you know in advance exactly how long the slice will eventually be.
+.image img/slice_under_hood2.svg 200 _
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+Doing this is useful as a micro-optimization when you're about to append elements to the slice and you know the final length of the slice in advance.
+
+: https://excalidraw.com/#json=TiMTjJURaNLArsUwaeo3q,sY2pt8gItY8QI4JWhWHkZA
+
 
 
 * Slice function parameters are cheap and flexible
 
 The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the backing array!
 
-Moreover, a slice parameter is much more flexible than an array parameter.
+Moreover, a slice parameter is much more flexible than an array parameter because the length of the slice can be arbitrary.
 
 .play -edit src/slice_cheap.go  /^//START/,/^//END
 
@@ -2522,30 +2537,32 @@ Moreover, a slice parameter is much more flexible than an array parameter.
 
 * Slicing operator
 
-The _slicing_operator_ allows you to produce a new slice that focuses on a different portion of the same backing array.
+The _slicing_operator_ can be applied to an array or a slice and produces a slice that focuses on a specific portion of the same backing array:
 
 .play -edit src/slicing_operator.go  /^//START/,/^//END/
+
+.image img/slice_under_hood.svg _ 900
+
+
+
+* Slicing operator (cont'd)
 
 The first index is inclusive and, if unspecified, defaults to `0`.
 The second index is exclusive and, if unspecified, defaults to the length of the slice.
 
 .play -edit src/slicing_operator2.go  /^//START/,/^//END/
 
-
-
-* Slicing operator (cont'd)
-
-For slicing expression `s[i:j]` to be legal, the indices `i` and `j` must satisfy
+In the slicing expression `s[i:j]`,  indices `i` and `j` must satisfy
 
   0 <= i <= j <= cap(s)
 
-Otherwise, a compilation error or panic will occur.
+Otherwise, a compilation error or a panic will occur.
 
 Note that the slicing operator allows you to retrieve the part of the backing array that extends beyond the length of the slice you're operating on:
 
-.play -edit src/slicing_operator2.go  /^//START/,/^//END/
+.play -edit src/slicing_operator3.go  /^//START/,/^//END/
 
-There's also a three-index form, which can be useful in some cases, but we won't talk about it here.
+: There's also a three-index form, which can be useful in some cases, but we won't talk about it here.
 
 
 
@@ -2633,7 +2650,7 @@ Its last parameter is variadic: you can add more than one element to the slice a
 
 .play -edit src/append.go  /^//START/,/^//END/
 
-Under the hood, the `append` function copies elements of the backing array to a larger one when capacity in the former has been reached:
+Under the hood, the `append` function copies elements of the backing array to a larger one when capacity in the former has been reached and returns a slice that points to the new array:
 
 .play -edit src/append_grow.go  /^//START/,/^//END/
 
@@ -2683,31 +2700,40 @@ The key type *must* be comparable:
 
 
 
-* Maps are reference types
-
-A function that has a parameter of some map type only gets a copy of a reference
-to the underlying data structure (hash table).
-
-The zero value of map types is `nil`.
-
-Map types are *not* comparable.
-
-.play -edit src/map_reference.go /^//START/,/^//END/
-
-However, you can use [[https://pkg.go.dev/golang.org/x/exp/maps#Equal][the `Equal` function]] from [[https://pkg.go.dev/golang.org/x/exp/maps][the `golang.org/x/exp/maps` package]] to compare two maps whose key type and value type are comparable.
-
-
-
 * Creating map values
 
 You can create and populate a map with a _map_literal_:
 
 .play -edit src/map_literal.go /^//START/,/^//END/
 
-Alternatively, you can use the built-in function `make` with the desired map type to initialize an empty map:
+Alternatively, you can use the built-in function `make` to initialize an empty map of the desired type:
 
 .play -edit src/map_make.go /^//START/,/^//END/
 
+
+
+* A map's zero value
+
+The zero value of map types is `nil`.
+
+.play -edit src/map_zero.go /^//START/,/^//END/
+
+Maps are "reference types": a function that has a parameter of some map type
+only gets a copy of a reference to the underlying data structure (hash table).
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
+
+
+
+* Map are not comparable.
+
+Regardless of their key and value types, maps are not comparable: the compiler won't allow you to use the `==` operator to test the equality of two arbitrary map values.
+
+The only legal comparison is to a literal nil value.
+
+.play -edit src/map_incomparable.go /^//START/,/^//END/
+
+However, you can use [[https://pkg.go.dev/golang.org/x/exp/maps#Equal][the `Equal` function]] from [[https://pkg.go.dev/golang.org/x/exp/maps][the `golang.org/x/exp/maps` package]] to compare two maps whose key type and value type are comparable.
 
 
 
@@ -2829,7 +2855,7 @@ If a map entry that has not yet been reached is removed during iteration, the co
 Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order on maps is random,
 removing entries unrelated to the current iteration causes undesired *undeterminism*.
 
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
 
 
 
@@ -3227,10 +3253,11 @@ The empty interface is an interface that requires no method:
 
 Therefore, it is automatically satisfied by _all_ types (no exception) in Go.
 
-Go 1.18 [[https://go.dev/doc/go1.18#generics][introduced]] `any` as a predeclared alias for `interface{}`.
+Go 1.18 [[https://go.dev/doc/go1.18#generics][introduced]] `any` as a [[https://pkg.go.dev/builtin#any][predeclared alias for `interface{}`]]:
 
-The empty interface is useful for maximum flexibility in very generic functions,
-such as `fmt.Println`:
+  type any = interface{}
+
+The empty interface is useful for maximum flexibility in functions that require it:
 
   func Println(a ...any) (int, error)
 
@@ -3371,15 +3398,21 @@ and only then did we declare the interface types that they satisfy.
 
 
 
-* Namecheck project: any way of mocking the HTTP client?
+* Namecheck project: how to swap a fake HTTP client for the real one?
 
 The `IsAvailable` method still isn't easily testable...
 
 It unconditionally sends a HTTP request to the social network of interest, which means we cannot write unit tests (in the strict sense of the term) for it.
 
-We still need a way of somehow injecting the real HTTP client in our production code and injecting a "mock" HTTP client in our tests... Any ideas?
+For instance, we'd like to check that, if the response from GitHub has status code `200`, then `github.Github`'s `IsAvailable` method returns `false,`nil`.
+
+We'd need some way of injecting the real HTTP client in our production code and injecting some fake HTTP client in our test code... Any ideas?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+
+: test behaviour of IsAvailable given behaviour of its Client
+: system under test: github.GitHub
+: the HTTP client is a collaborator with side effects => good candidate for mocking
 
 
 
@@ -3397,6 +3430,8 @@ Therefore, you can create a "hole" or "placeholder" to be filled
 See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-tests-in-golang-619653f90742#e976][Mat Ryer's - 5 simple tips and tricks for writing unit tests in #golang]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 200 _
+
+: definition of test double at https://www.martinfowler.com/articles/mocksArentStubs.html#TheDifferenceBetweenMocksAndStubs
 
 
 
@@ -3638,13 +3673,13 @@ Programs that modify data being simultaneously accessed by multiple goroutines m
 
 _Concurrency_safety_ is a property of a given operation on a variable of a given type.
 
-An operation is said to be _concurrency-safe_ if it can be safely performed in a concurrent fashion from multiple goroutines and consistently produces predictable results.
+An operation is _concurrency-safe_ if it can be carried out in a concurrent fashion (from multiple goroutines) without explicit synchronization and consistently produces predictable results.
 
 Here are a few examples of operations that are *not* concurrency-safe:
 
 - updating a package-level variable
-- incrementing an `int` variable
-- appending to a slice
+- incrementing a local `int` variable
+- appending to a local slice variable
 
 
 
@@ -3854,6 +3889,7 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 .play -edit src/goroutines_with_waitgroup.go /^//START/,/^//END/
 
+: mention that Go's runtime embarks a rudimentary deadlock detector
 : don't forget the pair of parens at the end of each function literal!
 : What happens if I remove a wg.Done()? deadlock
 : What happens if I remove a wg.Add(1)? only one of the two goroutine will likely have time execute
@@ -3889,11 +3925,11 @@ Can you spot the bug in the following program?
 
 There is a _data_race_: a variable is being read and updated by different goroutines in a concurrent fashion!
 
-More specifically, the goroutines spawned by `printTenIntsConcurrently` _capture_ and read iteration variable `i` as it's being updated by the loop.
-
 .play -edit src/goroutine_func_answer.go /^//START/,/^//END/
 
-Consequently, the program is undeterministic: the results are unpredictable.
+More specifically, the iteration variable `i` is a _single_ variable that takes different values in each loop iteration, and the child goroutines _capture_ and read `i` as it's being updated by the loop. Consequently, the program yields unpredictable results.
+
+See the [[https://golang.org/doc/faq#closures_and_goroutines][Go FAQ]] and [[https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables][CommonMistakes - Using goroutines on loop iterator variables]].
 
 : before learning how to fix it, let's see how we can get help for detecting it
 
@@ -3901,33 +3937,27 @@ Consequently, the program is undeterministic: the results are unpredictable.
 
 * Detecting the data race
 
-We've identified the data race by inspection, but some static- and dynamic-analysis tools can help.
+Some static- and dynamic-analysis tools can supplement visual inspection.
 
 *go*vet*
 
-This subcommand analyzes the code and can detect issues that the compiler does not.
-
-Try running `go` `vet` on the program.
+This subcommand analyzes the code and can detect issues that the compiler does not. Try running `go` `vet` on the program.
 
 *race*detector*
 
-The Go CLI provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution.
+The Go CLI provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution. Try running the program with the `-race` flag. Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][not guaranteed to catch all data races]].
 
-Try running the program with the `-race` flag.
-
-Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][not guaranteed to catch all data races]].
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
 
 
 
 * Fixing the data race
 
-One way to fix the data race consists in [[https://en.wikipedia.org/wiki/Variable_shadowing][_shadowing_]] the iteration variable inside the loop, before the `go` statement.
+In constrast to the iteration variable, variables declared within the body of the loop are not shared between iterations. Therefore, one way to fix the data race consists in declaring a copy of the iteration variable inside the loop, before the `go` statement:
 
 .play -edit src/goroutine_func_redecl.go /^//START/,/^//END/
 
 Although the redeclaration looks a bit weird, this solution has merit insofar as the fix is colocated with the start of the `go` statement (reduced cognitive load).
-
-See also the [[https://golang.org/doc/faq#closures_and_goroutines][Golang FAQ about this]].
 
 : kind of awkward to pass them as parameters further down if the anonymous function is long
 
@@ -4131,7 +4161,7 @@ on the serving hatch's platform at any one time.
 
 * Channels are FIFO
 
-Channels have first-in/first-out semantics.
+Channels [[https://go.dev/ref/spec#Channel_types][act as first-in-first-out queues]].
 
 .image https://i.imgflip.com/68zdq9.jpg 300 _
 
@@ -4328,6 +4358,8 @@ Closing a channel is akin to a restaurant announcing the end of service.
 
 Similarly, closing a channel doesn't drain it from the elements it contains; and some goroutine(s) can still receive on a closed channel in order to consume its elements.
 
+: close is an unfortunate term; may mislead beginners to believe that you cannot receive values from a closed channel
+
 
 
 * Ranging over a channel
@@ -4362,10 +4394,9 @@ Closing a channel to which a for-range loop is applied causes the loop to termin
 
 
 
-* Remember: channels are reference types
+* Remember: channels are "reference types"
 
 Operating on a copy `cb` of a channel `ca` affects the same underlying data structure as if you operated on channel `ca` directly.
-
 .play -edit src/channels_are_references.go /^//START/,/^//END/
 
 (If that weren't the case, channel function parameters wouldn't be very useful;
@@ -4406,12 +4437,12 @@ By adding an arrow on either side of the `chan` keyword, you can mark a channel 
 - _send-only_ (no receiving allowed)
 - _receive-only_ (no sending or closing allowed)
 
-This is useful to restrict what can be done with a channel passed to a function,
+This is useful to restrict the direction of communication of channel within a function,
 
   func produce(c chan<- string) {} // c is send-only
   func consume(c <-chan string) {} // c is receive-only
 
-or with a channel resulting from a function,
+or of a channel resulting from a function,
 
   func Done() <-chan struct{}
 
@@ -4859,7 +4890,7 @@ Let's keep track (in memory) of how many times each username has been checked.
 
 The HTTP server provided by `net/http` is concurrent: it handles each incoming request in a separate goroutine.
 
-However, maps are *not* concurrency-safe: carelessly updating a map from multiple goroutines yields unpredictable results!
+However, maps are *not* concurrency-safe: unsynchronized updates to a map from multiple goroutines yields unpredictable results!
 
 The Go runtime [[https://go.dev/doc/go1.6#runtime][may be able to detect concurrent map writes]] and intentionally crash the program (see [[https://go.dev/play/p/NMDVMeaVLLx][this Playground]]), or the runtime may miss the data race and you may silently lose some updates to the map.
 
@@ -5164,7 +5195,7 @@ For the gory details, see [[https://research.swtch.com/interfaces][Russ Cox - Go
 
 Interface types are comparable (but you already knew that).
 
-Interfaces are reference types; therefore, manipulating pointers to interface is rare.
+Interfaces are "reference types"; therefore, manipulating pointers to interface is rare.
 
 An interface type's zero value is `nil`:
 
