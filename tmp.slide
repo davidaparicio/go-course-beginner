@@ -1,0 +1,85 @@
+Formation Go
+12 April 2022
+
+Julien Cretel
+jcretel-infosec@protonmail.com
+https://jub0bs.com
+@jub0bs
+
+
+* Structs
+
+* Declaring a named struct type
+
+A [[https://go.dev/ref/spec#Struct_types][struct type]] is a sequence of _fields_. Each field has a name and a type:
+
+  type User struct {
+    firstName string
+    lastName  string
+    isAdmin   bool
+  }
+
+All fields of a struct value are stored in a contiguous fashion in memory; the compiler may add some padding between fields to respect alignment rules, though.
+
+: compare to Java classes, where everything but primitive types is a reference (not memory/cache efficient)
+
+
+
+* A struct type's zero value
+
+The zero value of a struct types has all its fields set to their types' zero values:
+
+.play -edit struct_zero.go  /^//START/,/^//END/
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
+
+: not nil
+
+
+* Initialization TODO
+
+
+
+danger of unkeyed literal
+
+
+* Field access
+
+dot syntax, as in many languages
+mention accessible through pointers, syntactic sugar
+fields are addressable
+mention encapsulation then
+
+
+
+* Struct as function parameters
+
+Struct types are not "reference types". They cannot take the value `nil`.
+Functions that have a struct as parameter operate on a full copy of that struct!
+
+use pointers if you want changes to be reflected outside, or return a new updated value
+
+
+
+* Struct field tags
+
+The declaration of a struct type may specify a _tag_ for each of the fields. A field tag is a string value that follows the field's type in the struct type's declaration.
+
+A field tag is typically used for mapping the correspondance between names in Go and JSON for encoding/decoding purposes:
+
+  type User struct {
+    FirstName string `json:"first_name"`
+    LastName  string `json:"last_name"`
+    IsAdmin   bool   `json:"is_admin"`
+  }
+
+
+
+* Struct comparability
+
+A struct type is comparable only if the types of all its fields are themselves comparable:
+
+.play -edit struct_comparability.go  /^//START/,/^//END/
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 200 _
+

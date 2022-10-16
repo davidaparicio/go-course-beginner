@@ -1060,7 +1060,7 @@ The scope of such variables is restricted to the if(-else) statement.
 
 * If-else statements
 
-Braces around the body of an `else` (not followed by an `if` statement) are also mandatory.
+Braces around the body of an `else` (not followed by an `if`) are also mandatory.
 
 .play -edit src/if_else.go /^//START/,/^//END/
 
@@ -1285,7 +1285,7 @@ You've already used a variadic function... Which one? Check its signature in the
 
 The type of identically typed consecutive parameters can be factored out:
 
-  func Split(s, sep string) []string
+.play -edit src/function_factored_type_in_param_list.go /^//START/,/^//END/
 
 Similarly, the type of identically typed consecutive results can be factored out:
 
@@ -1542,25 +1542,6 @@ You can also create your own error types (i.e. types that satisfy the `error` in
 
 
 
-* Namecheck project: rethinking the looksGood function
-
-1. Exercise function `looksGood` in your `main` function.
-
-2. Treat the error in a sensible way.
-
-3. Take a few moments to think about function `looksGood`...
-
-- Is it easy to use?
-- Does its signature make sense?
-- Who, between the caller and library author, would be to blame for a non-nil error?
-- How would you improve function `looksGood`?
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-: we're re-compiling the regexp at each call
-
-
-
 * Panic
 
 A panic is a run-time event that indicates an exceptional and irrecoverable failure.
@@ -1594,6 +1575,25 @@ if some programming error renders the package unusable.
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 : examples: invalid regexp pattern, template compilation failure
+
+
+
+* Namecheck project: rethinking the looksGood function
+
+1. Exercise function `looksGood` in your `main` function.
+
+2. Treat the error in a sensible way.
+
+3. Take a few moments to think about function `looksGood`...
+
+- Is it easy to use?
+- Does its signature make sense?
+- Who, between the caller and library author, would be to blame for a non-nil error?
+- How would you improve function `looksGood`?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: we're re-compiling the regexp at each call
 
 
 
@@ -3701,12 +3701,12 @@ Unless a type is documented to be concurrency-safe, do not assume it is!
 
 The `go` keyword spawns a new goroutine: it causes the function call to which it applies to get executed "in the background":
 
-  go grindCoffeeBeans()
+  go grindCoffeeBeans(nbBeans)
   go frothMilk()
 
 `go` statements do not block; they _immediately_ yield control to the next instruction.
 
-The function's arguments (if any) are executed _before_ the goroutine starts.
+The function's arguments (if any) are evaluated _before_ the goroutine starts.
 
 The function's results (if any) are lost, but channels can be used to communicate values between goroutines.
 
@@ -3749,13 +3749,13 @@ Therefore, a goroutine cannot readily be _killed_.
 
 
 
-* The golden rule about the go keyword
+* Be careful with the go keyword
 
-Before spawning a new goroutine, you must understand exactly under what conditions it will terminate.
+Before spawning a new goroutine, you must understand exactly under what conditions it will terminate. See [[https://github.com/golang/go/wiki/CodeReviewComments#goroutine-lifetimes][CodeReviewComments - Goroutine lifetimes]].
 
 If you're careless and spawn goroutines willy-nilly, you expose yourself to correctness and performance bugs (_goroutine_leaks_).
 
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
 
 
 
@@ -4068,14 +4068,14 @@ The element type of a channel is completely arbitrary; here is a contrived examp
 
 "c" or "ch", on its own or as a suffix (with or without camelcase):
 
-  var c chan int
-  var ch chan string
-  var errc chan error
-  var taskCh chan Task
+  c := make(chan int)
+  ch := make(chan string)
+  errc := make(chan error)
+  taskCh := make(chan Task)
 
 Plural of the channel's element type:
 
-  var tasks chan Task
+  tasks := make(chan Task)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
 
@@ -4155,6 +4155,7 @@ on the serving hatch's platform at any one time.
 .image https://josephdmcnamee.files.wordpress.com/2012/01/serving-hatch1.jpg 350 _
 
 : what does a channel of capacity 0 correspond to?
+: Far from being useless, an unbuffered channel can be used to create a synchronization point between two goroutines.
 : the analogy is imperfect because channels are FIFO and waiters don't necessarily pick up plates in the order in which they arrived
 
 
@@ -4427,6 +4428,9 @@ those parameters would instead need to be pointers to channels.)
 : the channel allows us to serialize access to the slice (local mutable state)
 : for anonymous function for wait and close, no need for a wait group? why not?
 : could you put the go func() {...}() before the call to wg.Add?
+: subsidairy question: how would you implement the fan-out/fan-in without a wait group?
+:   simply loop as many times as len(checkers)
+:   within loop: receive one result and append to slice
 
 
 
@@ -5147,7 +5151,7 @@ A dot import allows you to access all the exported identifiers of the imported p
 
 .play -edit src/helloworld_dot.go
 
-Dot imports can be convenient in test code, but are otherwise best avoided because
+Dot imports can be convenient in test code (see [[https://cs.opensource.google/go/go/+/refs/tags/go1.18.1:src/strconv/quote_test.go;l=8][this example]]), but are best avoided in production code because
 
 - they pollute the namespace of your source file,
 - they obscure the provenance of identifiers.

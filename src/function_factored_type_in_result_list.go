@@ -10,6 +10,8 @@ func main() {
 }
 
 func MinAndMax(first int, rest ...int) (min, max int) { // HL
+	// omitted
+	// END OMIT
 	min, max = first, first
 	for _, i := range rest {
 		if i < min {
@@ -21,5 +23,3 @@ func MinAndMax(first int, rest ...int) (min, max int) { // HL
 	}
 	return
 }
-
-// END OMIT
