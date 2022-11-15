@@ -6,8 +6,8 @@ import (
 
 func main() {
 	// START OMIT
-	var nothing struct{}
-	m := map[string]struct{}{"red": nothing, "blue": nothing, "green": nothing}
+	var present struct{}
+	m := map[string]struct{}{"red": present, "blue": nothing, "green": nothing}
 	const k = "yellow"
 
 	// checking for membership
@@ -16,7 +16,7 @@ func main() {
 	}
 
 	// adding an element
-	m["white"] = nothing
+	m["white"] = present
 
 	// deleting an element
 	delete(m, "red")

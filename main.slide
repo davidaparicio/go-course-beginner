@@ -1,5 +1,5 @@
 Formation Go
-12 April 2022
+14 November 2022
 
 Julien Cretel
 jcretel-infosec@protonmail.com
@@ -10,7 +10,7 @@ https://jub0bs.com
 
 * Setup
 
-Make sure you have the latest version of Go (1.18.x) installed by running
+Make sure you have the latest version of Go (1.19.x) installed by running
 
   go version
 
@@ -2785,21 +2785,11 @@ A mathematical set is an unordered collection of unique elements.
 
 Unlike Python, Go doesn't yet provide a native set type, but... maps to the rescue!
 
-You can implement a set of `string` simply as a map[string]bool:
-
-.play -edit src/map_set_bool.go /^//START/,/^//END/
-
-: amortized O(1) insertion/deletion/membership
-
-
-
-* Implementing a set using a map (cont'd)
-
-A more memory-efficient alternative consists in using a `map[string]struct{}`:
+You can implement a set of `string` simply as a `map[string]struct{}`:
 
 .play -edit src/map_set_nothing.go /^//START/,/^//END/
 
-Pick whichever of the two approaches you prefer.
+: amortized O(1) insertion/deletion/membership
 
 
 
