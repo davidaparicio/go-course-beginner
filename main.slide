@@ -2597,32 +2597,27 @@ If you only need one of the iteration variables, you can omit the other:
 
 
 
-* Table-driven subtests
+* Table-driven tests
 
-One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_subtests_]], an approach to writing test cases that drastically reduces test-logic duplication:
+One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_tests_]], an approach to writing test cases that drastically reduces test-logic duplication:
 
   func TestIsValid(t *testing.T) {
-    type TestCase struct {
+    testCases := []struct {
       desc     string
       username string
       want     bool
-    }
-    testCases := []TestCase {
-      {"contains two consecutive hyphens", "jub0--bs", false},
+    }{
+      {"contains 'Twitter'", "jub0bsOnTwitter", false},
       // other test cases...
     }
     for _, tc := range testCases {
-      f := func(t *testing.T) {
-        got := github.IsValid(tc.username)
-        if got != tc.want {
-          t.Errorf("github.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
-        }
+      got := twitter.IsValid(tc.username)
+      if got != tc.want {
+        t.Errorf("twitter.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
       }
-      t.Run(tc.desc, f)
     }
   }
 
-: Run method: results of each subtest detailed in output
 : use of anonymous struct for slice of test cases
 
 
@@ -2639,6 +2634,27 @@ One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-usi
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : note that the name of the type can be omitted in struct literal
+
+
+
+* Table-driven subtests
+
+An improvement over table-driven tests is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_subtests_]].
+
+This approach consists in passing the test logic to `*testing.T`'s `Run` method, which causes information about the different test cases to be output when you run the tests.
+
+  // the rest of the testing function is unchanged
+  for _, tc := range testCases {
+    f := func(t *testing.T) {
+      got := twitter.IsValid(tc.username)
+      if got != tc.want {
+        t.Errorf("twitter.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
+      }
+    }
+    t.Run(tc.desc, f)
+  }
+
+: Run method: results of each subtest detailed in output
 
 
 
@@ -4608,7 +4624,7 @@ That file is precious; you should track changes to it in your version-control sy
 
 2. Inspect the contents of the `go.mod` file and of the newly created `go.sum` file.
 
-3. Import `gorilla/mux` in your server's `main.go` and define your routes with it instead.
+3. Import `gorilla/mux` in your server's `main.go` and define your routes with it instead. Only accept `GET` requests.
 
 4. Run the following command to clean up your `go.mod` file:
 
@@ -4728,7 +4744,7 @@ Modify your `cmd/server/main.go` as follows:
 
 1. Remove the `Err` field from your `Result` type.
 
-2. Declare another channel named `errorCh` dedicated to `error` values. Choose the capacity of that channel wisely.
+2. Declare another channel named `errorCh` dedicated to `error` values.
 
 3. Report normal results and errors through the two different channels.
 

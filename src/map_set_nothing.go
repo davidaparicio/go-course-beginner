@@ -7,7 +7,7 @@ import (
 func main() {
 	// START OMIT
 	var present struct{}
-	m := map[string]struct{}{"red": present, "blue": nothing, "green": nothing}
+	m := map[string]struct{}{"red": present, "blue": present, "green": present}
 	const k = "yellow"
 
 	// checking for membership
