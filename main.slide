@@ -1,5 +1,5 @@
 Formation Go
-14 November 2022
+3 April 2023
 
 Julien Cretel
 jcretel-infosec@protonmail.com
@@ -198,7 +198,7 @@ However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.o
 
 The ability to define custom types (and methods on them) promote [[https://en.wikipedia.org/wiki/Abstraction_(computer_science)#Abstraction_in_object_oriented_programming][_abstraction_]].
 
-Go's interfaces (and, soon, generics) enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]].
+Go's interfaces (and generics) enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]].
 
 Go's packages enable [[https://en.wikipedia.org/wiki/Encapsulation_(computer_programming)][_encapsulation_]].
 
@@ -243,8 +243,7 @@ The `go` toolchain comes with tools for
 - code formatting (`gofmt`)
 - automatic package imports (`goimports`)
 - documentation generation
-- testing & code coverage
-- microbenchmarks
+- testing (unit tests, microbenchmarks, fuzz tests) & code coverage
 - profiling & tracing
 - run-time race detector
 - etc.
@@ -979,7 +978,7 @@ Not all values are addressable:
 
 However, the `&` operator can be applied to [[https://go.dev/ref/spec#Composite_literals][_composite_literals_]] (structs, maps, slices, etc.):
 
-  pu := &User{name "jub0bs"}
+  pu := &User{name: "jub0bs"}
   fmt.Println(pu)
 
 : for convenience
@@ -1951,6 +1950,7 @@ The following example uses black-box testing:
 
   package twitter_test
 
+  import "testing"
   // import declaration of your twitter package (omitted here)
 
   func TestUsernameContainsTwitter(t *testing.T) {
@@ -2882,6 +2882,137 @@ or
 
 
 * Structs
+
+* Declaring a named struct type
+
+A [[https://go.dev/ref/spec#Struct_types][struct type]] is a sequence of _fields_. Each field has a name and a type:
+
+  type User struct {
+    firstName string
+    lastName  string
+    isAdmin   bool
+  }
+
+All fields of a struct value are stored in a contiguous fashion in memory; the compiler may add some padding between fields to respect alignment rules, though.
+
+: compare to Java classes, where everything but primitive types is a reference (not memory/cache efficient)
+
+
+
+* A struct type's zero value
+
+The zero value of a struct types has all its fields set to their types' zero values:
+
+.play -edit src/struct_zero.go  /^//START/,/^//END/
+
+Struct types are not "reference types". They cannot take the value `nil`.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
+
+
+
+
+* Constructing a struct value
+
+Given the following type declaration,
+
+  type User struct {
+    firstName string
+    lastName  string
+    isAdmin   bool
+  }
+
+you can construct a value of this type via a *struct*literal*,
+
+  u := User{
+    firstName: "Julien",
+    lastName: "Cretel",
+  }
+
+Fields omitted from the struct literal are zero-valued. In the example above, the `isAdmin` field of `u` is `false`.
+
+
+
+* Avoid unkeyed literals
+
+Consider this struct type declaration:
+
+.code -edit src/unkeyed_literals.go /^//START1/,/^//END1/
+
+Here are examples of an unkeyed literal and a keyed literal:
+
+.play -edit src/unkeyed_literals.go /^//START2/,/^//END2/
+
+You should avoid unkeyed literals (esp. of third-party types) because their
+reliance on the order of the fields in the struct type declaration makes them
+
+- less expressive (harder to write and read)
+- brittle to changes in the declaration (addition of a field, re-ordering of the fields)
+
+`go`vet` is your friend!
+
+: error-prone
+: In struct literals, you can either specify all the...
+: why error prone: easier to swap the fields,
+: won't be affected by reordering of the fields in the type declaration
+
+
+
+* Field access (TODO)
+
+Field access uses the usual dot syntax present in many languages.
+
+Syntactic sugar: struct fields are also accessible through a pointer to a struct.
+
+Fields are addressable.
+
+The case of a struct field's first letter dictates whether that field is exported.
+
+: TODO: good practices around encapsulation
+
+
+
+* Struct as function parameters
+
+Functions that have a struct as parameter operate on a full copy of that struct!
+
+.play -edit src/struct_func_param.go /^//START/,/^//END/
+
+
+
+* Struct as function parameters (cont'd)
+
+Use pointers if you want changes to be reflected outside of the function.
+
+.play -edit src/struct_func_param_pointer.go /^//START/,/^//END/
+
+Or return the updated value as a result of the function.
+
+
+
+* Struct field tags
+
+The declaration of a struct type may specify a _tag_ for each of the fields. A field tag is a string value that follows the field's type in the struct type's declaration.
+
+A field tag is typically used for mapping the correspondance between names in Go and JSON for encoding/decoding purposes:
+
+  type User struct {
+    FirstName string `json:"first_name"`
+    LastName  string `json:"last_name"`
+    IsAdmin   bool   `json:"is_admin"`
+  }
+
+For JSON decoding to work properly, fields *must* be exported.
+
+
+
+* Struct comparability
+
+A struct type is comparable only if the types of all its fields are themselves comparable:
+
+.play -edit src/struct_comparability.go  /^//START/,/^//END/
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 200 _
 
 [[https://go.dev/play/p/axkpaElUyHI][Live demo in Playground]]
 
@@ -4585,15 +4716,15 @@ For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andre
 So far, you've only relied on Go's core library but, thanks to Go's module system,
 you can of course bring in third-party dependencies.
 
-To add a third-party HTTP router like [[https://github.com/gorilla/mux][gorilla/mux]] as a dependency to your project, run
+To add a third-party HTTP router like [[https://github.com/julienschmidt/httprouter][julienschmidt/httprouter]] as a dependency to your project, run
 
-  go get github.com/gorilla/mux
+  go get github.com/julienschmidt/httprouter
 
 Running that command adds the following line to your `go.mod` file:
 
-  require github.com/gorilla/mux v1.8.0 // indirect
+  require github.com/julienschmidt/httprouter v1.3.0 // indirect
 
-Once you actually use package `github.com/gorilla/mux` in your code, you can run
+Once you actually use package `github.com/julienschmidt/httprouter` in your code, you can run
 
   go mod tidy
 
@@ -4605,7 +4736,7 @@ to get rid of that "indirect" comment.
 
 Running
 
-  go get github.com/gorilla/mux
+  go get github.com/julienschmidt/httprouter
 
 also causes the creation (or update) of a file named `go.sum`.
 
@@ -4620,11 +4751,11 @@ That file is precious; you should track changes to it in your version-control sy
 
 1. Run the following command within your project to download the dependency:
 
-  go get github.com/gorilla/mux
+  go get github.com/julienschmidt/httprouter
 
 2. Inspect the contents of the `go.mod` file and of the newly created `go.sum` file.
 
-3. Import `gorilla/mux` in your server's `main.go` and define your routes with it instead. Only accept `GET` requests.
+3. Import `github.com/julienschmidt/httprouter` in your server's `main.go` and define your routes with it instead. Only accept `GET` requests.
 
 4. Run the following command to clean up your `go.mod` file:
 
