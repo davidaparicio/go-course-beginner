@@ -2,24 +2,24 @@ package main
 
 import "fmt"
 
-// START1 OMIT
+// START OMIT
 type Climber interface {
-	Climb(meters int) error // HL
+	Climb(meters int) // HL
 }
 
 type Mountaineer struct {
-	Name string
+	Name     string
+	Altitude int
 }
 
-func (m *Mountaineer) Climb(meters int) error { // HL
-	fmt.Printf("%s climbs %d meters\n", m, meters)
-	return nil
+func (m *Mountaineer) Climb(meters int) { // HL
+	m.Altitude += meters
+	fmt.Printf("%s climbs %dm to reach altitude %dm\n", m.Name, meters, m.Altitude)
 }
 
-// END1 OMIT
 func main() {
-	// START2 OMIT
 	var c Climber = &Mountaineer{Name: "Lynn Hill"} // HL
 	fmt.Println(c)
-	// END2 OMIT
 }
+
+// END OMIT

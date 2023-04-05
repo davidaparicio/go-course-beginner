@@ -3114,9 +3114,11 @@ Implement `IsAvailable` in the `twitter` package:
 
 
 
-* Methods
+* Methods TODO
 
-Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods on the two types we've just declared.
+Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods.
+
+Methods are the key to interfaces, which are the key to polymorphism in Go.
 
 Live demo in Playground
 
@@ -3198,16 +3200,13 @@ Not so in Go, and that's one reason why interfaces are one of the most fascinati
 
 * Interface satisfaction in Go is implicit
 
-If a concrete type has _all_ the methods required by the interface, the compiler automatically considers that the concrete type satisfies the interface:
+If a concrete type has _all_ the methods required by the interface, the concrete type automatically satisfies the interface!
 
-.play -edit src/interface_sat.go /^//START1/,/^//END1/
-
-A concrete-type value can be used wherever an interface value is expected:
-
-.play -edit src/interface_sat.go /^//START2/,/^//END2/
+.play -edit src/interface_sat.go /^//START/,/^//END/
 
 Important: `*Mountaineer` satisfies the `Climber` interface, but `Mountaineer` doesn't.
 
+: A value of that concrete type can then be used wherever an interface value is expected.
 : structural typing as opposed to nominal subtyping
 
 
@@ -3301,6 +3300,26 @@ Many of the interface types provided by Go's standard library are single-method:
 
 
 
+* fmt.Stringer
+
+`fmt.Stringer` is an interface type that requires a single method:
+
+  type Stringer interface {
+    String() string
+  }
+
+If a type satisfies `fmt.Stringer`, its `String` method governs the textual representation that functions from the `fmt` package use for that type.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+
+
+
+* fmt.Stringer
+
+.play -edit src/stringer.go /^//START/,/^//END/
+
+
+
 * Namecheck project: satisfy the fmt.Stringer
 
 1. Study the [[https://pkg.go.dev/fmt#Stringer][documentation]] of the `fmt.Stringer` interface type.
@@ -3382,7 +3401,7 @@ You can declare a larger interface type simply by listing the more elementary in
 
 
 
-* Notable interfaces: the empty interface
+* Other notable interfaces: the empty interface
 
 The empty interface is an interface that requires no method:
 
@@ -3400,7 +3419,7 @@ The empty interface is useful for maximum flexibility in functions that require 
 
 
 
-* Notable interfaces: the empty interface (cont'd)
+* Other notable interfaces: the empty interface (cont'd)
 
 Because the empty interface is the least specific type in Go, you should use it sparingly.
 
@@ -3416,7 +3435,7 @@ Therefore, peppering empty interfaces all over the business layer of your applic
 
 
 
-* Notable interfaces: error
+* Other notable interfaces: error
 
 `error` is a interface type predeclared by the language:
 
@@ -3439,21 +3458,7 @@ You can declare your own types and make them satisfy the `error` interface.
 
 
 
-* Notable interfaces: fmt.Stringer
-
-`fmt.Stringer` requires a single method:
-
-  type Stringer interface {
-    String() string
-  }
-
-If a type satisfies `fmt.Stringer`, its `String` method governs the textual representation that functions from the `fmt` package use for that type.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
-
-
-
-* Notable interfaces: io.Reader and io.Writer
+* Other notable interfaces: io.Reader and io.Writer
 
 The `io` package provides two complementary interface types:
 
@@ -3473,7 +3478,7 @@ The `io` package provides two complementary interface types:
 
 
 
-* Favor interface parameters
+* Favor interface parameters when all you care about is behavior
 
 If a given function parameter is supposed to provide _behavior_ (rather than data), you should strive to use an interface type (rather than a concrete type) for that parameter.
 
