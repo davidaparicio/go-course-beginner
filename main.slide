@@ -3579,7 +3579,7 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 * Namecheck project: declare an interface for http.Client
 
-1. Inspect the source code of function `http.Get`. That function simply calls the `Get` method on `http.DefaultClient`, which is a singleton of type `*http.Client`.
+1. Inspect the source code of function `http.Get`. That function simply calls the `Get` method on `http.DefaultClient`, which is a package-level variable of type `*http.Client`.
 
 2. Consult the documentation for `http.Client`. Does the `http` package provide an interface for that concrete type? If not, is that a problem? What about in other languages like Java?
 
@@ -4986,31 +4986,7 @@ You can do this exercise in the [[https://go.dev/play/p/7Hsz9o3MwRs][Go Playgrou
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : we won't be using context in our project but...
-: extra exercise: make IsAvailable cancellable
-
-
-
-* Exercise: debug this ping-pong game
-
-1. Open [[https://go.dev/play/p/EMYdWA6keT0][this Playground]] (adapted from [[https://www.youtube.com/watch?v=QDDwwePbDtw&t=2m54s][one of Sameer Ajmani's talk]]). The program models a simple ping-pong game.
-
-2. The game ends with a deadlock. Can you see why?
-
-3. Discuss and fix the program.
-
-(A solution is available in this [[https://go.dev/play/p/IwCS6LlVfBx][Playground]].)
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-: The `main` goroutine plays the role of the umpire.
-: two goroutines exchanging one value over and over
-: pointer element to reduce memory footprint
-: show that deadlock if you never throw the ball on the table
-: one player terminates while the other is left holding the ball
-: one possibility: buffer size of 1, but no guarantee that the same player will play twice in a row
-: non-blocking send by adding a select statement (with an additional case <-ctx.Done())
-: easy solution: referee receive ball from main after cancel()
-: https://talks.golang.org/2013/advconc.slide#6
+: TODO: make check function cancelable, to avoid leaking goroutines if some errors occur
 
 
 
