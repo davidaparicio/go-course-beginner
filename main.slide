@@ -8,9 +8,24 @@ https://jub0bs.com
 
 
 
+* Who I am
+
+- Julien Cretel (a.k.a. [[https://twitter.com/jub0bs][@jub0bs]])
+- self-employed since 2019
+- Go developer since 2017
+- Web-security researcher & consultant
+- (occasional) bug-bounty hunter
+- trainer (Go & security)
+- blogger (at [[https://jub0bs.com][jub0bs.com]])
+
+: pentests, vulnerability evaluation, code audits
+: present yourselves!
+
+
+
 * Setup
 
-Make sure you have the latest version of Go (1.19.x) installed by running
+Make sure you have the latest version of Go (1.20.x) installed by running
 
   go version
 
@@ -86,21 +101,6 @@ A forcing function for learning Go: we'll introduce new concepts as needed.
 .image https://raw.githubusercontent.com/nielsing/yar/master/images/yargopher3.png 150 _
 
 : mention Newsweaver's rebranding to Poppulo, missed claiming @Poppulo on Twitter
-
-
-
-* Who I am
-
-- Julien Cretel (a.k.a. [[https://twitter.com/jub0bs][@jub0bs]])
-- self-employed since 2019
-- Go developer since 2017
-- Web-security researcher & consultant
-- (occasional) bug-bounty hunter
-- trainer (Go & security)
-- blogger (at [[https://jub0bs.com][jub0bs.com]])
-
-: pentests, vulnerability evaluation, code audits
-: present yourselves!
 
 
 
@@ -2602,11 +2602,12 @@ If you only need one of the iteration variables, you can omit the other:
 One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_tests_]], an approach to writing test cases that drastically reduces test-logic duplication:
 
   func TestIsValid(t *testing.T) {
-    testCases := []struct {
+    type TestCase struct{
       desc     string
       username string
       want     bool
-    }{
+    }
+    testCases := []TestCase {
       {"contains 'Twitter'", "jub0bsOnTwitter", false},
       // other test cases...
     }
@@ -3114,13 +3115,26 @@ Implement `IsAvailable` in the `twitter` package:
 
 
 
-* Methods TODO
+* Methods
 
-Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods.
+Methods are functions that are attached to a specific type.
 
-Methods are the key to interfaces, which are the key to polymorphism in Go.
+They distinguish themselves from _package-level_functions_, e.g.
 
-Live demo in Playground
+  func MatchString(pattern string, s string) (matched bool, err error) // package-level function
+
+by the presence (in a pair of parentheses between the keyword `func` and the method's name) of an extra parameter called the _method's_receiver_:
+
+  func (re *Regexp) MatchString(s string) bool // method on the *Regexp type
+
+Methods are the key to satisfying interfaces, which are the key to polymorphism in Go.
+
+Live demo on [[https://go.dev/play/p/axkpaElUyHI][the Playground]].
+
+: Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods.
+: * Value receiver vs. pointer receiver
+
+: A method can have either a value receiver or a pointer receiver.
 
 
 
