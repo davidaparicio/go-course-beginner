@@ -899,7 +899,7 @@ Use lower camel case for local variables and unexported top-level variables:
 
 Use upper camel case (Pascal case) for exported top-level variables:
 
-  var ErrUnknownAvailability = errors.new("namecheck: unknown availability")
+  var UnknownAvailabilityError = errors.new("namecheck: unknown availability")
 
 Aside from the _blank_identifier_, don't use underscores in variable names.
 
@@ -3404,12 +3404,12 @@ You can declare a larger interface type simply by listing the more elementary in
 
 * Namecheck project: use a slice of Checkers
 
-1. In your `main` function, create a slice of `Checker` with two elements:
+1. In your `main` function, create a slice of `namecheck.Checker` with two elements:
 
 - a pointer to a `twitter.Twitter`
 - a pointer to a `github.GitHub`
 
-2. Simplify the existing code by ranging over the slice of `Checker` values.
+2. Simplify the existing code by ranging over the slice of `namecheck.Checker` values.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3722,6 +3722,16 @@ Disclaimer: many cooking metaphors ahead!
 
 
 
+* Metaphor: a cheeseburger recipe
+
+You can describe a recipe in a sequential manner or in a _concurrent_ manner.
+
+.image img/burger.svg _ 700
+
+If you've got help in the kitchen, you can _parallelize_ and finish the dish faster.
+
+
+
 * Concurrency is not parallelism
 
 *Concurrency*
@@ -3735,18 +3745,6 @@ Disclaimer: many cooking metaphors ahead!
 - a property of the running program
 
 : if you are making a pasta dish, you can bring the pot of water to a boil on the stove while you do 15 minutes of other prep work
-
-
-
-* Metaphor: a cheeseburger recipe
-
-You can describe a recipe in a sequential manner or in a _concurrent_ manner.
-
-.image img/burger.svg _ 700
-
-If you've got help in the kitchen, you can _parallelize_ and finish the dish faster.
-
-
 
 
 
@@ -4573,7 +4571,7 @@ those parameters would instead need to be pointers to channels.)
     Err       error
   }
 
-2. In `main`, initialize a `chan`Result` named `resultCh`; make sure it's accessible to the child goroutines.
+2. In `main`, initialize a `chan`Result` named `resultCh`; pass that channel as an argument to the `check` function.
 
 3. In each child goroutine, create a `Result` value and send it to the channel.
 
@@ -4683,14 +4681,14 @@ You'll work in `cmd/server` for the remainder of the course.
 
 Use [[https://pkg.go.dev/encoding/json/][the `encoding/json` package]] to encode some Go value to JSON.
 
-_Field_tags_ are used to map the correspondance between the names of a struct's fields (which must be exported!) and the property names of the resulting JSON object:
-
-.code -edit src/json_encoding.go /^//START1/,/^//END1/
-
 Create a `json.Encoder` that writes to the handler's `http.ResponseWriter`,
 then pass the value to its `Encode` method:
 
 .play -edit src/json_encoding.go /^//START2/,/^//END2/
+
+_Field_tags_ are used to map the correspondance between the names of a struct's fields (which must be exported!) and the property names of the resulting JSON object:
+
+.code -edit src/json_encoding.go /^//START1/,/^//END1/
 
 : w is the http.ResponseWriter
 : don't forget to inspect the resulting error
@@ -4898,7 +4896,7 @@ Modify your `cmd/server/main.go` as follows:
 
 3. Report normal results and errors through the two different channels.
 
-4. In your `main` function, use a for-select to receive from both channels.
+4. In your `handleCheck` function, use a for-select to receive from both channels.
 
 5. As soon as you receive one error from `errorCh`, send a `500` response and return.
 
