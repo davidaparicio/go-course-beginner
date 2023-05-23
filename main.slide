@@ -2840,47 +2840,6 @@ The `Keys` function (and other useful generic functions that operate on maps) ar
 : this example systematically prints map pairs in the lexicographical order of its keys
 
 
-* Don't insert entries in a map while ranging over it
-
-You can of course mutate values associated to a key that is already present in the map.
-
-However, inserting new keys in a map while ranging over it yields [[https://golang.org/ref/spec#For_range][undefined behavior]]!
-
-.play -edit src/map_insert_while_ranging.go /^//START/,/^//END/
-
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
-
-: If a map entry is created during iteration, that entry may be produced during the iteration or may be skipped.
-: The choice may vary for each entry created and from one iteration to the next.
-
-
-
-* Don't remove entries unrelated to the current iteration
-
-If a map entry that has not yet been reached is removed during iteration, the corresponding iteration value will not be produced.
-
-Because of [[https://golang.org/ref/spec#For_range][this documented behavior]] and because iteration order on maps is random,
-removing entries unrelated to the current iteration causes undesired *undeterminism*.
-
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
-
-
-
-* Don't remove entries unrelated to the current iteration (cont'd)
-
-Consider the following program:
-
-.play -edit src/map_delete_while_ranging.go /^//START/,/^//END/
-
-From one execution to the next, the output may be either
-
-  map[baz:3 foo:1]
-
-or
-
-  map[bar:2 baz:3]
-
-
 
 * Structs
 
