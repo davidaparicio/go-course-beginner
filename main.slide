@@ -1,5 +1,5 @@
 Formation Go
-3 April 2023
+22 May 2023
 
 Julien Cretel
 jcretel-infosec@protonmail.com
@@ -4054,13 +4054,9 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the child goroutine.
 
-The call to `wg.Wait` must happen _after_ all calls to `wg.Add` (otherwise: data race).
-
 A `sync.WaitGroup` must not be copied after first use. If a function needs to operate on a wait group that was declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to that function.
 
 .image https://go.dev/blog/gopher/plush.jpg 250 _
-
-: if wg.Add concurrent with wg.Wait, data race: https://go.dev/play/p/PPlY-M7yfYh
 
 
 
@@ -4597,8 +4593,8 @@ By adding an arrow on either side of the `chan` keyword, you can mark a channel 
 
 This is useful to restrict the direction of communication of channel within a function,
 
-  func produce(c chan<- string) {} // c is send-only
-  func consume(c <-chan string) {} // c is receive-only
+  func produce(ch chan<- string) {} // ch is send-only
+  func consume(ch <-chan string) {} // ch is receive-only
 
 or of a channel resulting from a function,
 
@@ -4737,29 +4733,33 @@ To add a third-party HTTP router like [[https://github.com/julienschmidt/httprou
 
   go get github.com/julienschmidt/httprouter
 
+
+
+* Effects of adding dependencies on go.mod and go.sum
+
 Running that command adds the following line to your `go.mod` file:
 
   require github.com/julienschmidt/httprouter v1.3.0 // indirect
+
+It also causes the creation (or update) of a file named `go.sum`. That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues.
+
+The `go.sum` is precious; you should track changes to it in your version-control system.
+
+
+
+* A Hello-World server with julienschmidt/httprouter
+
+.code -edit src/httprouter.go
+
+
+
+* Tidying your go.mod
 
 Once you actually use package `github.com/julienschmidt/httprouter` in your code, you can run
 
   go mod tidy
 
 to get rid of that "indirect" comment.
-
-
-
-* The go.sum file
-
-Running
-
-  go get github.com/julienschmidt/httprouter
-
-also causes the creation (or update) of a file named `go.sum`.
-
-That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues in the dependency.
-
-That file is precious; you should track changes to it in your version-control system.
 
 
 
