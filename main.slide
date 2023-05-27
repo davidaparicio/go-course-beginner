@@ -2,9 +2,13 @@ Formation Go
 22 May 2023
 
 Julien Cretel
+
 jcretel-infosec@protonmail.com
+
 https://jub0bs.com
-@jub0bs
+
+https://twitter.com/@jub0bs
+https://infosec.exchange/@jub0bs
 
 
 
@@ -61,16 +65,14 @@ If you need to add a line break somewhere, make sure [[https://github.com/golang
 
 
 
-* What to expect from the course (TODO)
+* What to expect from the course
 
 - morning: 9:00-12:30; afternoon: 14:00-17:30
 - 10-minute breaks every hour
 - interaction
-- learn the fundamentals
-- emphasis on practice over theory
-- long-running project
-- gophers
-- cooking analogies
+- theory: Go fundamentals
+- practice: a long-running project & other exercises
+- gophers!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 200 _
 
@@ -220,21 +222,6 @@ Go has no concept of [[https://en.wikipedia.org/wiki/Inheritance_(object-oriente
 
 
 
-* Go also has functional aspects
-
-Functions are first-class citizens. They can
-
-- have other functions as parameters,
-- return functions as results,
-- be stored in variables,
-- be stored in struct fields.
-
-However, despite having anonymous functions, Go has no concise "lambda" notation.
-
-.image https://i.redd.it/2dpp8t6mk7641.png 200 _
-
-
-
 * Go's rich toolchain
 
 The `go` toolchain comes with tools for
@@ -258,9 +245,15 @@ Moreover, the core library is pretty extensive; see [[https://pkg.go.dev/std][pk
 
 * Go development pays well
 
-See the results of the [[https://insights.stackoverflow.com/survey/2020#technology-what-languages-are-associated-with-the-highest-salaries-worldwide-global][Stack Overflow's 2020 Developer Survey]].
+See the results of the Stack Overflow developer survey:
 
-.image https://go.dev/blog/gophergala/fancygopher.jpg 400 _
+- [[https://insights.stackoverflow.com/survey/2020#technology-what-languages-are-associated-with-the-highest-salaries-worldwide-global][2020]
+- [[https://insights.stackoverflow.com/survey/2021#technology-top-paying-technologies][2021]]
+- [[https://survey.stackoverflow.co/2022/#technology-top-paying-technologies][2022]]
+
+https://insights.stackoverflow.com/survey/2021#technology-top-paying-technologies`
+
+.image https://go.dev/blog/gophergala/fancygopher.jpg 200 _
 
 
 
@@ -1155,7 +1148,6 @@ A for-range loop can also be used to iterate over strings, arrays, maps, and cha
 * Functions
 
 
-
 * Calling a function
 
 To call a function, specify *all* the required arguments by *position* within parentheses
@@ -1167,6 +1159,7 @@ after the name of the function, using commas as delimiters:
 
 - to specify arguments by keyword or name,
 - to specify a default value for a parameter of your function.
+
 
 
 * Evaluation strategy: call by value
@@ -1190,6 +1183,7 @@ are composed of a pointer to some hidden data structure in memory.
 what happens when values of such types are passed to a function.
 
 .play -edit src/call_by_sharing.go /^//START/,/^//END/
+
 
 
 * Function declaration
@@ -2984,7 +2978,7 @@ A struct type is comparable only if the types of all its fields are themselves c
 
 2. Declare a struct type named `Tree` to represent one node of a [[https://en.wikipedia.org/wiki/Binary_tree][binary tree]].
 
-- Each node should contain a value of type `int`.
+- Each node contains a value of type `int`.
 - Each node has at most two children.
 - Each node should hold references to its children (if any), but not to its parent node.
 
@@ -3123,7 +3117,7 @@ Rather than having package-level functions, let's create some object dedicated t
 
 * Interfaces in a nutshell
 
-Interfaces (along with generics) are a mechanism for achieving [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]] in Go:
+Interfaces (and now generics) enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]] in Go:
 they allow you to manipulate different concrete type that provide the same behavior(s).
 
 Contrary to all the types that we've covered so far, interfaces are abstract types. An interface defines a set of types that provide some (zero or more) specific methods:
@@ -3433,19 +3427,19 @@ You can declare your own types and make them satisfy the `error` interface.
 
 * Other notable interfaces: io.Reader and io.Writer
 
-The `io` package provides two complementary interface types:
+The `io` package provides two complementary interface types: `Reader` and `Writer`.
+
+`io.Reader` represents a _source_ of bytes; it's satisfied by `os.Stdin`, `*os.File`, etc.
 
   type Reader interface {
     Read(dst []byte) (int, error)
   }
 
+`io.Writer` represents a _sink_ of bytes: it's satisfied by `os.Stdout`, `*os.File`, etc.
+
   type Writer interface {
     Write(src []byte) (int, error)
   }
-
-`io.Reader` represents a _source_ of bytes; it's satisfied by `os.Stdin`, `*os.File`, etc.
-
-`io.Writer` represents a _sink_ of bytes: it's satisfied by `os.Stdout`, `*os.File`, etc.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/network-side.svg 200 _
 
@@ -3554,9 +3548,9 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 1. Inspect the source code of function `http.Get`. That function simply calls the `Get` method on `http.DefaultClient`, which is a package-level variable of type `*http.Client`.
 
-2. Consult the documentation for `http.Client`. Does the `http` package provide an interface for that concrete type? If not, is that a problem? What about in other languages like Java?
+2. Consult the documentation for `http.Client`. Does the `http` package provide an interface for that concrete type? If not, is that a problem in Go? Why or why not? And what about in other languages like Java, C#, or PHP?
 
-3. In `namecheck.go`, judiciously declare a useful interface named "Getter" that values of type `*http.Client`, such as `http.DefaultClient`, already satisfy.
+3. In `namecheck.go`, judiciously declare a useful interface named "Getter" that `*http.Client` (the type of `http.DefaultClient`) already satisfy.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -4175,11 +4169,9 @@ The element type of a channel is completely arbitrary; here is a contrived examp
 
 * Popular naming choices for channels
 
-"c" or "ch", on its own or as a suffix (with or without camelcase):
+"ch" on its own or as a suffix (with or without camelcase):
 
-  c := make(chan int)
   ch := make(chan string)
-  errc := make(chan error)
   taskCh := make(chan Task)
 
 Plural of the channel's element type:
@@ -4217,20 +4209,32 @@ The zero value of channel types is `nil`. Uninitialized channels are not particu
 
 To initialize a channel, use the built-in function `make` with two arguments:
 
-- the desired type of the channel;
-- optionally (default value: `0`), the desired _capacity_ of the channel.
+- the desired type of the channel,
+- the desired _capacity_ of the channel.
 
-  c1 := make(chan string, 16)
-  c2 := make(chan string)
+  ch := make(chan string, 16)
+
+You can omit the second argument; the capacity of the resulting channel is `0`.
+
+  ch := make(chan string) // equivalent to make(chan string, 0)
 
 A channel's capacity cannot be changed after initialization.
 
-Some terminology:
-
-- A channel of zero capacity is said to be _unbuffered_ or _synchronous_.
-- A channel of positive capacity is said to be _buffered_.
-
 : The specified capacity (if any) must be non-negative; otherwise, you'll get a compilation error or, worse, a panic.
+
+
+
+* Buffered and unbuffered channels
+
+A channel of positive capacity is said to be _buffered_.
+
+  ch := make(chan string, 16) 
+
+A channel of zero capacity is said to be _unbuffered_ or _synchronous_.
+
+  ch := make(chan string, 0) 
+
+Contrary to what you may believe, unbuffered channels are useful. More on that soon.
 
 
 
@@ -4240,10 +4244,10 @@ A channel's capacity corresponds to the size of its _buffer_, i.e. the maximum n
 
 Built-in function `cap` can be used to query a channel's capacity:
 
-  c := make(chan string, 16) // initialize a channel of strings of capacity 16
-  fmt.Println(cap(c))        // 16
+  ch := make(chan Result, 16)
+  fmt.Println(cap(ch))        // 16
 
-Choosing channel capacity wisely is important, as that choice typically affects the correctness and/or the performance of your program!
+Choose channel capacity judiciously; this choice typically affects the correctness (and sometimes the performance) of your program.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
@@ -4619,17 +4623,16 @@ Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][fun
 
 2. Adjust `handleCheck`'s signature and implementation:
 
-- If the client provided no username via a query param, send a `400` response.
+- If the client provided no username via a query param named "`username`", send a `400`Bad`Request` response.
 - Otherwise, write (using `fmt.Fprint`) your slice of results in the response.
 
-3. Register your `handleCheck` handler on a route named `/check`.
+3. Add a `main` function `main`; in it, register your `handleCheck` handler on a route named `/check`, then start the server on a port 8080.
 
-4. Start your server and hit the `/check` endpoint.
+4. Run the program and hit the `/check` endpoint.
 
-You'll work in `cmd/server` for the remainder of the course.
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
-
+: You'll work in `cmd/server` for the remainder of the course.
 
 
 * JSON encoding
@@ -4925,7 +4928,7 @@ If function `cancellable` is launched as a goroutine, you can trigger its eventu
 
 The [[https://pkg.go.dev/context#Context][`context.Context` interface]] [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this "done channel" trick]] and can be used to terminate goroutines via cancellations or timeouts.
 
-Its `Done` method returns the channel in question, and its `Err` method returns a sentinel error value when the context is [[https://pkg.go.dev/context#Canceled][canceled]] or [[https://pkg.go.dev/context#DeadlineExceeded][times out]]:
+Its `Done` method returns the channel in question, and its `Err` method returns a non-`nil` error value when the context is [[https://pkg.go.dev/context#Canceled][canceled]] or [[https://pkg.go.dev/context#DeadlineExceeded][times out]]:
 
   func cancellable(ctx context.Context) error {
     for {
@@ -4952,7 +4955,7 @@ You can do this exercise in the [[https://go.dev/play/p/7Hsz9o3MwRs][Go Playgrou
 
 2. Modify the solution to the previous exercise to use a `context.Context` rather than a channel of empty structs.
 
-(A solution is available in this [[https://go.dev/play/p/fpneA8J6DyU][Playground]].)
+(A solution is available in this [[https://go.dev/play/p/fuQ8vahNfDL][Playground]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -4969,7 +4972,7 @@ Let's keep track (in memory) of how many times each username has been checked.
 
 2. In `handleCheck`, increment the count associated to the username being checked.
 
-3. Declare an additional `handleStats` server that returns a JSON representation of the variable declared in step 1.
+3. Declare an additional `handleStats` handler that returns a JSON representation of the variable declared in step 1.
 
 4. Register your `handleStats` handler on a route named `/stats`.
 

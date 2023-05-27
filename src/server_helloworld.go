@@ -7,7 +7,7 @@ import (
 )
 
 // START OMIT
-func handleHello(w http.ResponseWriter, req *http.Request) { // HL
+func handleHello(w http.ResponseWriter, _ *http.Request) { // HL
 	fmt.Fprint(w, "Hello, world!\n")
 }
 
