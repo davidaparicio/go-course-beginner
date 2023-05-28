@@ -4749,41 +4749,24 @@ to get rid of that "indirect" comment.
 * Select statement
 
 
-`select` is a multiway communication selector: it's reminiscent of a `switch`, but each of its cases refers to a _channel_communication_ (either a send or a receive).
+The `select` statement is a multiway communication selector: it allows you to randomly select one among several channel communications.
 
-`select` is a powerful construct in Go; you should invest time to master it.
-
-With goroutines and channels, `select` completes the concurrency trifecta!
+With goroutines and channels, `select` completes the concurrency trifecta.
+It is very powerful, which is why you should invest time to master it.
 
 .image https://pbs.twimg.com/media/DDWqkrFUMAAbIyL?format=png&name=large 300 _
 
-
-
-* Mechanics of select
-
-Remember that, depending on the channel's state, channel communications may block.
-
-  select {
-  case out <- 42:
-    // ...
-  case v, ok:= <-in:
-    if !ok {
-      break
-    }
-    // do something with v
-  }
-
-If all the cases of a `select` are blocking, the `select` statement itself blocks.
-
-As soon as one case is non-blocking, it gets selected and its instructions are executed.
-
-If more than one cases are non-blocking, one of them gets selected in a pseudo-random uniform fashion.
-
-You can use the `break` keyword within a case to break out of the `select` statement.
+: reminder: channel communication = a channel send or receive
 
 
 
-* Mechanics of select (cont'd)
+* Syntax of a select statement
+
+A `select` statement is reminiscent of a `switch` statement. It comprises a number of "normal" cases and, optionally, a `default` case.
+
+However, each of the normal cases is associated with a _channel_communication_, .
+
+The default case isn't associated to any channel communication.
 
   select {
   case out <- 42:
@@ -4797,7 +4780,46 @@ You can use the `break` keyword within a case to break out of the `select` state
     time.Sleep(200 * time.Millisecond)
   }
 
-A `select` statement can contain an optional `default` case, which isn't associated to any channel communication and gets selected if all the other normal cases are blocking.
+You can also use the `break` keyword within a `select` statement to break out of it.
+
+
+
+* Mechanics of the select statement
+
+  select {
+  case out <- 42:
+    // ...
+  case v, ok:= <-in:
+    if !ok {
+      break
+    }
+    // do something with v
+  default:
+    time.Sleep(200 * time.Millisecond)
+  }
+
+Recall that, depending on a channel's state, communications on that channel may block.
+
+When program execution reaches a `select` statement, what happens is governed by
+
+- the presence or absence of a default case, and
+- the blocking or non-blocking character of the channel communications listed.
+
+
+
+* Mechanics of the select statement (cont'd)
+
+If all the normal cases are blocking, two situations are possible:
+
+- If the `select` statement lacks a `default` case, the `select` statement itself blocks.
+- If the `select` statement contains a `default` case, the instructions associated to that case are executed.
+
+Otherwise, if exactly one normal case is non-blocking, that case gets _selected_, i.e.
+the channel communication occurs and the associated instructions are executed.
+
+Otherwise, if more than one cases are non-blocking, one of those cases gets selected in a pseudo-random uniform fashion.
+
+.image https://pbs.twimg.com/media/DDWqkrFUMAAbIyL?format=png&name=large 200 _
 
 
 
