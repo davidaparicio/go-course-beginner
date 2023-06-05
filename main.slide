@@ -247,11 +247,11 @@ Moreover, the core library is pretty extensive; see [[https://pkg.go.dev/std][pk
 
 See the results of the Stack Overflow developer survey:
 
-- [[https://insights.stackoverflow.com/survey/2020#technology-what-languages-are-associated-with-the-highest-salaries-worldwide-global][2020]
+- [[https://insights.stackoverflow.com/survey/2020#technology-what-languages-are-associated-with-the-highest-salaries-worldwide-global][2020]]
 - [[https://insights.stackoverflow.com/survey/2021#technology-top-paying-technologies][2021]]
 - [[https://survey.stackoverflow.co/2022/#technology-top-paying-technologies][2022]]
 
-https://insights.stackoverflow.com/survey/2021#technology-top-paying-technologies`
+: https://insights.stackoverflow.com/survey/2021#technology-top-paying-technologies
 
 .image https://go.dev/blog/gophergala/fancygopher.jpg 200 _
 
@@ -411,31 +411,42 @@ You *must* initialize a module at the root of your project in order to manage de
 
 
 
-* Modules (cont'd)
+* The path of a module
 
-A module is identified by its _path_, which
+A module is identified by its _path_, which should be globally unique.
 
-- takes the form of a schemeless URI where the module will be made available,
-- acts as prefix for package import paths within the module.
+A module's path takes the form of a schemeless URI where you intend to publish its source code, e.g.
 
-The `go`mod` subcommand allows you to interact with the module system. You can initialize a module by running a command of the form
+  github.com/jub0bs/namecheck
+
+The module's path acts as prefix for import paths of packages contained within the module:
+
+  // main.go
+  package main
+
+  import "github.com/jub0bs/namecheck/twitter"
+
+
+
+* Initializing a module
+
+You can initialize a module by running (at the root of your project, typically) a command of the following form:
 
    go mod init <your-module-path>
 
-Doing so will create a text file named `go.mod` at the root of your project.
+Initializing a module creates a text file named `go.mod` at the root of your project.
 
 Don't edit the `go.mod` file manually; instead, you can interact with it solely through the use of the `go`mod` subcommand.
 
 
 
-
 * Namecheck project: initialize a module
 
-At the root of your project, initialize a module:
+At the root of your project, initialize a module by running a command of this form:
 
   go mod init github.com/YOUR_GITHUB_USERNAME/namecheck
 
-A go.mod file will be created at the root of your project:
+A `go.mod` file will be created at the root of your project:
 
   namecheck
   ├── go.mod
@@ -928,8 +939,8 @@ In many cases, you have no option but to use the `var` keyword...
 
 *To*declare*a*variable*whose*type*cannot*be*inferred*by*the*initializing*expression*
 
-  userptr := nil          // compilation error: untyped nil
-  var userptr *user = nil // works fine
+  userptr := nil    // compilation error: untyped nil
+  var userptr *user // works fine
 
 *To*declare*a*variable*whose*inferred*type*doesn't*suit*you*
 
@@ -937,7 +948,7 @@ In many cases, you have no option but to use the `var` keyword...
   freezing := 32                // type int :(
   var freezingF Fahrenheit = 32 // type Fahrenheit :)
 
-: a nil value carries no type information
+: a nil value carries no type information (could be a map, a function, a slice, a pointer)
 : more idiomatic than freezing := Fahrenheit(32)
 
 
@@ -1230,6 +1241,8 @@ Write a function that implements Twitter's first validation rule:
   func containsNoIllegalPattern(username string) bool
 
 It should return true if its parameter does _not_ contain any case-insensitive match of "twitter" (e.g. "TwItTEr"), and false otherwise.
+
+Hint: no need for regular expressions; instead look up the `strings` package.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
