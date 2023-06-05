@@ -1,5 +1,5 @@
 Formation Go
-22 May 2023
+5 June 2023
 
 Julien Cretel
 
@@ -1852,7 +1852,8 @@ The [[https://pkg.go.dev/testing/][`testing` package]] allows you to test your p
 
 - unit tests or integration tests
 - example tests (executable examples that end up in the package's documentation),
-- micro-benchmarks (laser-focused performance tests for CPU-bound functions).
+- micro-benchmarks (laser-focused performance tests for CPU-bound functions),
+- fuzz tests (property-based tests using randomly generated inputs).
 
 You can run tests by invoking the following subcommand:
 
@@ -1932,34 +1933,33 @@ to a strict convention:
 
 Respect this convention, or your test functions will be ignored by `go`test`.
 
-The `testing.T` type provides methods (such as `Errorf`) that allow you to indicate that a test is failing, via an informative message.
+  func Testfoo(t *testing.T) // bad: the letter following Test is lowercase
+  func TestFoo(t *testing.T) // good
+
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
 
 
-* Test functions: an example for the twitter package
+* Example of a test function for the twitter package
 
-The following example uses black-box testing:
-
-  package twitter_test
+  package twitter_test // black-box testing
 
   import "testing"
   // import declaration of your twitter package (omitted here)
 
   func TestUsernameContainsTwitter(t *testing.T) {
-    // Arrange
     const (
       username = "jub0bsOnTwitter"
       want     = false
     )
-    // Act
     got := twitter.IsValid(username)
-    // Assert
     if got != want {
       t.Errorf("twitter.IsValid(%q): got %t; want %t", username, got, want)
     }
   }
+
+The `testing.T` type provides methods (such as `Errorf`) that allow you to indicate that a test is failing, via an informative message.
 
 The message format used here ("got ...; want ...") is widely used.
 
@@ -2108,17 +2108,17 @@ where USERNAME stands for the username whose availability we'd like to check.
 
 
 
-* defer
+* The defer keyword
 
 [[https://pkg.go.dev/net/http/#pkg-overview][The documentation of the `net/http` package]] warns that the client must close the response body when finished with it. Otherwise, the client risks a [[https://stackoverflow.com/questions/33238518/what-could-happen-if-i-dont-close-response-body/33238755#33238755][_resource_leak_]].
 
-Note that the defer keyword is used:
+Note that, in the example, the `defer` keyword precedes the call to `resp.Body.Close`:
 
   defer resp.Body.Close()
 
-`defer` is useful for simplifying functions that perform various clean-up actions (such the body of a `http.Response` when you're done with it).
+This keyword is particularly useful for simplifying functions that perform various clean-up actions, such as closing the body of a `http.Response` when you no longer need to process it.
 
-It's similar in spirit to the `finally` keyword from other languages, but it's much more convenient to use. You'll grow to love it!
+You'll grow to love the `defer` keyword!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 150 _
 
@@ -2128,19 +2128,28 @@ It's similar in spirit to the `finally` keyword from other languages, but it's m
 
 * Mechanics of the defer keyword
 
-`defer` causes the function call to which it's applied to unconditionally execute when the enclosing function terminates (whether normally or because of a panic).
+A function call preceded by the `defer` keyword gets _unconditionally_ executed _when_the_enclosing_function_terminates_, whether normally or as a result of a panic.
 
 .play -edit src/defer_unconditional.go /^//START/,/^//END/
+
+`defer` is reminiscent of the `finally` keyword from other languages, but it's more powerful because it promotes the co-location of resource acquisition and release.
+
+
+* Deferred function calls are executed in reverse order
 
 Deferred function calls are executed in reverse order in which they occur in the enclosing function.
 
 .play -edit src/defer_reverse.go /^//START/,/^//END/
 
+This is no accident: you typically want to release resources in reverse order in which you acquire them.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 200 _
 
 
-* Mechanics of the defer keyword (cont'd)
 
-Note also that the arguments of a deferred function call are evaluated, not when the function call executes, but when the `defer` statement is reached.
+* Evaluation of the arguments of a deferred function call
+
+The arguments of a deferred function call are evaluated, not when the function call executes, but when the `defer` statement is reached.
 
 .play -edit src/defer_eval.go /^//START/,/^//END/
 
@@ -4268,6 +4277,7 @@ on the serving hatch's platform at any one time.
 .image https://josephdmcnamee.files.wordpress.com/2012/01/serving-hatch1.jpg 350 _
 
 : what does a channel of capacity 0 correspond to?
+: An unbuffered channel has a capacity of zero and so it’s already full before any writes
 : Far from being useless, an unbuffered channel can be used to create a synchronization point between two goroutines.
 : the analogy is imperfect because channels are FIFO and waiters don't necessarily pick up plates in the order in which they arrived
 
@@ -4891,6 +4901,30 @@ Modify your `cmd/server/main.go` as follows:
 : mangle the domain name in github.Github's IsAvailable method in order to cause an error
 
 
+* Goroutines leak!
+
+If you've written the `check` function as shown below and you've chosen insufficient capacities for the two channels, goroutines may leak. Explain why and how.
+
+  func check(checker namecheck.Checker, username string,
+    wg *sync.WaitGroup, resultCh chan<- Result, errorCh chan<- error) {
+    defer wg.Done()
+    res := Result{Username: username, Platform: checker.String(), Valid: checker.IsValid(username)}
+    if !res.Valid {
+      resultCh <- res
+      return
+    }
+    avail, err := checker.IsAvailable(username)
+    if err != nil {
+      errorCh <- err
+      return
+    }
+    res.Available = avail
+    resultCh <- res
+  }
+
+If you did not modify the `check` function, what capacities should `resultCh` and `errorCh` have to avoid ever leaking goroutines? Is this approach viable in general, though?
+
+
 
 * Canceling goroutines
 
@@ -4940,7 +4974,7 @@ If function `cancellable` is launched as a goroutine, you can trigger its eventu
 
 3. Cancel the goroutine from `main` after one second.
 
-(A solution is available in this [[https://go.dev/play/p/7Hsz9o3MwRs]].)
+(A solution is available in this [[https://go.dev/play/p/7Hsz9o3MwRs][Playground]].)
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -4986,6 +5020,47 @@ You can do this exercise in the [[https://go.dev/play/p/7Hsz9o3MwRs][Go Playgrou
 
 
 
+* There's more to the context package (TODO)
+
+
+
+* Namecheck project: fix the goroutine leak
+
+You now know enough about the `context` package to fix the goroutine.
+
+1. Add a `context.Context` parameter to the `check` function.
+
+2. Modify the `check` function so that, even if sends on either or both of the two channels block, canceling the context force the function to terminate.
+
+3. In the `handleCheck` handler, create a context and pass it to the `check` function. Cancel that context if an error is received on the `errorCh` channel.
+
+4. Make both `resultCh` and `errorCh` unbuffered channels.
+
+What could be further improved?
+
+: IsAvailable itself isn't cancellable... but we could make it so.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
+* Communicating by sharing memory
+
+Go encourages you to use channels to communicate between goroutines.
+
+However, sharing memory can sometimes be simpler and/or more performant.
+
+Go's standard library provides two main mechanisms for sharing memory:
+
+- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync][the `sync` package]],
+- synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]], which are difficult to use correctly and which most programs should avoid.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
+
+: won't cover the latter because easy to misuse
+
+
+
 * Namecheck project: count of checks per username
 
 Let's keep track (in memory) of how many times each username has been checked.
@@ -5012,24 +5087,9 @@ However, maps are *not* concurrency-safe: unsynchronized updates to a map from m
 
 The Go runtime [[https://go.dev/doc/go1.6#runtime][may be able to detect concurrent map writes]] and intentionally crash the program (see [[https://go.dev/play/p/NMDVMeaVLLx][this Playground]]), or the runtime may miss the data race and you may silently lose some updates to the map.
 
+One solution: synchronizing access to the map via a mutex.
+
 .image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
-
-
-
-* Communicating by sharing memory
-
-Go encourages you to use channels to communicate between goroutines.
-
-However, sharing memory can sometimes be simpler and/or more performant.
-
-Go's standard library provides two main mechanisms for sharing memory:
-
-- [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync][the `sync` package]],
-- synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]].
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
-
-: won't cover the latter because easy to misuse
 
 
 
@@ -5058,14 +5118,13 @@ To avoid [[https://en.wikipedia.org/wiki/Resource_contention][_contention_]], yo
 
 
 
-
 * Namecheck project: count of checks per username
 
 1. Study the documentation of `sync.Mutex`.
 
 2. Guard accesses (both writes *and* reads!) to the map with a mutex.
 
-3. Run the server again with the race detector on. Any issue this time?
+3. Run the server.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
