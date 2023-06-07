@@ -2200,12 +2200,11 @@ As soon as we know the HTTP request succeeded, we can plan the closure of the re
 
 Consider the following function.
 
-  func processFiles(paths ...string) {
+  func processFiles(paths ...string) error {
     for _, path := range paths {
       file, err := os.Open(path)
       if err != nil {
-        // deal with error
-        continue
+        return err
       }
       defer file.Close()
       // do something interesting with file...
@@ -2224,17 +2223,17 @@ Remember that deferred function calls are executed only when the enclosing funct
 
 One solution is to enclose the defer statement in a smaller function:
 
-  func processFiles(paths ...string) {
+  func processFiles(paths ...string) error {
     for _, path := range paths {
       if err := processFile(path); err != nil {
-        // deal with error
+        return err
       }
     }
   }
   func processFile(path string) error {
       file, err := os.Open(path)
       if err != nil {
-        // deal with error
+        return err
       }
       defer file.Close()
       // do something interesting with file...
@@ -2887,7 +2886,6 @@ Struct types are not "reference types". They cannot take the value `nil`.
 
 
 
-
 * Constructing a struct value
 
 Given the following type declaration,
@@ -2919,7 +2917,7 @@ Here are examples of an unkeyed literal and a keyed literal:
 
 .play -edit src/unkeyed_literals.go /^//START2/,/^//END2/
 
-You should avoid unkeyed literals (esp. of third-party types) because their
+[[https://go.dev/doc/go1compat#expectations][You should avoid unkeyed literals]] (esp. of third-party types) because their
 reliance on the order of the fields in the struct type declaration makes them
 
 - less expressive (harder to write and read)
@@ -2931,20 +2929,84 @@ reliance on the order of the fields in the struct type declaration makes them
 : In struct literals, you can either specify all the...
 : why error prone: easier to swap the fields,
 : won't be affected by reordering of the fields in the type declaration
+: unkeyed literal acceptable for anonymous structs (e.g. in table-driven subtests)
+: legitimate reason to change order of fields: minimize footprint or fit snuggly in cache line
 
 
 
-* Field access (TODO)
+* The empty struct
+
+A remarkable struct type is the empty struct, i.e. a struct type that contains no fields:
+
+  struct{}
+
+This type can take only one value:
+
+  struct{}{}
+
+The memory footprint of this value is zero.
+
+Contrary to what you may believe, the empty struct is often useful.
+
+: conveys intent that data doesn't matter
+: sets
+: signalling with channels
+
+
+
+* Field access
 
 Field access uses the usual dot syntax present in many languages.
 
-Syntactic sugar: struct fields are also accessible through a pointer to a struct.
+  type User struct {
+    Name    string
+    IsAdmin bool
+  }
 
-Fields are addressable.
+  func main() {
+    u := User{Name: "Julien"}
+    fmt.Println(u.Name) // Julien
+  }
+
+Struct fields are addressable:
+
+  fmt.Println(&u.Name) // some address in hexadecimal
+
+
+
+* Field access via pointer
+
+Struct fields are also conveniently accessible through a pointer to the struct value in question:
+
+  type User struct {
+    Name    string
+    IsAdmin bool
+  }
+
+  func main() {
+    u := &User{Name: "Julien"}
+    fmt.Println((*u).Name) // ok but unnecessary
+    fmt.Println(u.Name)    // syntactic sugar!
+  }
+
+
+
+* Exported or unexported fields
 
 The case of a struct field's first letter dictates whether that field is exported.
 
-: TODO: good practices around encapsulation
+  type User struct {
+    name    string
+    isAdmin bool
+  }
+
+Unexporting struct fields is the primary mechanism for encapsulation in Go.
+
+Don't export the fields of your top-level struct types (unless you have to, e.g. for JSON decoding).
+
+Well-designed struct types are _opaque_ ones, which export none of their fields. For example, see `time.Time` or `regexp.Regexp`.
+
+To allow clients of your package to manipulate values of such types, provide functions and methods.
 
 
 
@@ -3102,7 +3164,7 @@ by the presence (in a pair of parentheses between the keyword `func` and the met
 
   func (re *Regexp) MatchString(s string) bool // method on the *Regexp type
 
-Methods are the key to satisfying interfaces, which are the key to polymorphism in Go.
+Methods are tightly related to _interfaces_, which are the primary mechanism for polymorphism.
 
 Live demo on [[https://go.dev/play/p/axkpaElUyHI][the Playground]].
 
