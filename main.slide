@@ -2909,13 +2909,9 @@ Fields omitted from the struct literal are zero-valued. In the example above, th
 
 * Avoid unkeyed literals
 
-Consider this struct type declaration:
+Consider the following struct type and unkeyed and keyed literals of it:
 
-.code -edit src/unkeyed_literals.go /^//START1/,/^//END1/
-
-Here are examples of an unkeyed literal and a keyed literal:
-
-.play -edit src/unkeyed_literals.go /^//START2/,/^//END2/
+.play -edit src/unkeyed_literals.go /^//START/,/^//END/
 
 [[https://go.dev/doc/go1compat#expectations][You should avoid unkeyed literals]] (esp. of third-party types) because their
 reliance on the order of the fields in the struct type declaration makes them
@@ -3496,13 +3492,13 @@ Therefore, peppering empty interfaces all over the business layer of your applic
 
 You can declare your own types and make them satisfy the `error` interface.
 
-  type ErrUnkownAvailability struct {
+  type UnkownAvailabilityError struct {
     Username string
     Platform string
     Cause    error
   }
 
-  func (e *ErrUnkownAvailability) Error() string {
+  func (e *UnkownAvailabilityError) Error() string {
     const tmpl = "unknown availability of %q on %s: %v"
     return fmt.Sprintf(tmpl, e.Username, e.Platform, e.Cause)
   }
@@ -3538,16 +3534,16 @@ This principle isn't specific to Go and is known as [[https://blog.ndepend.com/p
 For example, don't do this:
 
   type Tree struct {...}
-  func (t *Tree) Save(f *os.File) error
+  func (t *Tree) WriteTo(f *os.File) error
 
 Instead, do this:
 
   type Tree struct {...}
-  func (t *Tree) Save(w io.Writer) error
+  func (t *Tree) WriteTo(w io.Writer) error
 
 The latter is more flexible, easier to test, promotes decoupling, and guides you towards the correct implementation.
 
-: os.File has a lot of methods that are not relevant to what Tree's Save is supposed to do
+: os.File has a lot of methods that are not relevant to what Tree's WriteTo is supposed to do
 
 
 
@@ -3559,11 +3555,11 @@ In other words, if a function has an interface parameter, that interface type sh
 
 Don't do this:
 
-  func (t *Tree) Load(rw io.ReadWriter) error
+  func (t *Tree) ReadFrom(rw io.ReadWriter) error
 
 Instead, do this:
 
-  func (t *Tree) Load(r io.Reader) error
+  func (t *Tree) ReadFrom(r io.Reader) error
 
 Again, this is more flexible, testable, and promotes correctness of implementation.
 
@@ -4605,7 +4601,7 @@ those parameters would instead need to be pointers to channels.)
 
 * Namecheck project: aggregate the results
 
-1. At the top of `main.go`, declare the following `Result` type:
+1. At the top of `cmd/cli/main.go`, declare the following `Result` type:
 
   type Result struct {
     Username  string
@@ -4708,7 +4704,7 @@ Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][fun
 
 2. Adjust `handleCheck`'s signature and implementation:
 
-- If the client provided no username via a query param named "`username`", send a `400`Bad`Request` response.
+- If the client provided no username via a query param named "`username`", write a `400`Bad`Request` response.
 - Otherwise, write (using `fmt.Fprint`) your slice of results in the response.
 
 3. Add a `main` function `main`; in it, register your `handleCheck` handler on a route named `/check`, then start the server on a port 8080.
@@ -5095,7 +5091,21 @@ You can do this exercise in the [[https://go.dev/play/p/7Hsz9o3MwRs][Go Playgrou
 
 
 
-* There's more to the context package (TODO)
+* Making a channel send cancelable
+
+Remember: a channel send may block.
+
+  resultCh <- res
+
+To make a channel send cancelable, you can wrap it in a select and add a case in which you detect a context's cancellation:
+
+  select {
+    case <-ctx.Done():
+      break
+    case resultCh <- res:
+  }
+
+You can use a similar trick to make a channel receive cancelable.
 
 
 
@@ -5105,7 +5115,7 @@ You now know enough about the `context` package to fix the goroutine.
 
 1. Add a `context.Context` parameter to the `check` function.
 
-2. Modify the `check` function so that, even if sends on either or both of the two channels block, canceling the context force the function to terminate.
+2. Modify the `check` function so that, even if sends on either or both of the two channels block, canceling the context forces the function to terminate.
 
 3. In the `handleCheck` handler, create a context and pass it to the `check` function. Cancel that context if an error is received on the `errorCh` channel.
 
@@ -5172,14 +5182,14 @@ One solution: synchronizing access to the map via a mutex.
 
 A [[https://en.wikipedia.org/wiki/Mutual_exclusion][_mutual_exclusion_]] (a.k.a. _mutex_) allows you to define a block of code to be executed by at most one goroutine at a time.
 
-Such a block of code to be executed in mutual exclusion is known as [[https://en.wikipedia.org/wiki/Critical_section][_critical_section_]].
+Such a block of code to be executed in mutual exclusion is known as a [[https://en.wikipedia.org/wiki/Critical_section][_critical_section_]].
 
 The [[https://pkg.go.dev/sync][`sync` package]] provides two types of mutexes, the simplest of which is [[https://pkg.go.dev/sync#Mutex][`sync.Mutex`]].
 That type requires no initialization, because its zero value is readily usable:
 
   var mu sync.Mutex
 
-Simply surround the critical section by calls to the mutex's `Lock` and `Unlock` methods:
+Simply surround the critical section(s) by calls to the mutex's `Lock` and `Unlock` methods:
 
   mu.Lock()
   // critical section
@@ -5201,7 +5211,11 @@ To avoid [[https://en.wikipedia.org/wiki/Resource_contention][_contention_]], yo
 
 3. Run the server.
 
+4. What could be improved?
+
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: instead of a package-level map, we could make the handler a method of some API/server struct type in which we inject the mutex
 
 
 
