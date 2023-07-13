@@ -3672,7 +3672,7 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 
 
-* A useful pattern: single-method adapter
+* Single-method adapter
 
 : Remember that you can add methods to any of your named types, regardless of their underlying types.
 
@@ -3682,14 +3682,14 @@ Consider the following single-method interface type:
     Climb(meters uint) error
   }
 
-A [[https://pkg.go.dev/net/http#HandlerFunc][frequently useful]] trick to implement such an interface consists in declaring a type based on a function whose signature matches that of the interface's method:
+A [[https://pkg.go.dev/net/http#HandlerFunc][frequently useful]] trick to implement such an interface is the following. First, declare a type based on a function whose signature matches that of the interface's method:
 
   type ClimberFunc func(uint) error
 
-The method then simply delegates to the underlying function:
+Then, declare a method that simply delegates to the underlying function! 🤯
 
   func (cf ClimberFunc) Climb(meters uint) error {
-    return cf(meters) // 🤯
+    return cf(meters)
   }
 
 : Note that the method's implementation simply delegates to the underlying function.
