@@ -821,7 +821,7 @@ You can declare variables at the top level or within functions (_local_variables
 
 A _local_variable_ *must* be used, or compilation will fail.
 
-Go's declaration syntax departs from C's in many ways. Rob Pike clarified the motivations behind this departure in [[https://go.dev/blog/declaration-syntax][a post entitled _Go's_Declaration_Syntax_]]. 
+Go's declaration syntax departs from C's in many ways. Rob Pike clarified the motivations behind this departure in [[https://go.dev/blog/declaration-syntax][a post entitled _Go's_Declaration_Syntax_]].
 
 Two alternative declaration syntaxes exist: the `var` keyword and the `:=` operator.
 
@@ -897,7 +897,7 @@ You should [[https://github.com/golang/go/wiki/CodeReviewComments#variable-names
   var i int     // better
 
 Use lower camel case for local variables and unexported top-level variables:
-    
+
   var maxOutstanding int
   var nbOfVisits uint
 
@@ -933,7 +933,7 @@ In many cases, you have no option but to use the `var` keyword...
 *To*declare*a*top-level*variable*
 
   package main
-  
+
   maxConcurrent := 16    // syntax error: non-declaration statement outside function body
   var maxConcurrent = 16 // works fine
 
@@ -3605,16 +3605,40 @@ We'd need some way of injecting the real HTTP client in our production code and 
 
 
 
-* Implicit satisfaction makes "mocking" easy!
+* Diving into the source code of the net/http package
+
+Function `http.Get` delegates to a `Get` method on something named `DefaultClient`:
+
+  package http
+  // -snip-
+  func Get(url string) (resp *Response, err error) {
+    return DefaultClient.Get(url)
+  }
+
+`DefaultClient` simply is a package-level variable of type `*http.Client`:
+
+  package http
+  // -snip-
+  var DefaultClient = &Client{}
+
+Since we want to mock/stub the `*http.Client` type, we need an interface type that `*http.Client` implements...
+
+Does the `net/http` package provide such an interface? If not, is that a problem? 😏
+
+What about in languages other than Go, such as Java, C#, or PHP?
+
+
+
+* Implicit satisfaction makes "stubbing" easy!
 
 You can declare an interface type that will be satisfied by your own existing types.
 
 But you can even create your own interface type for concrete types that you do not own and for which no useful interface is readily provided!
 
-Therefore, you can create a "hole" or "placeholder" to be filled
+Therefore, you can "create a placeholder" to be filled by...
 
-- by the real thing in your production code, and
-- by some [[https://www.martinfowler.com/bliki/TestDouble.html][_test_double_]] (mock, stub, fake, etc.) in your test code!
+- ... the real thing in your production code, and
+- ... some [[https://www.martinfowler.com/bliki/TestDouble.html][_test_double_]] (mock, stub, fake, etc.) in your test code!
 
 See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-tests-in-golang-619653f90742#e976][Mat Ryer's - 5 simple tips and tricks for writing unit tests in #golang]].
 
@@ -3624,48 +3648,61 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 
 
-* Namecheck project: declare an interface for http.Client
+* Namecheck project: declare an interface for *http.Client
 
-1. Inspect the source code of function `http.Get`. That function simply calls the `Get` method on `http.DefaultClient`, which is a package-level variable of type `*http.Client`.
+1. In `namecheck.go`, judiciously declare a useful interface named "Getter" that type `*http.Client` already satisfies.
 
-2. Consult the documentation for `http.Client`. Does the `http` package provide an interface for that concrete type? If not, is that a problem in Go? Why or why not? And what about in other languages like Java, C#, or PHP?
-
-3. In `namecheck.go`, judiciously declare a useful interface named "Getter" that `*http.Client` (the type of `http.DefaultClient`) already satisfy.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-: see https://golang.org/pkg/net/http/#Get
-
-
-
-* Namecheck project: declare an interface for http.Client (cont'd)
-
-4. Carve a hole for a `namecheck.Getter` in your `Twitter` and `GitHub` struct types:
+2. In your `Twitter` and `GitHub` struct types, add a field of type `namecheck.Getter`:
 
   type Twitter struct {
     Getter namecheck.Getter
   }
 
-5. In `IsAvailable`, replace the call to `http.Get` by a call to the `Getter`'s method.
+5. In your `IsAvailable` methods, call the `Getter`'s method instead of `http.Get`.
 
-6. In your `main` function, inject the actual HTTP client when you instantiate the `Twitter` and `GitHub` struct types.
+6. In your `main` function, _inject_ the actual HTTP client when you instantiate the `Twitter` and `GitHub` struct types.
 
-Can you guess what's coming next?
+: Now you have everything you need to create a "fake" Getter for testing purposes!
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
-
-
-: TODO: move elsewhere
 : unit test: no I/O, limit site effects
 : email sender: you don't want to send an email every time
 : payment system: unless e2e tests, don't want to trigger a real payment in unit tests
 
 
 
-* Namecheck project: "mock" the HTTP client
+* A useful pattern: single-method adapter
 
-1. Create a `stub` package. In it, declare the following struct type:
+: Remember that you can add methods to any of your named types, regardless of their underlying types.
+
+Consider the following single-method interface type:
+
+  type Climber interface {
+    Climb(meters uint) error
+  }
+
+A [[https://pkg.go.dev/net/http#HandlerFunc][frequently useful]] trick to implement such an interface consists in declaring a type based on a function whose signature matches that of the interface's method:
+
+  type ClimberFunc func(uint) error
+
+The method then simply delegates to the underlying function:
+
+  func (cf ClimberFunc) Climb(meters uint) error {
+    return cf(meters) // 🤯
+  }
+
+: Note that the method's implementation simply delegates to the underlying function.
+
+Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy conversion of ordinary functions to the interface type:
+
+  climber := Climber(func(meters uint) {return nil})
+
+
+
+* Namecheck project: "stub" the HTTP client
+
+1. Create a package named `stub`. In it, declare the following struct type:
 
   type SuccessfulGetter struct {
     StatusCode int
@@ -4035,24 +4072,23 @@ Wait groups are particularly useful when the number of goroutines to spawn is no
 
 * Using a wait group
 
-Declare a variable of type [[https://pkg.go.dev/sync#WaitGroup][`sync.WaitGroup`]], whose the zero value is readily usable.
+The zero value of type [[https://pkg.go.dev/sync#WaitGroup][`sync.WaitGroup`]] is readily usable:
+
+  var wg sync.WaitGroup
 
 A wait group supports three operations:
 
   func (wg *WaitGroup) Add(delta int)
 
-- increments the counter by delta
-- should be called _just_before_ spawning a goroutine
+`Add` increments the counter by `delta`. Call it _just_before_ spawning a goroutine.
 
   func (wg *WaitGroup) Done()
 
-- decrements the counter by 1
-- should be called _at_the_very_end_ of each spawned goroutine (with a `defer`, typically)
+`Done` decrements the counter by 1. Call it _at_the_very_end_ of each spawned goroutine (with a `defer`, typically).
 
   func (wg *WaitGroup) Wait()
 
-- `wg.Wait()` blocks until the counter goes back to 0 (acts as a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]])
-- should be called at the point of the spawning goroutine where you need to wait
+`Wait` blocks until the counter goes back to 0 (acts as a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]]). Call it at the point of the spawning goroutine where you need to wait for the spawned goroutines to terminate.
 
 : wg.Done() is equivalent to wg.Add(-1)
 
@@ -4308,11 +4344,11 @@ A channel's capacity cannot be changed after initialization.
 
 A channel of positive capacity is said to be _buffered_.
 
-  ch := make(chan string, 16) 
+  ch := make(chan string, 16)
 
 A channel of zero capacity is said to be _unbuffered_ or _synchronous_.
 
-  ch := make(chan string, 0) 
+  ch := make(chan string, 0)
 
 Contrary to what you may believe, unbuffered channels are useful. More on that soon.
 
@@ -4705,11 +4741,11 @@ Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][fun
 2. Adjust `handleCheck`'s signature and implementation:
 
 - If the client provided no username via a query param named "`username`", write a `400`Bad`Request` response.
-- Otherwise, write (using `fmt.Fprint`) your slice of results in the response.
+- Otherwise, use `fmt.Fprint` to write your slice of results in the response.
 
-3. Add a `main` function `main`; in it, register your `handleCheck` handler on a route named `/check`, then start the server on a port 8080.
+3. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on a route named `/check`, then start the server on port 8080.
 
-4. Run the program and hit the `/check` endpoint.
+4. Run the program and hit the `/check` endpoint in your browser.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
 
@@ -5178,24 +5214,31 @@ One solution: synchronizing access to the map via a mutex.
 
 
 
+* Mutual exclusions
+
+A [[https://en.wikipedia.org/wiki/Mutual_exclusion][_mutual_exclusion_]] (a.k.a. _mutex_) allows you to delineate sections of code to be executed by at most one goroutine at a time.
+
+Such a section of code to be executed in mutual exclusion is known as a [[https://en.wikipedia.org/wiki/Critical_section][_critical_section_]].
+
+To avoid [[https://en.wikipedia.org/wiki/Resource_contention][_contention_]], strive to keep critical sections short and free of I/O operations.
+
+
+
 * Using sync.Mutex
 
-A [[https://en.wikipedia.org/wiki/Mutual_exclusion][_mutual_exclusion_]] (a.k.a. _mutex_) allows you to define a block of code to be executed by at most one goroutine at a time.
-
-Such a block of code to be executed in mutual exclusion is known as a [[https://en.wikipedia.org/wiki/Critical_section][_critical_section_]].
-
 The [[https://pkg.go.dev/sync][`sync` package]] provides two types of mutexes, the simplest of which is [[https://pkg.go.dev/sync#Mutex][`sync.Mutex`]].
+
 That type requires no initialization, because its zero value is readily usable:
 
   var mu sync.Mutex
 
-Simply surround the critical section(s) by calls to the mutex's `Lock` and `Unlock` methods:
+Mutex variables are typically declared in a function (rather than at package level).
 
-  mu.Lock()
+Then simply surround the critical section(s) by calls to the mutex's `Lock` and `Unlock` methods:
+
+  mu.Lock()   // 🔒
   // critical section
-  mu.Unlock()
-
-To avoid [[https://en.wikipedia.org/wiki/Resource_contention][_contention_]], you should keep the critical section short and free of I/O operations!
+  mu.Unlock() // 🔓
 
 : A popular name for a mutex variable is "mu".
 : in some cases, defer can be useful to Unlock
