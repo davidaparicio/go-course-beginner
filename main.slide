@@ -4736,20 +4736,33 @@ Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][fun
 
 * Namecheck project: turn your CLI tool into a Web server
 
-1. Copy `cmd/cli/main.go` to `cmd/server/main.go`. In the latter, rename the `main` function to `handleCheck`.
+1. Copy `cmd/cli/main.go` to `cmd/server/main.go`. We won't touch `cmd/cli` for the remainder of the course.
 
-2. Adjust `handleCheck`'s signature and implementation:
+2. In `cmd/server/main.go`, rename the `main` function to `handleCheck`.
 
-- If the client provided no username via a query param named "`username`", write a `400`Bad`Request` response.
-- Otherwise, use `fmt.Fprint` to write your slice of results in the response.
+3. Adjust `handleCheck`'s signature to make it compatible with a HTTP handler:
 
-3. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on a route named `/check`, then start the server on port 8080.
+  func handleCheck(w http.ResponseWriter, r *http.Request)
 
-4. Run the program and hit the `/check` endpoint in your browser.
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
 
-: You'll work in `cmd/server` for the remainder of the course.
+
+
+* Namecheck project: turn your CLI tool into a Web server (cont'd)
+
+4. Adjust `handleCheck`'s implementation:
+
+- If the client provided no username via a query param named "`username`",
+  write a `400`Bad`Request` response and terminate the handler.
+- Otherwise, write your slice of results in the response. Hint: use `fmt.Fprint`.
+
+5. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on a route named `/check`, then start the server on port 8080.
+
+6. Run the program and hit the `/check` endpoint, e.g. by visiting [[http://localhost:8080/check?username=jub0bs][http://localhost:8080/check?username=jub0bs]] in your browser:
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
 
 
 * JSON encoding
@@ -4812,7 +4825,7 @@ To add a third-party HTTP router like [[https://github.com/julienschmidt/httprou
 
   go get github.com/julienschmidt/httprouter
 
-
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
 
 * Effects of adding dependencies on go.mod and go.sum
 
@@ -5147,7 +5160,7 @@ You can use a similar trick to make a channel receive cancelable.
 
 * Namecheck project: fix the goroutine leak
 
-You now know enough about the `context` package to fix the goroutine.
+You now know enough about the `context` package to fix the goroutine leak! 💪
 
 1. Add a `context.Context` parameter to the `check` function.
 
