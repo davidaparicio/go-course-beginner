@@ -4818,61 +4818,73 @@ For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andre
 
 * Adding third-party dependencies to your project
 
-So far, you've only relied on Go's core library but, thanks to Go's module system,
-you can of course bring in third-party dependencies.
-
-To add a third-party HTTP router like [[https://github.com/julienschmidt/httprouter][julienschmidt/httprouter]] as a dependency to your project, run
-
-  go get github.com/julienschmidt/httprouter
+So far, you've exclusively relied on Go's core library but, thanks to Go's module system, you can of course bring in third-party dependencies.
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
 
-* Effects of adding dependencies on go.mod and go.sum
+For example, you may want to configure your server for [[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS][CORS]], so that your API can be consumed by a browser-based client. The most popular CORS middleware library for Go may be [[https://github.com/rs/cors][rs/cors]], but I [[https://jub0bs.com/posts/2023-02-08-fearless-cors/][strongly recommend]] my own: [[https://github.com/jub0bs/fcors][jub0bs/fcors]].
 
-Running that command adds the following line to your `go.mod` file:
+To add this CORS middleware library as a dependency to your project, you would run 
 
-  require github.com/julienschmidt/httprouter v1.3.0 // indirect
-
-It also causes the creation (or update) of a file named `go.sum`. That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues.
-
-The `go.sum` is precious; you should track changes to it in your version-control system.
+  go get github.com/jub0bs/fcors
 
 
 
-* A Hello-World server with julienschmidt/httprouter
 
-.code -edit src/httprouter.go
+* Effects of adding dependencies on go.mod
+
+Running that `go`get` command adds the following line to your `go.mod` file:
+
+  require github.com/jub0bs/fcors v0.6.0 // indirect
+
+Note the presence of an "indirect" comment, which indicates that you're not (yet?) directly depending on that module in your code.
+
+Once you actually use package `github.com/jub0bs/fcors` in your code, you'll be able to remove that "indirect" comment by running the following command:
+
+  go mod tidy
+
+
+
+* The go.sum file
+
+Adding/updating a dependency also creates/updates a file named `go.sum`.
+
+That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues.
+
+You should track changes to that file in your version-control system. Don't ignore it!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
+
+* A simple Web server configured for CORS
+
+.play -edit src/cors.go /^//START/,/^//END/
 
 
 
 * Tidying your go.mod
 
-Once you actually use package `github.com/julienschmidt/httprouter` in your code, you can run
-
-  go mod tidy
-
-to get rid of that "indirect" comment.
 
 
 
-* Namecheck project: use a third-party package for routing
-
+* Namecheck project: configure your server for CORS
 
 1. Run the following command within your project to download the dependency:
 
-  go get github.com/julienschmidt/httprouter
+  go get github.com/jub0bs/fcors
 
 2. Inspect the contents of the `go.mod` file and of the newly created `go.sum` file.
 
-3. Import `github.com/julienschmidt/httprouter` in your server's `main.go` and define your routes with it instead. Only accept `GET` requests.
+3. Import `github.com/jub0bs/fcors` in your server's `main.go`.
 
-4. Run the following command to clean up your `go.mod` file:
+4. In your main function, instantiate a CORS middleware and apply it to the default `http.ServeMux`.
+
+5. Run the following command to clean up your `go.mod` file:
 
   go mod tidy
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
-
-: we don't really need mux here; nothing fancy; just for practice
 
 
 
@@ -4997,6 +5009,8 @@ To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][la
       // do something interesting with res
     }
   }
+
+: TODO: add a link to Mat Ryer's talk https://www.youtube.com/watch?v=5DVV36uqQ4E&t=9m58s
 
 
 
