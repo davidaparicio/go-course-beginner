@@ -4822,7 +4822,7 @@ So far, you've exclusively relied on Go's core library but, thanks to Go's modul
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
 
-For example, you may want to configure your server for [[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS][CORS]], so that your API can be consumed by a browser-based client. The most popular CORS middleware library for Go may be [[https://github.com/rs/cors][rs/cors]], but I [[https://jub0bs.com/posts/2023-02-08-fearless-cors/][strongly recommend]] my own: [[https://github.com/jub0bs/fcors][jub0bs/fcors]].
+For example, you may want to configure your server for [[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS][CORS]], so that your API can be consumed by a browser-based [[https://developer.mozilla.org/en-US/docs/Glossary/Origin][cross-origin]] client. The most popular CORS middleware library for Go may be [[https://github.com/rs/cors][rs/cors]], but I [[https://jub0bs.com/posts/2023-02-08-fearless-cors/][strongly recommend]] my own: [[https://github.com/jub0bs/fcors][jub0bs/fcors]].
 
 To add this CORS middleware library as a dependency to your project, you would run 
 
@@ -4831,7 +4831,7 @@ To add this CORS middleware library as a dependency to your project, you would r
 
 
 
-* Effects of adding dependencies on go.mod
+* go.mod's require directive
 
 Running that `go`get` command adds the following line to your `go.mod` file:
 
