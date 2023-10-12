@@ -4153,12 +4153,11 @@ Can you spot the bug in the following program?
 
 * Closures running as goroutines: explanation
 
-The program contains a [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bug_]], which is very likely to cause a _data_race_:
-variable `i` is indeed read and updated in a concurrent fashion without any precautions!
+The program contains a [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bug_]], which is very likely to cause a _data_race_ and yield unpredictable and undesirable results! 😱
 
 .play -edit src/goroutine_func_answer.go /^//START/,/^//END/
 
-More specifically, the iteration variable `i` is a _single_ variable that takes different values in each loop iteration, and the child goroutines _capture_ and read `i` as it's being updated by the loop. Consequently, the program yields unpredictable results.
+Why? Because `i` is a single variable scoped to the loop (not to individual iterations). And, crucially, variable `i` is [[https://en.wikipedia.org/wiki/Closure_(computer_programming)][_captured_]] and _read_ by the child goroutines while it's being _updated_ by the loop, in a concurrent fashion, without any precautions!
 
 See the [[https://golang.org/doc/faq#closures_and_goroutines][Go FAQ]] and [[https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables][CommonMistakes - Using goroutines on loop iterator variables]].
 
@@ -4166,19 +4165,45 @@ See the [[https://golang.org/doc/faq#closures_and_goroutines][Go FAQ]] and [[htt
 
 
 
-* Detecting the synchorization bug or data race
+* Detection of synchorization bugs with go vet
 
-Some static- and dynamic-analysis tools can supplement visual inspection.
+The `vet` subcommand performs some static analysis and can report a range of issues, including some synchronization bugs.
 
-*go*vet*
+If you run `vet` on your program, it will report something like the following:
 
-This subcommand performs some static analysis and can reports a range of issues, including some synchronization bugs. Try running `go` `vet` on the program.
+  $ go vet main.go
+  ./main.go:19:16: loop variable i captured by func literal
 
-*race*detector*
+In the [[https://go.dev/play/p/8-lOBoCLGTy][Go Playground]], `vet` is run before compilation (when you click _Run_).
 
-The Go CLI provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution. Try running the program with the `-race` flag. Caution: the race detector is [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][not guaranteed to catch all data races]].
+And VS Code runs `vet` in the background and directly highlights issues in your code.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
+
+
+
+* Go's race detector
+
+Go provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution. Caution: the race detector is [[https://go.dev/doc/articles/race_detector][not guaranteed to catch _all_ data races]].
+
+  $ go run -race main.go
+  5
+  4
+  5
+  ==================
+  WARNING: DATA RACE
+  Read at 0x00c00011e038 by goroutine 6:
+    main.printTenIntsConcurrently.func1()
+        /Users/jub0bs/my-project/main.go:19 +0x8b
+
+  Previous write at 0x00c00011e038 by main goroutine:
+    main.printTenIntsConcurrently()
+        /Users/jub0bs/my-project/main.go:16 +0xa4
+    main.main()
+        /Users/jcretel/Desktop/go-course-beginner/main.go:9 +0x1c
+  -snip-
+
+Don't leave the race detector on in production: its overhead is prohibitive.
 
 
 
@@ -4259,7 +4284,7 @@ For more details about this change, see [[https://go.dev/blog/loopvar-preview][F
 
 * Namecheck project: aggregate the results (how?)
 
-What if, instead of printing the results, we wanted to somehow aggregated them?
+What if, instead of printing the results, we wanted to somehow aggregate them?
 
 Remember: the result(s) of the function call to which the `go` keyword is applied are lost.
 
