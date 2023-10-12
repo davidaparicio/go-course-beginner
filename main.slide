@@ -4207,9 +4207,9 @@ Don't leave the race detector on in production: its overhead is prohibitive.
 
 
 
-* One way to fix the data race
+* One way to fix the synchronization bug
 
-In constrast to the iteration variable, variables declared within the body of the loop are not shared between iterations. Therefore, one way to fix the data race consists in declaring a copy of the iteration variable inside the loop, before the `go` statement:
+In constrast to the iteration variable, variables declared within the body of the loop are not shared between iterations. Therefore, one way to fix the synchronization bug consists in declaring a copy of the iteration variable inside the loop, before the `go` statement:
 
 .play -edit src/goroutine_func_redecl.go /^//START/,/^//END/
 
@@ -4219,7 +4219,7 @@ Although the redeclaration looks a bit weird, this solution has merit insofar as
 
 
 
-* Another way to fix the data race
+* Another way to fix the synchronization bug
 
 An alternative solution consists in passing the value of the iteration variable as an argument to the anonymous function.
 
@@ -4229,11 +4229,11 @@ That way, by virtue of Go's call-by-value evaluation strategy, the function only
 
 
 
-* Yet another way to fix the data race
+* Yet another way to fix the synchronization bug
 
-When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may cause data races.
+When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may introduce synchronization bugs.
 
-Defining a dedicated named function can help:
+Defining a dedicated named function helps in guarding your code against such bugs:
 
 .play -edit src/goroutine_func_standalone.go /^//START/,/^//END/
 
@@ -4243,22 +4243,14 @@ Defining a dedicated named function can help:
 
 From Go 1.22 onwards, variables introduced by a `for` loop will have per-iteration scope, instead of per-loop scope (as they are in versions prior to Go 1.22).
 
-You can already preview this scoping change by setting `GOEXPERIMENT=loopvar` in your environment (in Go 1.21.x).
+You can already preview this scoping change
 
-  func main() {
-    var wg sync.WaitGroup
-    const n = 10
-    wg.Add(n)
-    for i := 0; i < n; i++ {
-      go func() {
-        defer wg.Done()
-        fmt.Println(i) // after setting GOEXPERIMENT=loopvar, no synchronization bug here!
-      }()
-    }
-    wg.Wait()
-  }
+- in [[https://go.dev/play/p/xuAs_QEW6xd?v=gotip][the Go Playground]] after selecting _Go_dev_branch_, and
+- locally, which Go 1.21+, by setting `GOEXPERIMENT=loopvar` in your environment.
 
 For more details about this change, see [[https://go.dev/blog/loopvar-preview][Fixing For Loops in Go 1.22]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
 
 : Inadvertently capturing a loop variable is so common that the Go team had to act.
 
