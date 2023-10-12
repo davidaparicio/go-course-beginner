@@ -4153,7 +4153,8 @@ Can you spot the bug in the following program?
 
 * Closures running as goroutines: explanation
 
-There is a _data_race_: a variable is being read and updated by different goroutines in a concurrent fashion!
+The program contains a [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bug_]], which is very likely to cause a _data_race_:
+variable `i` is indeed read and updated in a concurrent fashion without any precautions!
 
 .play -edit src/goroutine_func_answer.go /^//START/,/^//END/
 
@@ -4165,13 +4166,13 @@ See the [[https://golang.org/doc/faq#closures_and_goroutines][Go FAQ]] and [[htt
 
 
 
-* Detecting the data race
+* Detecting the synchorization bug or data race
 
 Some static- and dynamic-analysis tools can supplement visual inspection.
 
 *go*vet*
 
-This subcommand analyzes the code and can detect issues that the compiler does not. Try running `go` `vet` on the program.
+This subcommand performs some static analysis and can reports a range of issues, including some synchronization bugs. Try running `go` `vet` on the program.
 
 *race*detector*
 
@@ -4181,7 +4182,7 @@ The Go CLI provides a [[https://go.dev/blog/race-detector][race detector]], i.e.
 
 
 
-* Fixing the data race
+* One way to fix the data race
 
 In constrast to the iteration variable, variables declared within the body of the loop are not shared between iterations. Therefore, one way to fix the data race consists in declaring a copy of the iteration variable inside the loop, before the `go` statement:
 
@@ -4193,7 +4194,7 @@ Although the redeclaration looks a bit weird, this solution has merit insofar as
 
 
 
-* Fixing the data race
+* Another way to fix the data race
 
 An alternative solution consists in passing the value of the iteration variable as an argument to the anonymous function.
 
@@ -4203,13 +4204,38 @@ That way, by virtue of Go's call-by-value evaluation strategy, the function only
 
 
 
-* Be careful when running closures as goroutines
+* Yet another way to fix the data race
 
 When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may cause data races.
 
 Defining a dedicated named function can help:
 
 .play -edit src/goroutine_func_standalone.go /^//START/,/^//END/
+
+
+
+* Good news: Go 1.22 will fix for loops!
+
+Inadvertently capturing a loop variable is so common that the Go team had to act.
+
+From Go 1.22 onwards, variables introduced by a `for` loop will have per-iteration scope (instead of per-loop scope, as they do in versions prior to Go 1.22).
+
+You can already preview this scoping change by setting `GOEXPERIMENT=loopvar` in your environment (in Go 1.21.x).
+
+  func main() {
+    var wg sync.WaitGroup
+    const n = 10
+    wg.Add(n)
+    for i := 0; i < n; i++ {
+      go func() {
+        defer wg.Done()
+        fmt.Println(i) // after setting GOEXPERIMENT=loopvar, no synchronization bug here!
+      }()
+    }
+    wg.Wait()
+  }
+
+For more details about this change, see [[https://go.dev/blog/loopvar-preview][Fixing For Loops in Go 1.22]].
 
 
 
