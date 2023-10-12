@@ -4051,44 +4051,55 @@ We need another mechanism...
 
 * Wait groups
 
-The [[https://pkg.go.dev/sync][`sync` package]] provides a mechanism for orchestrating goroutines: _wait_groups_.
+The [[https://pkg.go.dev/sync][`sync` package]] provides a useful mechanism: _wait_groups_.
 
-A wait group is little more than a glorified counter with _concurrency-safe_ operations.
-
-A wait group allows you to
-
-- keep track of the number of goroutines you spawn to perform a particular task, and
-- wait for all those goroutines to terminate before moving on.
+A wait group implements something like a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]]: it allows you to wait for a group of goroutines to terminate before moving on.
 
 Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
 
+
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/upright.svg 200 _
 
+: Java equivalent: CountDownLatch
 : e.g. if you're spawning a goroutine for each line of a file that you're reading, or for each element received from a channel
 : wait groups not needed in fan-out/fan-in if number of tasks known in advance
 : compare https://go.dev/play/p/cnXXJFTUPO1 to https://go.dev/play/p/MHjuGwsP_hJ
 
 
 
-* Using a wait group
+* Declaring a wait group
 
 The zero value of type [[https://pkg.go.dev/sync#WaitGroup][`sync.WaitGroup`]] is readily usable:
 
   var wg sync.WaitGroup
 
-A wait group supports three operations:
+A `sync.WaitGroup` is typically declared within a function; declaring one at the top level is rarely (if ever) useful.
+
+  var wg sync.WaitGroup // bad
+
+  func main() {
+    // ...
+    var wg sync.WaitGroup // good
+    // ...
+  }
+
+
+
+* Using a wait group
+
+A wait group is little more than a counter that supports _concurrency-safe_ operations.
+
+A wait group has three methods:
 
   func (wg *WaitGroup) Add(delta int)
-
-`Add` increments the counter by `delta`. Call it _just_before_ spawning a goroutine.
-
   func (wg *WaitGroup) Done()
-
-`Done` decrements the counter by 1. Call it _at_the_very_end_ of each spawned goroutine (with a `defer`, typically).
-
   func (wg *WaitGroup) Wait()
 
-`Wait` blocks until the counter goes back to 0 (acts as a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]]). Call it at the point of the spawning goroutine where you need to wait for the spawned goroutines to terminate.
+- `Add` increments the counter by `delta`. Call it _just_before_ spawning a goroutine.
+- `Done` decrements the counter by 1. Call it _at_the_very_end_ of each spawned goroutine, typically via a `defer` statement.
+- `Wait` blocks until the counter goes back to 0. Call it at the point of the spawning goroutine where you need to wait for the spawned goroutines to terminate.
+
+
 
 : wg.Done() is equivalent to wg.Add(-1)
 
@@ -4585,7 +4596,7 @@ Closing a channel is akin to a restaurant announcing the end of service.
 - The restaurant no longer accepts customers for the day.
 - However, the staff allows already present customers to stay and finish their meal.
 
-.image https://rew-online.com/wp-content/uploads/2019/10/restaurantCLOSED.jpg 250 _
+.image https://www.matternow.com/wp-content/uploads/2020/06/CAL-BlgPst-1200x630-043014-1024x538-3.jpg 250 _
 
 Similarly, closing a channel doesn't drain it from the elements it contains; and some goroutine(s) can still receive on a closed channel in order to consume its elements.
 
