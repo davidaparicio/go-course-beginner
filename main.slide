@@ -4241,9 +4241,7 @@ Defining a dedicated named function can help:
 
 * Good news: Go 1.22 will fix for loops!
 
-Inadvertently capturing a loop variable is so common that the Go team had to act.
-
-From Go 1.22 onwards, variables introduced by a `for` loop will have per-iteration scope (instead of per-loop scope, as they do in versions prior to Go 1.22).
+From Go 1.22 onwards, variables introduced by a `for` loop will have per-iteration scope, instead of per-loop scope (as they are in versions prior to Go 1.22).
 
 You can already preview this scoping change by setting `GOEXPERIMENT=loopvar` in your environment (in Go 1.21.x).
 
@@ -4261,6 +4259,8 @@ You can already preview this scoping change by setting `GOEXPERIMENT=loopvar` in
   }
 
 For more details about this change, see [[https://go.dev/blog/loopvar-preview][Fixing For Loops in Go 1.22]].
+
+: Inadvertently capturing a loop variable is so common that the Go team had to act.
 
 
 
