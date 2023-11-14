@@ -1,10 +1,13 @@
 module whatever
 
-go 1.18
+go 1.21
 
 require (
-	github.com/yuin/goldmark v1.4.1 // indirect
-	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
-	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
-	golang.org/x/tools v0.1.10 // indirect
+	github.com/jub0bs/fcors v0.6.0
+	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa
+)
+
+require (
+	golang.org/x/net v0.18.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )

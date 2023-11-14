@@ -1,5 +1,5 @@
 Formation Go
-5 June 2023
+10 November 2023
 
 Julien Cretel
 
@@ -29,15 +29,15 @@ https://infosec.exchange/@jub0bs
 
 * Setup
 
-Make sure you have the latest version of Go (1.20.x) installed by running
+Make sure you have the latest version of Go (1.21.x) installed by running
 
-  go version
+  $ go version
 
-To figure out where your Go distribution is installed, run
+If you're curious about where your Go distribution is installed, you can run
 
-  go env GOROOT
+  $ go env GOROOT
 
-To learn Go, I recommend Visual Studio Code and its [[https://code.visualstudio.com/docs/languages/go][Go extension]], which embarks a number of utilities such as `goimports` and `gofmt`.
+To cut your teeth on Go, I recommend [[https://code.visualstudio.com/][Visual Studio Code]] and its [[https://code.visualstudio.com/docs/languages/go][Go extension]], which embarks a number of utilities such as `goimports` and `gofmt`.
 
 Also make sure you have Git installed.
 
@@ -90,15 +90,16 @@ If you need to add a line break somewhere, make sure [[https://github.com/golang
 
 *Objectives*
 
-Write a small CLI tool (and then a server) to check the validity and availability
-of a username on multiple social networks: Twitter, GitHub, etc.
+Write a small CLI tool (and, later, a Web server) to check the validity and availability of a username on multiple social networks: Twitter, GitHub, etc.
 
-A forcing function for learning Go: we'll introduce new concepts as needed.
+A forcing function for learning: Go concepts will be introduced as needed by the project.
 
 *Business* *case*
 
 - Ability to choose a name consistent across multiple platforms 😇
 - [[https://en.wikipedia.org/wiki/Cybersquatting#Social_media][Username squatting]] 😈
+
+For an example of a ([[https://twitter.com/marckohlbrugge/status/1682064001331609615][reportedly]]) financially successful similar project, see [[https://handle.horse]].
 
 .image https://raw.githubusercontent.com/nielsing/yar/master/images/yargopher3.png 150 _
 
@@ -165,12 +166,10 @@ However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.o
 
 * Reminiscent of but different from C
 
-- strong typing
+- statically linked executables
 - fast compilation
-- garbage collection
+- automatic memory management (garbage collection)
 - memory safety
-- packages
-- full Unicode support
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
 
@@ -182,16 +181,19 @@ However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.o
 
 * Reminiscent of but different from C (cont'd)
 
+- packages
+- strong typing
 - concurrency primitives
 - sensible `switch` behavior
-- first-class functions
 - multiple function results
-- no semi-colons
+- no terminating semi-colons
+- full Unicode support
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
 
-: multiple returns allow principled error handling
 : packages: no ifdef guards, no required ordering of top-level declarations, encapsulation
+: Brian Kernighan (popularized C): I think that the real problem with C is that it doesn't give you enough mechanisms for structuring really big programs, for creating ``firewalls'' within programs so you can keep the various pieces apart. https://www.cs.cmu.edu/~mihaib/kernighan-interview/
+: multiple returns allow principled error handling
 : also syntax differences: type name comes after variable name
 
 
@@ -341,18 +343,91 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
 
 
 
-* Namecheck project: a starting point
+* Modules
 
-1. Create a folder named `namecheck`; in it, create a file named `main.go`:
+Go's solution to dependency management is known as the [[https://go.dev/doc/modules/managing-dependencies][_modules_system_]].
+
+The terms _package_ and _module_ are confusingly similar, but don't conflate the two!
+
+- A _package_ is a unit of code composed of one or more source files.
+- A _module_ is a collection of packages versioned together using [[https://semver.org/][semantic versioning]].
+
+.image img/modules_vs_packages.svg 300 _
+
+: https://excalidraw.com/#json=7Ayd8pQ2QmNF6Xi3fopDw,sttstuhV7iAXR8leKwlfrw
+
+
+
+* The path of a module
+
+A module is identified by its _path_, which takes the form of a domain followed by a path where you will release its source code. A module's path should be globally unique.
+
+For instance, if you intend to publish your code on GitHub, the path of your module should have the following format:
+
+  github.com/YOUR_GITHUB_USERNAME/REPO_NAME
+
+A module's path prefixes import paths of all the packages contained within the module:
+
+  package main
+
+  import "github.com/YOUR_GITHUB_USERNAME/REPO_NAME/SOME_PACKAGE_NAME"
+
+
+
+* Initializing a module
+
+When starting a project, you should initialize a module in the project's root folder.
+
+: (Multi-module projects do exist but are rare and invite complication.)
+
+To do so, `cd` to the root of your project and run a command of the following form:
+
+  $ go mod init <your-module-path>
+
+Initializing a module creates a text file named `go.mod` at the root of your project.
+
+Don't edit the `go.mod` file manually. Instead, you can interact with it solely through the use of the `mod` subcommand. For help, run
+
+  $ go help mod
+
+
+
+* Namecheck project: initialize a module
+
+1. Create a root folder named `namecheck` for your project and `cd` into it.
+
+2. At the root of your project, initialize a module by running a command of this form:
+
+  $ go mod init github.com/YOUR_GITHUB_USERNAME/namecheck
+
+A `go.mod` file will be created at the root of your project:
 
   namecheck
+  └── go.mod
+
+3. Inspect the contents of the `go.mod` file. It should look something like this:
+
+  module github.com/jub0bs/namecheck
+
+  go 1.21.3
+
+- The [[https://go.dev/ref/mod#go-mod-file-module][`module` directive]] defines the module's path.
+- The [[https://go.dev/ref/mod#go-mod-file-go][`go` directive]] indicates that the module assumes the semantics of a specific version of Go.
+
+
+* Namecheck project: a starting point
+
+1. Create, at the root of your project, a file named `main.go`:
+
+  namecheck
+  ├── go.mod
   └── main.go
 
 2. Write a "Hello World" program in main.go
 
 3. Compile it by running the following command, which creates a standalone native binary (named `main` on *nix systems or `main.exe` on Windows):
 
-  go build main.go
+  $ go build main.go
 
 4. Execute the executable (then delete it).
 
@@ -364,17 +439,17 @@ Go source files [[https://golang.org/ref/spec#Source_code_representation][*must*
 
 * Compiling and executing a program in one fell swoop
 
-If you just want to run the program without retaining an executable, run
+If you just want to quickly execute the program without retaining an executable, run
 
-  go run main.go
+  $ go run main.go
 
 which is roughly equivalent (on *nix systems) to
 
-  go build main.go
-  ./main
-  rm main
+  $ go build main.go
+  $ ./main
+  $ rm main
 
-Don't use `go`run` in production, though.
+For various reasons, the `run` subcommand isn't appropriate for production, though.
 
 .image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 200 _
 
@@ -382,77 +457,22 @@ Don't use `go`run` in production, though.
 
 * Cross-compilation
 
-By default, the compiler will produce an executable targeting your operating system and architecture.
+By default, the compiler will produce an executable that targets your operating system and architecture, which are given by the following shell command. In my case:
+
+  $ go env GOOS GOARCH
+  darwin
+  amd64
 
 However, you can cross-compile to a different operating system and architecture using the `GOOS` and `GOARCH` environment variables:
 
-  GOOS=windows GOARCH=amd64 go build main.go
+  $ GOOS=windows GOARCH=amd64 go build main.go
 
 The following command lists all valid GOOS/GOARCH combinations:
 
-  go tool dist list
-
-.image https://go.dev/blog/store/gophers.jpg 200 _
+  $ go tool dist list
 
 
-
-* Modules
-
-Go's solution to dependency management is known as the _module_system_.
-
-The terms _package_ and _module_ are confusingly similar, but don't conflate the two!
-
-- _Packages_ are composed of one or more source files.
-- You can think of a _module_ as a mechanism for managing dependencies within a project.
-
-You *must* initialize a module at the root of your project in order to manage dependencies, including packages within the same project!
-
-: typically, one module per project
-
-
-
-* The path of a module
-
-A module is identified by its _path_, which should be globally unique.
-
-A module's path takes the form of a schemeless URI where you intend to publish its source code, e.g.
-
-  github.com/jub0bs/namecheck
-
-The module's path acts as prefix for import paths of packages contained within the module:
-
-  // main.go
-  package main
-
-  import "github.com/jub0bs/namecheck/twitter"
-
-
-
-* Initializing a module
-
-You can initialize a module by running (at the root of your project, typically) a command of the following form:
-
-   go mod init <your-module-path>
-
-Initializing a module creates a text file named `go.mod` at the root of your project.
-
-Don't edit the `go.mod` file manually; instead, you can interact with it solely through the use of the `go`mod` subcommand.
-
-
-
-* Namecheck project: initialize a module
-
-At the root of your project, initialize a module by running a command of this form:
-
-  go mod init github.com/YOUR_GITHUB_USERNAME/namecheck
-
-A `go.mod` file will be created at the root of your project:
-
-  namecheck
-  ├── go.mod
-  └── main.go
-
-Inspect its contents.
+.image https://go.dev/blog/store/gophers.jpg 150 _
 
 
 
@@ -472,21 +492,23 @@ Which keywords are new to you? Which one(s) seem to be missing?
 
 * Keywords
 
-*chan* and *select* are related to _channels_, which allow you to communicate between goroutines (Go's lightweight threads).
-
-*fallthrough* can be used to override `switch`'s normal "breaking" behavior.
-
-*go* is used to spawn goroutines.
-
-*goto* [[https://tip.golang.org/src/cmd/go/internal/str/str.go#L44][has its uses]], but it's not for the average Go developer.
+*defer* allows you to unconditionally execute some code at the end of a function.
+It's useful for cleaning up and reclaiming resources.
 
 *range*, used in conjunction with `for`, allows you to iterate over various data structures.
 
-No `while` keyword in Go: all loops are written with the `for` keyword.
+*go* is used to spawn goroutines, which you can think of as lightweight threads.
 
-No `try`/`catch`/`finally` keywords in Go: errors are reported as normal values.
+*chan* and *select* are related to _channels_, which allow you to synchronize and communicate between goroutines.
 
-*defer* allows you to unconditionally execute some code at the end of a function.
+*fallthrough* is a rarely used keyword that lets you override the normal "breaking" behavior of Go's `switch` statement.
+
+*goto* [[https://tip.golang.org/src/cmd/go/internal/str/str.go#L44][has its uses]], but it's not for the average Go developer. Avoid it.
+
+Go has no `while` keyword: all loops are written with the `for` keyword.
+
+Because Go has no exception system, it also lacks `try`/`catch`/`finally` keywords.
+
 
 : defer: a cleaner alternative to finally
 
@@ -543,14 +565,14 @@ Go also comes with several predeclared names accessible from anywhere in your co
 
   var foo = "foo" // this is a comment
 
-[[https://golang.org/ref/spec#Comments][_General_comments_]] are delimited by `/*` and `*/`; they can be multiline and they do not nest:
+[[https://golang.org/ref/spec#Comments][_General_comments_]] are delimited by `/*` and `*/`; they can be multiline and do not nest:
 
   /*
     this is
     a general comment
   */
 
-The documentation of a package is written as comments in the package's source file(s).
+The documentation of a package is written as comments in the package's source file(s). For an example, see [[https://github.com/jub0bs/fcors/blob/main/fcors.go]].
 
 : won't talk too much about documentation in this first course
 
@@ -560,15 +582,18 @@ The documentation of a package is written as comments in the package's source fi
 
 
 
-* Package path and package name
+* A package's path and default name
 
 A package is identified by its _path_, which must be globally unique.
 
+Standard-library packages have paths that are composed of one or more components:
+
   fmt
   net/http
-  github.com/jub0bs/missilelauncher
 
-The path of a third-party package typically is a schemeless URL that corresponds to the location where clients can download the package.
+Other packages have paths that take the form of a domain followed by one or more components:
+
+  github.com/jub0bs/missilelauncher
 
 The _default_name_ of a package corresponds to the last component of its path:
 
@@ -576,9 +601,6 @@ The _default_name_ of a package corresponds to the last component of its path:
   http
   missilelauncher
 
-.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 150 _
-
-: first two are part of core library; third one is third-party
 : "usually": the exception is for a package whose enclosing folder doesn't mach the package name; best avoided
 : also, with versions of modules after v1, it's the second last path component: "rsc.io/quote/v3" => quote
 
@@ -594,9 +616,9 @@ For instance, all source files constituting the `fmt` package start with
 
   package fmt
 
-and are located in a folder corresponding to `${go`env`GOROOT}/src/fmt`:
+and are located in a folder named `fmt` somewhere on your machine:
 
-  /usr/local/Cellar/go/1.17.8/libexec/src/fmt
+  fmt
   ├── doc.go
   ├── errors.go
   ├── format.go
@@ -609,10 +631,12 @@ and are located in a folder corresponding to `${go`env`GOROOT}/src/fmt`:
 
 The documentation of a package installed locally can be consulted at the command line with the `doc` subcommand:
 
-  go doc fmt
-  go doc fmt Println
+  $ go doc fmt
+  $ go doc fmt Println
 
 The documentation for core-library and third-party packages is available online at [[https://pkg.go.dev/fmt][https://pkg.go.dev/fmt]].
+
+The documentation of some packages ([[https://pkg.go.dev/fmt#pkg-examples][`fmt`, for instance]]) features executable examples.
 
 .image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
 
@@ -620,7 +644,7 @@ The documentation for core-library and third-party packages is available online 
 
 * Package: the unit of encapsulation
 
-In Go, the package (not the type!) is the unit of encapsulation.
+In Go, packages (as opposed to types) act as units of encapsulation.
 
 There are only two access levels: a package-level identifier is either
 
@@ -649,9 +673,9 @@ We'll cover two ways of importing packages: normal imports and named imports.
 The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility takes care of adding missing imports, removing unreferenced imports, and organizes imports in a canonical way:
 
   import (
-    // core-library packages
+    // standard-library packages
 
-    // third-party packages
+    // other packages
   )
 
 .image https://go.dev/blog/store/gophers.jpg 200 _
@@ -945,8 +969,9 @@ In many cases, you have no option but to use the `var` keyword...
 *To*declare*a*variable*whose*inferred*type*doesn't*suit*you*
 
   type Fahrenheit float64
+
   freezing := 32                // type int :(
-  var freezingF Fahrenheit = 32 // type Fahrenheit :)
+  var freezing Fahrenheit = 32 // type Fahrenheit :)
 
 : a nil value carries no type information (could be a map, a function, a slice, a pointer)
 : more idiomatic than freezing := Fahrenheit(32)
@@ -1098,7 +1123,7 @@ You can omit the switch expression, which is equivalent to using `true`:
 
 This form of `switch` statement is preferred to a long if-else chain.
 
-(When we cover interfaces, you'll learn another form of switch, called a _type_switch_.)
+There is another form of switch known as _type_switch_, which you can ignore for now.
 
 
 
@@ -1106,7 +1131,19 @@ This form of `switch` statement is preferred to a long if-else chain.
 
 
 
-* While-style loop
+* Three-clause loop
+
+The familiar loop syntax from the C-family languages is back.
+
+.play -edit src/forc.go /^//START/,/^//END/
+
+Again, no parentheses needed around the init/condition/post part.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
+
+
+
+* "While" loop
 
 Remember: no `while` keyword in Go!
 
@@ -1117,7 +1154,6 @@ The conditional expression
 - must be of boolean type,
 - needs not be parenthesized,
 - can be omitted (to obtain an infinite loop).
-
 
 
 * break and continue
@@ -1131,18 +1167,6 @@ the `continue` keyword skips to the next iteration of the (innermost) loop.
 .play -edit src/continue.go /^//START/,/^//END/
 
 For nested loops, those keywords can be used in conjunction with [[https://go.dev/ref/spec#Labeled_statements][_labels_]].
-
-
-
-* C-style loop
-
-The familiar loop syntax from the C-family languages is back.
-
-.play -edit src/forc.go /^//START/,/^//END/
-
-Again, no parentheses needed around the init/condition/post part.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
 
 
 
@@ -1329,6 +1353,7 @@ The zero value of function types is `nil`.
 
 Be careful: calling a `nil` function causes a panic!
 
+: greetings is a function-valued variable
 : functions as parameters: useful for decorators/middleware
 : function-typed results can also be useful for cleaning up; see Mat Ryer's talk
 
@@ -1350,7 +1375,23 @@ A _closure_ is an anonymous function that references variables from outside its 
 
 
 
-* And one more thing: defer
+* Methods
+
+Methods are functions that are attached to a specific type.
+
+They distinguish themselves from _package-level_functions_, e.g.
+
+  func MatchString(pattern string, s string) (matched bool, err error) // package-level function
+
+by the presence (in a pair of parentheses between the keyword `func` and the method's name) of an extra parameter called the _method's_receiver_:
+
+  func (re *Regexp) MatchString(s string) bool // method on the *Regexp type
+
+Methods are tightly related to _interfaces_, which are the primary mechanism for polymorphism. More about that later in the course.
+
+
+
+* A glimpse at defer
 
 *defer* allows you to make sure that something unconditionally happens when a function returns, regardless of its point of exit.
 
@@ -1565,7 +1606,7 @@ Panics can (but rarely should) be [[https://go.dev/blog/defer-panic-and-recover]
 
 
 
-* Don't panic willy-nilly in your code
+* Don't panic for no good reason
 
 Do not panic in your functions for anticipated and mundane failures:
 
@@ -1868,9 +1909,7 @@ The [[https://pkg.go.dev/testing/][`testing` package]] allows you to test your p
 - micro-benchmarks (laser-focused performance tests for CPU-bound functions),
 - fuzz tests (property-based tests using randomly generated inputs).
 
-You can run tests by invoking the following subcommand:
-
-  go test
+You can run tests by invoking the following subcommand: `go`test`
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
@@ -2148,6 +2187,7 @@ A function call preceded by the `defer` keyword gets _unconditionally_ executed 
 `defer` is reminiscent of the `finally` keyword from other languages, but it's more powerful because it promotes the co-location of resource acquisition and release.
 
 
+
 * Deferred function calls are executed in reverse order
 
 Deferred function calls are executed in reverse order in which they occur in the enclosing function.
@@ -2209,6 +2249,7 @@ Consider the following function.
       defer file.Close()
       // do something interesting with file...
     }
+    return nil
   }
 
 What's a potential issue, here? How would you fix it?
@@ -2219,22 +2260,21 @@ What's a potential issue, here? How would you fix it?
 
 * A defer pitfall (cont'd)
 
-Remember that deferred function calls are executed only when the enclosing function terminates, not at the end of the loop iteration that they appear in. Here, the files will all be closed _only_ when the function terminates!
+Remember that deferred function calls are executed, not at the end of the loop iteration in which the defer statements occur, but only when the enclosing function terminates!
 
+In our earlier example, the files will all be closed _only_ when `processFiles` terminates!
 One solution is to enclose the defer statement in a smaller function:
 
   func processFiles(paths ...string) error {
     for _, path := range paths {
-      if err := processFile(path); err != nil {
-        return err
-      }
+      if err := processFile(path); err != nil { return err }
     }
+    return nil
   }
+
   func processFile(path string) error {
       file, err := os.Open(path)
-      if err != nil {
-        return err
-      }
+      if err != nil { return err }
       defer file.Close()
       // do something interesting with file...
   }
@@ -2296,9 +2336,9 @@ For now, just write a fake implementation of `IsAvailable` in your `twitter` pac
 
 Flesh out your `main` function:
 
-1. Check the validity of the username of interest on Twitter. Print the result to stdout.
+1. Check the validity of the username of interest on Twitter. Print the result.
 
-2. If the username is valid, check its availability on Twitter. Print the result to stdout.
+2. If the username is valid, check its availability on Twitter. Print the error if it's non-`nil` or the boolean result otherwise.
 
 3. Repeat steps 1 & 2 for GitHub.
 
@@ -2469,8 +2509,9 @@ The only legal comparison is to a literal `nil` value.
 
 .play -edit src/slice_incomparable.go  /^//START/,/^//END/
 
-However, you can use [[https://pkg.go.dev/golang.org/x/exp/slices#Equal][the `Equal` function]] from [[https://pkg.go.dev/golang.org/x/exp/slices][the `golang.org/x/exp/slices` package]] to compare two slices whose element type is comparable.
+However, you can use [[https://pkg.go.dev/slices#Equal][the `Equal` function]] from [[https://pkg.go.dev/slices][the `slices` package]] (new in Go 1.21) to compare two slices whose element type is comparable.
 
+.play -edit src/slice_equal.go  /^//START/,/^//END/
 
 
 * Slice indexing
@@ -2655,9 +2696,7 @@ One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-usi
 
 * Table-driven subtests
 
-An improvement over table-driven tests is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_subtests_]].
-
-This approach consists in passing the test logic to `*testing.T`'s `Run` method, which causes information about the different test cases to be output when you run the tests.
+An improvement over table-driven tests is [[https://go.dev/blog/subtests#table-driven-tests-using-subtests][_table-driven_subtests_]]. This approach consists in passing the test logic (as an anonymous function) to `*testing.T`'s `Run` method:
 
   // the rest of the testing function is unchanged
   for _, tc := range testCases {
@@ -2669,6 +2708,12 @@ This approach consists in passing the test logic to `*testing.T`'s `Run` method,
     }
     t.Run(tc.desc, f)
   }
+
+This approach displays information about the different subtests when you run the tests.
+
+It also allows you to limit which subtests to run within a given test function, e.g. only the subtests in `TestIsValid` whose description starts with "too":
+
+  go test -v -run='^TestIsValid/too*' ./...
 
 : Run method: results of each subtest detailed in output
 
@@ -2765,8 +2810,9 @@ The only legal comparison is to a literal nil value.
 
 .play -edit src/map_incomparable.go /^//START/,/^//END/
 
-However, you can use [[https://pkg.go.dev/golang.org/x/exp/maps#Equal][the `Equal` function]] from [[https://pkg.go.dev/golang.org/x/exp/maps][the `golang.org/x/exp/maps` package]] to compare two maps whose key type and value type are comparable.
+However, you can use [[https://pkg.go.dev/maps#Equal][the `Equal` function]] from [[https://pkg.go.dev/maps][the `maps` package]] (new in Go 1.21) to compare two maps whose key type and value type are comparable.
 
+.play -edit src/map_equal.go /^//START/,/^//END/
 
 
 * Accessing a value associated with a key in a map
@@ -2843,7 +2889,7 @@ Maps are unordered collections. Not only is the iteration order unspecified, but
 To range over a map in a certain order, you must
 
 - collect all of the map's keys in a slice,
-- sort the slice as desired,
+- sort the slice of keys as desired (e.g. in lexicographical order),
 - access the map values as you range over the sorted slice of keys.
 
 .code -edit src/map_range_deterministic.go /^//START/,/^//END/
@@ -2851,8 +2897,6 @@ To range over a map in a certain order, you must
 See [[https://go.dev/play/p/UwzU1ZKpVNP][this Playground]].
 
 The `Keys` function (and other useful generic functions that operate on maps) are provided by [[https://pkg.go.dev/golang.org/x/exp/maps][the `golang.org/x/exp/maps` package]].
-
-: this example systematically prints map pairs in the lexicographical order of its keys
 
 
 
@@ -3173,21 +3217,18 @@ Live demo on [[https://go.dev/play/p/axkpaElUyHI][the Playground]].
 
 * Namecheck project: turn IsValid and IsAvailable into methods
 
-Rather than having package-level functions, let's create some object dedicated to checking the validity and availability of usernames on each platform.
+To pave the way for the introduction of useful interface types in our project, let's create some types that allows users to check the validity and availability of usernames on each platform and turn our two functions into methods.
 
 1. In the `twitter` package, declare a `Twitter` type based on an empty struct.
 
 2. Turn `IsValid` and `IsAvailable` into methods on that type (use a pointer receiver).
 
-3. Declare a third method named `String` on the `Twitter` type; it should have no parameter and return a string corresponding to the name of the platform: `"Twitter"`.
+3. Adjust your tests in `twitter_test.go` and `main.go`.
 
-4. Adjust your tests in `twitter_test.go` and `main.go`.
-
-5. Repeat steps 1-4 for the `github` package.
+4. Repeat steps 1-4 for the `github` package.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
-: value or pointer receiver for String method?
 
 
 
@@ -3200,7 +3241,7 @@ Rather than having package-level functions, let's create some object dedicated t
 Interfaces (and now generics) enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]] in Go:
 they allow you to manipulate different concrete type that provide the same behavior(s).
 
-Contrary to all the types that we've covered so far, interfaces are abstract types. An interface defines a set of types that provide some (zero or more) specific methods:
+Contrary to all the types that we've covered so far, interfaces are abstract types. An interface defines a set of types that provide some (zero or more) specific operations:
 
   type Climber interface {
     Climb(int) error
@@ -3347,42 +3388,6 @@ Many of the interface types provided by Go's standard library are single-method:
 
 
 
-* fmt.Stringer
-
-`fmt.Stringer` is an interface type that requires a single method:
-
-  type Stringer interface {
-    String() string
-  }
-
-If a type satisfies `fmt.Stringer`, its `String` method governs the textual representation that functions from the `fmt` package use for that type.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
-
-
-
-* fmt.Stringer
-
-.play -edit src/stringer.go /^//START/,/^//END/
-
-
-
-* Namecheck project: satisfy the fmt.Stringer
-
-1. Study the [[https://pkg.go.dev/fmt#Stringer][documentation]] of the `fmt.Stringer` interface type.
-
-  type Stringer interface {
-    String() string
-  }
-
-That interface governs how functions from the `fmt` package represent values of the concrete type in question.
-
-2. Do `*twitter.Twitter` and `*github.GitHub` satisfy that interface? If not, make it so!
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
 * Interface composition
 
 Consider these two interfaces:
@@ -3423,11 +3428,10 @@ You can declare a larger interface type simply by listing the more elementary in
 
 * Namecheck project: declare a Checker interface
 
-1. Still in `namecheck.go`, declare an interface type named `Checker` by composition of
+1. Still in `namecheck.go`, declare an interface type named `Checker` by composition of the following interface types:
 
-- a `Validator`
-- an `Availabler`
-- a `fmt.Stringer`
+- `Validator`
+- `Availabler`
 
 2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it?
 
@@ -3443,6 +3447,40 @@ You can declare a larger interface type simply by listing the more elementary in
 - a pointer to a `github.GitHub`
 
 2. Simplify the existing code by ranging over the slice of `namecheck.Checker` values.
+
+3. There currently is no way to ask a `Checker` to which platform (Twitter or GitHub) it's dedicated. Any idea?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* fmt.Stringer
+
+[[https://pkg.go.dev/fmt#Stringer][documentation]] is an interface type that requires a single method:
+
+  type Stringer interface {
+    String() string
+  }
+
+If a type satisfies `fmt.Stringer`, its `String` method governs the textual representation that functions from the `fmt` package use for that type.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+
+
+
+* fmt.Stringer
+
+.play -edit src/stringer.go /^//START/,/^//END/
+
+
+
+* Namecheck project: satisfy the fmt.Stringer
+
+1. Modify the declaration of the `namecheck.Checker` interface so that the latter also be an `fmt.Stringer`.
+
+2. Do `*twitter.Twitter` and `*github.GitHub` still satisfy the `namecheck.Checker` interface? If not, fix that.
+
+3. Make good use of `namecheck.Checker`'s new `String` method in your `main` function.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3708,7 +3746,7 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
     StatusCode int
   }
 
-2. Make `stub.SuccessfulGetter` satisfy your `namecheck.Getter` interface. Its `Get` method should unconditionally succeed and return the specified status code.
+2. Make `stub.SuccessfulGetter` satisfy your `namecheck.Getter` interface (hint: make use of `http.NoBody`). Its `Get` method should unconditionally succeed and return the specified status code.
 
 3. Now write a few unit tests for `github.GitHub`'s `IsAvailable` method and run them.
 
@@ -3718,8 +3756,6 @@ If not, what would you change?
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 150 _
 
 : https://www.martinfowler.com/articles/mocksArentStubs.html
-: You may get some panics. If you do, can you figure out why and fix it?
-: need a non-nil request body: use http.NoBody
 
 
 
@@ -3862,6 +3898,10 @@ The `main` function is itself a goroutine that is created when the program start
 Each goroutine gets its own stack, which starts small and grows/shrinks as required.
 
 .image https://go.dev/blog/store/gophers.jpg 300 _
+
+: goroutines != futures/promises/async
+: doesn't return anything that will eventually contain the results
+
 
 
 * The Go scheduler
@@ -4060,7 +4100,7 @@ Wait groups are particularly useful when the number of goroutines to spawn is no
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/upright.svg 200 _
 
-: Java equivalent: CountDownLatch
+: Java equivalent: CountDownLatch: https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/CountDownLatch.html
 : e.g. if you're spawning a goroutine for each line of a file that you're reading, or for each element received from a channel
 : wait groups not needed in fan-out/fan-in if number of tasks known in advance
 : compare https://go.dev/play/p/cnXXJFTUPO1 to https://go.dev/play/p/MHjuGwsP_hJ
@@ -4132,7 +4172,9 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 * How not to misuse wait groups
 
-Calls to `wg.Add` must take place in the spawning goroutine, _not_ within the child goroutine.
+Calls to `Add` must take place in the spawning goroutine, _not_ within the child goroutine.
+
+Calls to `Add` with a positive delta that occur when the counter is zero must happen before the call to `Wait`.
 
 A `sync.WaitGroup` must not be copied after first use. If a function needs to operate on a wait group that was declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to that function.
 
@@ -4450,9 +4492,11 @@ Channels [[https://go.dev/ref/spec#Channel_types][act as first-in-first-out queu
 
 .image https://i.imgflip.com/68zdq9.jpg 300 _
 
-Of course, in the face of multiple goroutines sending values to a channel, the order in which values are received is only partial.
+Of course, if multiple goroutines send values to a channel, the order in which values are received is only partial.
 
-See [[https://go.dev/play/p/6kpQq0hhlun][this Playground]] (although you may only be able to fully understand the code later).
+See [[https://go.dev/play/p/6kpQq0hhlun][this Playground]] (although you may be able to fully understand the code only later).
+
+: the values from the two goroutines may be interleaved
 
 
 
@@ -4788,6 +4832,41 @@ Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][fun
 
 
 
+* HTTP handlers vs. shared memory
+
+Be careful! The HTTP server provided by `net/http` is *concurrent*: it handles each incoming request in a *separate* goroutine.
+
+Therefore, if your handler updates some shared memory, you *must* serialize access to it, or you risk introducing synchronization bugs in your code!
+
+As discussed earlier, a synchronization bug often manifests itself at run time as a data race, which leads to unpredictable results and possibly disastrous consequences!
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
+
+
+
+* Caution: HTTP handlers vs. shared memory (cont'd)
+
+The following program contains a simple synchronization bug:
+
+  var toggle bool
+
+  func handleToggle(_ http.ResponseWriter, _ *http.Request) {
+     toggle = !toggle // 😱
+  }
+
+  func main() {
+      http.HandleFunc("/toggle", handleToggle)
+      if err := http.ListenAndServe(":8080", nil); err != nil {
+          log.Fatal(err)
+      }
+  }
+
+If two requests are sent to `/toggle` at exact the same time, the subsequent value of global variable `toggle` is unpredictable.
+
+This bug is particularly insidious because it will only manifest itself under sufficiently heavy load on the server. Simple integration tests are unlikely to catch it.
+
+
+
 * Namecheck project: turn your CLI tool into a Web server
 
 1. Copy `cmd/cli/main.go` to `cmd/server/main.go`. We won't touch `cmd/cli` for the remainder of the course.
@@ -5118,11 +5197,11 @@ If you did not modify the `check` function, what capacities should `resultCh` an
 
 Spawning goroutines is easy, but making sure they terminate sometimes requires more effort. For example, consider the following function:
 
-.code -edit src/uncancellable.go /^//START1/,/^//END1/
+.code -edit src/uncancelable.go /^//START1/,/^//END1/
 
 If you start it as a goroutine, that goroutine will live on until your program ends:
 
-.play -edit src/uncancellable.go /^//START2/,/^//END2/
+.play -edit src/uncancelable.go /^//START2/,/^//END2/
 
 However, you may want to force that goroutine to terminate that goroutine earlier...
 
@@ -5130,12 +5209,12 @@ However, you may want to force that goroutine to terminate that goroutine earlie
 
 * Canceling goroutines (cont'd)
 
-One common recipe for making a function cancellable consists of
+One common recipe for making a function cancelable consists of
 
 - a `select` statement, and
 - a channel of type `<-chan`struct{}` passed as a parameter to the function.
 
-  func cancellable(done <-chan struct{}) {
+  func cancelable(done <-chan struct{}) {
     for {
         select {
         case <-done:
@@ -5147,18 +5226,18 @@ One common recipe for making a function cancellable consists of
     }
   }
 
-If function `cancellable` is launched as a goroutine, you can trigger its eventual termination simply by closing the `done` channel. Why?
+If function `cancelable` is launched as a goroutine, you can trigger its eventual termination simply by closing the `done` channel. Why?
 
 : closing a channel unblocks all receives on it!
 : can be used to broadcast a signal to multiple goroutines!
 
 
 
-* Exercise: render a function cancellable
+* Exercise: render a function cancelable
 
 1. Open this [[https://go.dev/play/p/yWEVD1G7Oix][Playground]]. Note that function `printInts` never terminates.
 
-2. Modify the program to make `printInts` cancellable.
+2. Modify the program to make `printInts` cancelable.
 
 3. Cancel the goroutine from `main` after one second.
 
@@ -5170,11 +5249,11 @@ If function `cancellable` is launched as a goroutine, you can trigger its eventu
 
 * Canceling goroutines with context
 
-The [[https://pkg.go.dev/context#Context][`context.Context` interface]] [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this "done channel" trick]] and can be used to terminate goroutines via cancellations or timeouts.
+The [[https://pkg.go.dev/context#Context][`context.Context` interface]] [[https://talks.golang.org/2014/gotham-context.slide#10][formalizes and expands upon this "done channel" trick]] and can be used to terminate goroutines via cancelations or timeouts.
 
 Its `Done` method returns the channel in question, and its `Err` method returns a non-`nil` error value when the context is [[https://pkg.go.dev/context#Canceled][canceled]] or [[https://pkg.go.dev/context#DeadlineExceeded][times out]]:
 
-  func cancellable(ctx context.Context) error {
+  func cancelable(ctx context.Context) error {
     for {
         select {
         case <-ctx.Done():
@@ -5191,7 +5270,7 @@ By convention, a function that has a `context.Context` parameter should feature 
 
 
 
-* Exercise: cancelling a goroutine with context.Context
+* Exercise: canceling a goroutine with context.Context
 
 You can do this exercise in the [[https://go.dev/play/p/7Hsz9o3MwRs][Go Playground]].
 
@@ -5214,7 +5293,7 @@ Remember: a channel send may block.
 
   resultCh <- res
 
-To make a channel send cancelable, you can wrap it in a select and add a case in which you detect a context's cancellation:
+To make a channel send cancelable, you can wrap it in a select and add a case in which you detect a context's cancelation:
 
   select {
     case <-ctx.Done():
@@ -5240,7 +5319,7 @@ You now know enough about the `context` package to fix the goroutine leak! 💪
 
 What could be further improved?
 
-: IsAvailable itself isn't cancellable... but we could make it so.
+: IsAvailable itself isn't cancelable... but we could make it so.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -5283,7 +5362,7 @@ Let's keep track (in memory) of how many times each username has been checked.
 
 * One problem: a synchronization bug
 
-The HTTP server provided by `net/http` is concurrent: it handles each incoming request in a separate goroutine.
+Remember: the HTTP server provided by `net/http` is concurrent: it handles each incoming request in a separate goroutine.
 
 However, maps are *not* concurrency-safe: unsynchronized updates to a map from multiple goroutines yields unpredictable results!
 

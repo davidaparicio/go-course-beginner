@@ -6,7 +6,7 @@ import (
 )
 
 // START1 OMIT
-func uncancellable() {
+func uncancelable() {
 	for {
 		fmt.Println("Still alive...")
 		time.Sleep(500 * time.Millisecond)
@@ -17,7 +17,7 @@ func uncancellable() {
 
 // START2 OMIT
 func main() {
-	go uncancellable()
+	go uncancelable()
 	time.Sleep(10 * time.Second) // simulate more work
 }
 
