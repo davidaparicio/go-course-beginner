@@ -16,27 +16,25 @@ https://infosec.exchange/@jub0bs
 
 *Licence*
 
-These slides are freely available at [[https://github.com/jub0bs/go-course-beginner][https://github.com/jub0bs/go-course-beginner]] and are subject to a [[https://creativecommons.org/licenses/by-nc-sa/3.0/][CC BY-NC-SA 4.0 licence]].
+These slides are freely available at [[https://github.com/jub0bs/go-course-beginner]] and are subject to a [[https://creativecommons.org/licenses/by-nc-sa/3.0/][CC BY-NC-SA 4.0 licence]].
 
 *Why*English*rather*than*French?*
 
-The French terminology about Go isn't yet firmly established.
+The French terminology about Go concepts isn't firmly established yet; for instance, some people translate _slice_ (which is a Go data structure) to _coupe_ and others to _tranche_.
 
 Moreover, most of the Go learning resources available online are in English.
 
 *How*to*run*these*slides*locally*
 
-A README at the root of this repo explains how to run the slides using the `present` tool.
+[[https://github.com/jub0bs/go-course-beginner/blob/main/README.md][The README]] constains instructions for running the slides with [[https://pkg.go.dev/golang.org/x/tools/cmd/present][a Go-specific tool]].
 
-Some of these slides contain editable and executable code snippets.
-
-If you need to add a line break somewhere, make sure [[https://github.com/golang/go/issues/9011][to type Shift + Enter]].
+Some of these slides contain editable and executable code snippets. If you need to add a line break somewhere in a code snippet, make sure [[https://github.com/golang/go/issues/9011][to type Shift + Enter]].
 
 
 
-* Who I am
+* About me
 
-- Julien Cretel, a.k.a. @jub0bs on the Web
+- known as @jub0bs on the Web
 - self-employed since 2019
 - Go developer since 2017
 - Web-security researcher & consultant
@@ -44,7 +42,7 @@ If you need to add a line break somewhere, make sure [[https://github.com/golang
 - trainer on topics such as [[https://www.humancoders.com/formations/go][Go]] and [[https://www.humancoders.com/formations/securite-des-applications-web][Web security]]
 - blogger (at [[https://jub0bs.com][jub0bs.com]])
 
-And who are _you_? Please introduce yourselves.
+.image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 200 _
 
 : pentests, vulnerability evaluation, code audits
 : present yourselves!
@@ -76,16 +74,17 @@ Also, make sure you have Git installed.
 
 You'll develop a small command-line tool (and later a HTTP API) for checking the *validity* and *availability* of a username on multiple social networks: GitHub, etc.
 
-Not only have I foun this project to be a good forcing function for learning Go, but there is a [[https://twitter.com/marckohlbrugge/status/1682064001331609615][business case]] for it, as it allows people to
+Over the years, I have found this project to be a good forcing function for learning Go.
 
-- choose a brand name consistent across multiple platforms (which can be [[https://twitter.com/poppulo][hard]]), 😇 
-- discover a coveted username that's available on some platform, claim it for yourself and later sell it to an interested party (a.k.a. [[https://en.wikipedia.org/wiki/Cybersquatting#Social_media][username squatting]]). 😈 
+Moreover, there is a [[https://twitter.com/marckohlbrugge/status/1682064001331609615][business case]] for such a tool, as it would allow organizations and even individuals to choose a brand name consistent across multiple platforms.
+
+: see Poppulo's case on X/Twitter: https://twitter.com/poppulo
 
 .image https://go.dev/blog/gophergala/fancygopher.jpg 200 _
 
+Besides, if you're 😈, you may find this tool useful for [[https://en.wikipedia.org/wiki/Cybersquatting#Social_media][name squatting]]. Be aware that this practice is [[https://docs.github.com/en/site-policy/other-site-policies/github-username-policy][prohibited by GitHub]] and most of the other social networks, though.
 
-
-* Introduction
+: discover a coveted username that's available on some platform, claim it for yourself and later sell it to an interested party
 
 
 
@@ -107,13 +106,14 @@ Go was created in 2007 at Google by
 
 * Genesis of the language (cont'd)
 
-C++'s increasing complexity, slow compilation, and poor support for concurrency are [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][recurring sources of frustration]] for the two Roberts at Google, where C++ is heavily used for implementing distributed systems.
+Back in 2007, C++'s increasing complexity, slow compilation, and poor support for concurrency were [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][recurring sources of frustration]] for the two Roberts at Google,
+where C++ is heavily used for implementing distributed systems.
 
-.image https://imgs.xkcd.com/comics/compiling.png 250 _
+.image https://imgs.xkcd.com/comics/compiling.png 200 _
 
-They enlist the help of Ken Thompson and start working on a new language...
+They enlisted the help of Ken Thompson and started working on a new language, which would ultimately become Go.
 
-See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]] and [[https://www.youtube.com/watch?v=6oF0UblqkGs&t=465s][Carmen Andoh - 10 Years of Go (GopherConAU 2019)]].
+For more on the origins of Go, see [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]] and [[https://www.youtube.com/watch?v=6oF0UblqkGs&t=465s][Carmen Andoh - 10 Years of Go (GopherConAU 2019)]].
 
 
 
@@ -127,18 +127,17 @@ See [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming
 - 2014: Kubernetes; first GopherCon conference
 - 2015: The go compiler (`gc`) becomes self-hosted.
 - 2022: Go 1.18 adds generics to the language.
-
-.image https://go.dev/blog/gopher/gopher.png 150 _
+- 2023: Go 1.21 (the latest version) is released.
 
 
 
 * Logo & mascot
 
-Go's logo is unremarkable:
+Go's logo may strike you as rather uninspired and unremarkable:
 
 .image https://go.dev/blog/go-brand/logos.jpg 200 _
 
-However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.org/wiki/Gopher][gopher]], enjoys widespread recognition:
+However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.org/wiki/Gopher][gopher]], enjoys worldwide recognition:
 
 .image https://go.dev/blog/gopher/gopher.png 200 _
 
@@ -146,25 +145,9 @@ However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.o
 
 
 
-* Reminiscent of but different from C (TODO: remove)
-
-- statically linked executables
-- fast compilation
-- automatic memory management (garbage collection)
-- memory safety
-- sensible `switch` behavior
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/with-C-book.svg 200 _
-
-: compiled, but type inference, so feels like a dynamic language
-: memory safety: pointers, but no pointer arithmetic; no dangling pointers; no uninitialized variables; run-time bound checks
-: mention heap-overflow vuln discovered in curl
-: multiple returns allow principled error handling
-: also syntax differences: type name comes after variable name
-
-
-
 * What kind of language is Go?
+
+: Although Go has its roots in C, it is in many ways a more powerful language.
 
 *Concurrent*programming*
 
@@ -196,19 +179,19 @@ Go supports [[https://en.wikipedia.org/wiki/First-class_function][first-class fu
 : subtyping, but no covariance/contravariance
 : encapsulation at the package level rather than at the type/class level
 
-: packages: no ifdef guards, no required ordering of top-level declarations, encapsulation
+: packages: no ifdef guards, no required ordering of package-level declarations, encapsulation
 : Brian Kernighan (popularized C): I think that the real problem with C is that it doesn't give you enough mechanisms for structuring really big programs, for creating ``firewalls'' within programs so you can keep the various pieces apart. https://www.cs.cmu.edu/~mihaib/kernighan-interview/
 
 
 
 * Go's rich toolchain
 
-- cross-compilation
-- code formatting (`gofmt`) & automatic package imports (`goimports`)
-- documentation generation (`pkgsite`)
-- testing & code coverage
-- profiling & tracing
-- run-time race detector
+- [[https://pkg.go.dev/cmd/go][cross-compilation]]
+- [[https://pkg.go.dev/cmd/gofmt][code formatting]] & [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][automatic package imports]]
+- [[https://pkg.go.dev/golang.org/x/pkgsite/cmd/pkgsite][documentation generation]]
+- [[https://pkg.go.dev/testing][testing]] & [[https://pkg.go.dev/cmd/cover][code coverage]]
+- [[https://pkg.go.dev/cmd/pprof][profiling]] & [[https://pkg.go.dev/cmd/trace][tracing]]
+- [[https://go.dev/doc/articles/race_detector][race detector]]
 - extensive [[https://pkg.go.dev/std][standard library]]
 
 .image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 200 _
@@ -232,36 +215,32 @@ Even if don't stay at your current job for much longer, learning Go is not a was
 
 
 
-* First steps in Go
-
-
-
 * The Go Playground
 
-The Go Playground ([[https://go.dev/play/][https://go.dev/play/]]) is a Web app that lets you write and run
+The Go Playground (available at [[https://go.dev/play]]) is a Web app that lets you write and run
 a small Go program from your browser. Features include:
 
-- permalinks (convenient for sharing code snippets)
-- automatic formatting
-- automatic package imports from the standard library
-- basic static analysis with `go`vet`
+- code formatting & automatic package imports
+- basic static analysis
 - [[https://go.dev/play/p/lEDjyvhttIB][limited support for modules and multiple packages]]
+- permalinks
 - downloading of the program source (^S or ⌘+S)
+
+: static analysis: go vet
+: permalinks: convenient for sharing code snippets
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/computer/gamer.svg 150 _
 
-: It's a good place to experiment and fix ideas about the language and its core library.
+: It's a good place to experiment and fix ideas about the language and its standard library.
 
 
 
 * Some limitations of the Go Playground
 
-As the name indicates, the Playground isn't meant for anything extensive.
-
-Limitations include:
+As its name suggests, the Go Playground isn't meant for projects. Limitations include:
 
 - single executable
-- no networking allowed
+- no networking (no HTTP requests, etc.)
 - no way of specifying command-line arguments
 - limited support for third-party packages
 
@@ -275,44 +254,72 @@ Limitations include:
 
 * Hello, World!
 
-.play -edit src/helloworld.go
+You can play with the following program [[https://go.dev/play/p/7vin2BK8_A6][in the Go Playground]].
 
-You can play with this program [[https://go.dev/play/p/7vin2BK8_A6][in the Go Playground]].
+.play -edit src/helloworld.go
 
 .image https://go.dev/blog/gopher/plush.jpg 300 _
 
-: we can already draw some observations from this piece of code
 
 
+* Some lessons from the Hello World program
 
-* Observations about our Hello-World program
+All source file starts with a _package_clause_, which consists of the `package` keyword followed by the name of the package:
 
-.play -edit src/helloworld.go
+  package main
 
-All source file starts with a _package_clause_, i.e. the `package` keyword followed by the package's name: `package`main`
+A package named `main` produces a _command_ or _executable_program_. In contrast, other packages correspond to _libraries_, which are meant to be imported in other programs.
 
-A package named `main` produces an executable program (as opposed to a library).
-
-Imports specify _package_paths_ in double quotes.
-
-The `main` function of a `main` package is the program's entrypoint; it has no parameters and returns no results.
+_Import_declarations_ specify _package_paths_ in double quotes:
 
 : import paths require quotes like in Ruby: require 'json'
 
+  import "fmt"
+
+The `main` function is a program's entrypoint; it has no parameters and no results:
+
+  func main()
+
+Command-line arguments can be retrieved via [[https://pkg.go.dev/os#Args][a variable named `os.Args`]].
 
 
-* Observations about our Hello-World program (cont'd)
 
-.play -edit src/helloworld.go
+* Semicolons
 
-Go's formal grammar [[https://go.dev/ref/spec#Semicolons][uses semicolons as statement terminators]], but those semicolons do not appear in the source; [[https://go.dev/doc/effective_go#semicolons][they're added by the compiler]]. As a result, you're not free to break lines wherever you want.
+Go's formal grammar [[https://go.dev/ref/spec#Semicolons][uses semicolons as statement terminators]] but, in contrast to C languages, semicolons do not appear in the source and are [[https://go.dev/doc/effective_go#semicolons][added by the compiler]].
 
-The formater uses tabs (not spaces) for indentation.
+As a result, line breaks can only occur in limited places. Consider this program:
 
-Go source files [[https://go.dev/ref/spec#Source_code_representation][*must* be encoded in UTF-8]], or compilation will fail.
+  package main
 
-: cmd args: os.Args
-: guillemets doubles
+  import "fmt"
+
+  func main()
+  {
+      fmt.Println("Hello, 世界")
+  }
+
+Attempts to compile it fail with the following error message:
+
+  syntax error: unexpected semicolon or newline before {
+
+The closing parenthesis and the opening brace must indeed appear on the same line.
+
+
+
+* Formatting and file encoding
+
+Go uses tabs (not spaces) for indentation. You'll never need to worry about indenting your code yourself, because Go provides a formatting tool: `gofmt`.
+
+You can trigger `gofmt` by pressing the _Format_ button in the Go Playground:
+
+.image img/go_playground_format.png 200 _
+
+Moreover, if you've properly set up your IDE for Go, it will run `gofmt` upon file save.
+
+Before contributing to a Go project, make sure you format your code with `gofmt`!
+
+Finally, be aware that Go source files [[https://go.dev/ref/spec#Source_code_representation][*must* be encoded in UTF-8]], or compilation will fail.
 
 
 
@@ -327,7 +334,7 @@ The terms _package_ and _module_ are confusingly similar, but don't conflate the
 
 .image img/modules_vs_packages.svg 300 _
 
-: https://excalidraw.com/#json=7Ayd8pQ2QmNF6Xi3fopDw,sttstuhV7iAXR8leKwlfrw
+: https://excalidraw.com/#json=buuEXMFgpGowzDhZMWzi7,5QOjQiY9GoMUNHGHCGL5_w
 
 
 
@@ -382,13 +389,14 @@ A `go.mod` file will be created at the root of your project:
 
   module github.com/jub0bs/namecheck
 
-  go 1.21.3
+  go 1.21.4
 
 - The [[https://go.dev/ref/mod#go-mod-file-module][`module` directive]] defines the module's path.
-- The [[https://go.dev/ref/mod#go-mod-file-go][`go` directive]] indicates that the module assumes the semantics of a specific version of Go.
+- The [[https://go.dev/ref/mod#go-mod-file-go][`go` directive]] specifies the minimum required version of the Go toolchain.
 
 
-* Namecheck project: a starting point
+
+* Namecheck project: Hello World
 
 1. Create, at the root of your project, a file named `main.go`:
 
@@ -430,7 +438,7 @@ For various reasons, the `run` subcommand isn't appropriate for production, thou
 
 * Cross-compilation
 
-By default, the compiler will produce an executable that targets your operating system and architecture, which are given by the following shell command. In my case:
+By default, the compiler will produce an executable that targets your operating system and architecture, which are given by the following shell command:
 
   $ go env GOOS GOARCH
   darwin
@@ -440,7 +448,7 @@ However, you can cross-compile to a different operating system and architecture 
 
   $ GOOS=windows GOARCH=amd64 go build main.go
 
-The following command lists all valid GOOS/GOARCH combinations:
+The following command lists all the supported OS/architecture combinations:
 
   $ go tool dist list
 
@@ -474,13 +482,13 @@ It's useful for cleanup tasks, such as releasing resources.
 
 *chan* and *select* are related to _channels_, which allow you to synchronize and communicate between goroutines.
 
-*fallthrough* is a rarely used keyword that lets you override the normal "breaking" behavior of Go's `switch` statement.
+*fallthrough* is a seldom useful keyword that lets you override the normal "breaking" behavior of Go's `switch` statement.
 
-*goto* [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/strings/strings.go;drc=132fae93b789ce512068ff4300c665b40635b74e;l=1118][has its uses]] (see here and here), but it's not for the average Go developer. Avoid it.
+*goto* [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/strings/strings.go;drc=132fae93b789ce512068ff4300c665b40635b74e;l=1118][has its uses]], but it's not for the average Go developer. Avoid it.
 
 Go has no `while` keyword: all loops are written with the `for` keyword.
 
-Because Go has no exception system, it also lacks `try`/`catch`/`finally` keywords.
+Because Go has no exception system, it lacks keywords like `try`, `catch`, and `finally`.
 
 : defer: a cleaner alternative to finally
 
@@ -488,7 +496,8 @@ Because Go has no exception system, it also lacks `try`/`catch`/`finally` keywor
 
 * Predeclared names
 
-Go also comes with several predeclared names accessible from anywhere in your code:
+Go comes with several predeclared names accessible from anywhere in your code.
+We will cover some of them, but only as needed.
 
 *Constants*
 
@@ -505,8 +514,6 @@ Go also comes with several predeclared names accessible from anywhere in your co
   make    len     cap     new
   append  copy    delete  clear
   panic   recover
-
-(None of those lists is exhaustive.)
 
 
 
@@ -529,15 +536,11 @@ The documentation of a package is written as comments in the package's source fi
 
 
 
-* Packages
-
-
-
 * A package's path and default name
 
 A package is identified by its _path_, which must be globally unique.
 
-Standard-library packages have paths that are composed of one or more components:
+Standard-library packages have paths that are composed of one or more components delimited by slashes:
 
   fmt
   net/http
@@ -561,13 +564,22 @@ The _default_name_ of a package corresponds to the last component of its path:
 
 A package is composed of one or more source files that are compiled together.
 
-All of a package's source files start with the same _package_clause_ and are located in the same folder on the disk.
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 250 _
 
-For instance, all source files constituting the `fmt` package start with
+
+
+* Package: the unit of compilation (cont'd)
+
+All of a package's source files
+
+- start with the same _package_clause_, and
+- are located in the same folder on the disk.
+
+For instance, all the source files of the `fmt` package start with
 
   package fmt
 
-and are located in a folder named `fmt` somewhere on your machine:
+and are located in a folder named `fmt` somewhere within your Go installation:
 
   fmt
   ├── doc.go
@@ -580,16 +592,23 @@ and are located in a folder named `fmt` somewhere on your machine:
 
 * Package documentation
 
-The documentation of a package installed locally can be consulted at the command line with the `doc` subcommand:
+The documentation of a locally installed package can be consulted at the command line with the `doc` subcommand, e.g.
 
   $ go doc fmt
+  package fmt // import "fmt"
+
+  Package fmt implements formatted I/O with functions analogous to C's printf and
+  scanf. The format 'verbs' are derived from C's but are simpler.
+  -snip-
+
+You can also ask for the documentation of a specific symbol, such as `Println`:
+
   $ go doc fmt Println
 
 The documentation for standard-library packages is available online at [[https://pkg.go.dev/std]]. This website also allows you to discover useful third-party libraries and commands.
 
 The documentation of some packages ([[https://pkg.go.dev/fmt#pkg-examples][`fmt`, for instance]]) features executable examples.
 
-.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
 
 
 
@@ -597,12 +616,12 @@ The documentation of some packages ([[https://pkg.go.dev/fmt#pkg-examples][`fmt`
 
 In Go, packages (as opposed to types) act as units of encapsulation.
 
-There are only two access levels: a package-level identifier is either
+There are only two access levels: a _symbol_ (i.e. a package-level identifier) is either
 
 - _exported_ (i.e. accessible from another package), or
 - _unexported_ (i.e. only accessible within its own package).
 
-Whether a package-level identifier is exported depends on the case of its first letter:
+Whether a symbol is exported depends on the case of its first letter:
 
   package foo
 
@@ -618,7 +637,6 @@ Whether a package-level identifier is exported depends on the case of its first 
 * Importing packages
 
 We'll cover two ways of importing packages: normal imports and named imports.
-
 (For other import syntaxes, see Appendix B.)
 
 The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility takes care of adding missing imports, removing unreferenced imports, and organizes imports in a canonical way:
@@ -668,12 +686,6 @@ or when one of your source files uses multiple major versions of a _module_:
   import foov2 "github.com/jub0bs/foo/v2"
 
 : more on this later
-
-
-
-* Types
-
-: strong typing
 
 
 
@@ -732,6 +744,8 @@ When you declare a variable without initializing it, its value is the zero value
   var i int    // the value of i is 0
   var s string // the value of s is the empty string ""
 
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 150 _
+
 Types whose zero value is `nil` are sometimes called "reference types": pointers, functions, channels, interfaces, slices, and maps.
 
 : in French: valeur vierge
@@ -782,19 +796,15 @@ However, they are distinct types and are *not* interchangeable.
 
 If two types are "compatible", an expression of one type can be [[https://go.dev/ref/spec#Conversions][converted]] to the other, either implicitly or explicitly.
 
-However, Go requires many conversions from one type to another to be explicit
+However, Go requires many conversions from one type to another to be explicit.
 
 .play -edit src/type_conversion.go /^//START/,/^//END/
 
 
 
-* Variables
+* Variable declaration
 
-
-
-* Variables in a nutshell
-
-You can declare variables at the top level or within functions (_local_variables_):
+You can declare variables at the package level or locally within a function:
 
 .play -edit src/variables.go
 
@@ -843,20 +853,19 @@ For instance, the default type for integer constants is `int`:
 
 * Short variable declaration with := (cont'd)
 
-The `:=` operator is convenient for saving the results of a function in variables:
+The `:=` operator is convenient for assigning the results of a function to variables:
 
-  i, err := strconv.Atoi(s) // declares i and err
+  i, err := strconv.Atoi("42") // declares i and err
 
-If a variable on the left-hand side is already declared in the same scope,
-the `:=` operator simply updates it:
+If an identifier is already used by a variable in scope,  the `:=` operator simply updates that variable:
 
-  i, err := strconv.Atoi(s)
-  j, err := strconv.Atoi(s) // declares j, but only updates err
+  i, err := strconv.Atoi("42") // declares i and err
+  j, err := strconv.Atoi("96") // declares j, but only updates err
 
-However, `:=` must introduce at least one new variable on the left-hand side:
+However, the `:=` operator must introduce at least one new variable:
 
-  i, err := strconv.Atoi(s)
-  i, err := strconv.Atoi(s) // compilation error: no new variables on left side of :=
+  i, err := strconv.Atoi("42")
+  i, err := strconv.Atoi("96") // compilation error: no new variables on left side of :=
 
 If you only care about some of the results, assign the others to the _blank_identifier_:
 
@@ -872,15 +881,15 @@ Identifiers in Go [[https://go.dev/ref/spec#Identifiers][must]] start with a Uni
 
 You should [[https://github.com/golang/go/wiki/CodeReviewComments#variable-names][strive for conciseness]]; the smaller the scope, the shorter the name.
 
-  var index int // meh
-  var i int     // better
+  var index int // too verbose?
+  var i int     // likely preferable
 
-Use lower camel case for local variables and unexported top-level variables:
+Use lower camel case for local variables and unexported package-level variables:
 
   var maxOutstanding int
   var nbOfVisits uint
 
-Use upper camel case (Pascal case) for exported top-level variables:
+Use upper camel case (a.k.a. Pascal case) for exported package-level variables:
 
   var UnknownAvailabilityError = errors.new("namecheck: unknown availability")
 
@@ -892,11 +901,11 @@ Aside from the _blank_identifier_, don't use underscores in variable names.
 : _ is considered a letter
 
 
-* The var keyword versus the := operator
+* Favor the := operator in most cases
 
-Since there are two syntaxes for declaring variables, you may be wondering which one to use in a given situation...
+Because Go has two syntaxes for declaring variables, you may be wondering which one to use in a given situation...
 
-Convention dictactes that `:=` be used whenever possible, *except* when the variable's initial value doesn't matter or should be the variable type's zero value:
+Convention dictactes that the `:=` operator be used whenever possible, *except* when the variable's initial value doesn't matter or should be the variable type's zero value:
 
   finished := false // not great
   var finished bool // better
@@ -905,11 +914,11 @@ Convention dictactes that `:=` be used whenever possible, *except* when the vari
 
 
 
-* The var keyword versus the := operator (cont'd)
+* Use the var keyword if you have to
 
 In many cases, you have no option but to use the `var` keyword...
 
-*To*declare*a*top-level*variable*
+*To*declare*a*package-level*variable*
 
   package main
 
@@ -1092,6 +1101,17 @@ There is another form of switch known as _type_switch_, which you can ignore for
 
 
 
+* Namecheck project: validation of GitHub usernames
+
+A prospective username is considered [[https://docs.github.com/en/site-policy/other-site-policies/github-username-policy][acceptable by GitHub]] if it fulfils the following requements:
+
+1. The username does not start or end (or both) with a hyphen and does not contain two consecutive hyphens.
+2. The username contains between 3 and 39 alphanumeric or hyphen characters,
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
 * Functions
 
 
@@ -1157,18 +1177,6 @@ There's [[https://go.dev/doc/faq#overloading][no function overloading in Go]]: n
 can have the same name but different signatures.
 
 : however, no tuples in Go!
-
-
-
-* Namecheck project: validation of Twitter usernames
-
-A prospective username [[https://help.twitter.com/ca/managing-your-account/twitter-username-rules][must satisfy two conditions]] to be valid on Twitter:
-
-1. It does not contain any case-insensitive match of "twitter" (e.g. "TwItTEr").
-
-2. It contains between 4 and 15 alphanumeric or underscore characters.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
 
@@ -1750,7 +1758,7 @@ This design decision by the Go team is a key enabler of fast compilation.
 
 .image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 200 _
 
-: ex: the core library can be compiled in 10s on a modern machine
+: ex: the standard library can be compiled in 10s on a modern machine
 
 
 
@@ -1877,7 +1885,7 @@ Your tests then only have access to the exported members of package `foo`.
 
 * White or black box?
 
-White-box testing is the approach favored in the core library. It is convenient,
+White-box testing is the approach favored in the standard library. It is convenient,
 but can lead to prohibitive coupling between tests and implementation details.
 
 .image https://pbs.twimg.com/media/EzrMZe6X0AMSozD?format=jpg&name=900x900 300 _
@@ -2004,8 +2012,6 @@ Write enough good test cases to reach a code coverage that satisfies you.
 
 
 * Namecheck project: validation of GitHub usernames
-
-Create a `github` package (you can copy the `twitter` package to get started quickly):
 
   namecheck
   ├── github
@@ -2478,7 +2484,7 @@ The only legal comparison is to a literal `nil` value.
 
 .play -edit src/slice_incomparable.go  /^//START/,/^//END/
 
-However, you can use [[https://pkg.go.dev/slices#Equal][the `Equal` function]] from [[https://pkg.go.dev/slices][the `slices` package]] (new in Go 1.21) to compare two slices whose element type is comparable.
+However, you can use [[https://pkg.go.dev/slices#Equal][the `Equal` function]] from [[https://pkg.go.dev/slices][the `slices` package]] to compare two slices whose element type is comparable.
 
 .play -edit src/slice_equal.go  /^//START/,/^//END/
 
@@ -2787,7 +2793,7 @@ The only legal comparison is to a literal nil value.
 
 .play -edit src/map_incomparable.go /^//START/,/^//END/
 
-However, you can use [[https://pkg.go.dev/maps#Equal][the `Equal` function]] from [[https://pkg.go.dev/maps][the `maps` package]] (new in Go 1.21) to compare two maps whose key type and value type are comparable.
+However, you can use [[https://pkg.go.dev/maps#Equal][the `Equal` function]] from [[https://pkg.go.dev/maps][the `maps` package]] to compare two maps whose key type and value type are comparable.
 
 .play -edit src/map_equal.go /^//START/,/^//END/
 
@@ -3019,7 +3025,7 @@ The case of a struct field's first letter dictates whether that field is exporte
 
 Unexporting struct fields is the primary mechanism for encapsulation in Go.
 
-Don't export the fields of your top-level struct types (unless you have to, e.g. for JSON decoding).
+Don't export the fields of your package-level struct types (unless you have to, e.g. for JSON decoding).
 
 Well-designed struct types are _opaque_ ones, which export none of their fields. For example, see `time.Time` or `regexp.Regexp`.
 
@@ -4924,7 +4930,7 @@ For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andre
 
 * Adding third-party dependencies to your project
 
-So far, you've exclusively relied on Go's core library but, thanks to Go's module system, you can of course bring in third-party dependencies.
+So far, you've exclusively relied on Go's standard library but, thanks to Go's module system, you can of course bring in third-party dependencies.
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
 
