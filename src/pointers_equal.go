@@ -5,7 +5,8 @@ import "fmt"
 func main() {
 	// START OMIT
 	i := 42
-	j := i
-	fmt.Println(&i == &j) // false: i and j are distinct variables
+	p1 := &i
+	p2 := &i
+	fmt.Println(p1 == p2) // true
 	// END OMIT
 }
