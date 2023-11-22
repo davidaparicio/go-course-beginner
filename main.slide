@@ -457,6 +457,18 @@ The following command lists all the supported OS/architecture combinations:
 
 
 
+* Namecheck project: cross-compiled Hello World
+
+1. Pick a supported OS/architecture combination other than yours.
+
+2. Compile your Hello World program for that target.
+
+3. Delete the resulting binary.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
 * Keywords
 
   break           default           func          interface       select
@@ -914,7 +926,7 @@ Convention dictactes that the `:=` operator be used whenever possible, *except* 
 
 
 
-* Use the var keyword if you have to
+* Resort to the var keyword if needed
 
 In many cases, you have no option but to use the `var` keyword...
 
@@ -942,13 +954,115 @@ In many cases, you have no option but to use the `var` keyword...
 
 
 
+* Namecheck project: validation of GitHub usernames
+
+In your `main` function, do the following:
+
+1. Assign your prospective username to a string variable named `username`.
+
+2. Which variable declaration syntax did you choose? Justify your choice.
+
+3. Print the username variable to the screen.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* If statements
+
+Unlike in C, the condition must be of type `bool` and needs not be enclosed in parens.
+However, braces around the "if" branch are mandatory.
+
+.play -edit src/if_simple.go /^//START/,/^//END/
+
+A [[https://go.dev/ref/spec#Statements][_simple_statement_]] (usually a short variable declaration) can precede the condition:
+
+.play -edit src/if_short_variable_decl.go /^//START/,/^//END/
+
+The scope of such variables is restricted to the if(-else) statement.
+
+: mandatory braces: no dangling-else problem like in C, JS, etc.
+: short-var-decl: useful for error handling
+
+
+
+* If-else statements
+
+Braces around the body of an "else" branch are also mandatory.
+
+.play -edit src/if_else.go /^//START/,/^//END/
+
+Long if-else chains are considered non-idiomatic, and can often be advantageously replaced by a switch statement. Surprisingly, the `else` keyword is rarely used in Go.
+
+Go has no conditional ternary operator.
+
+
+
+* Switch statement
+
+The switch expression, whose type must be comparable, is evaluated once.
+
+The case expressions (not necessarily constants), are evaluated left-to-right and top-to-bottom and tested for equality against the switch expression until a match is found.
+
+The case clause of the first match gets executed. If no match is found, the default case clause (if any) gets executed.
+
+.play -edit src/switch.go /^//START/,/^//END/
+
+Unlike in C and other languages, no `break` keyword is required at the end of case clauses. Use the `fallthrough` keyword if needed (which is rare).
+
+: A short-variable-declaration statement can precede the switch condition.
+: The default clause can occur at any place among the the normal cases.
+
+
+
+* Tagless switch
+
+You can omit the switch expression, which is equivalent to switching on `true`:
+
+.play -edit src/tagless_switch.go /^//START/,/^//END/
+
+This form of `switch` statement is preferred to a long if-else chain.
+
+There is another form of switch known as _type_switch_, which you can ignore for now.
+
+
+
+* Namecheck project: validation of GitHub usernames
+
+A username is deemed [[https://docs.github.com/en/site-policy/other-site-policies/github-username-policy][acceptable by GitHub]] if
+
+- it does not start/end with a hyphen and does not contain two consecutive hyphens;
+- it contains between 3 and 39 alphanumeric or hyphen characters.
+
+In your `main` function, do the following:
+
+1. Using functions from the [[https://pkg.go.dev/strings][strings]] and [[https://pkg.go.dev/regexp][regexp]] packages, check whether your username follows both rules. Ignore any error for the time being; more about error handling later.
+
+2. Only if your username follows both rules, print that username to the screen.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
+* Namecheck project: validation of GitHub usernames (cont'd)
+
+Implementing this kind of validation logic in the `main` function is awkward.
+
+We should learn how to declare functions, so we can extract this logic out.
+
+But first, let's learn about pointers in Go.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
+
 * Pointers
 
 A [[https://en.wikipedia.org/wiki/Pointer_(computer_programming)][_pointer_]] is a type of value that stores a memory address.
 
-Like the C programming language, Go has pointers. Go pointers are less powerful but also much simpler than C pointers.
+Like C, Go has pointers. Although Go pointers are less powerful, they are also much simpler and safer than C pointers.
 
-Compared to other languages like Java—where almost everything is a [[https://en.wikipedia.org/wiki/Reference_(computer_science)][_reference_]] and you possibly get more indirection than you'd ideally like—Go allows you to keep more control over memory layout and the amount of garbage generated.
+Compared to other languages like Java—where almost everything is a [[https://en.wikipedia.org/wiki/Reference_(computer_science)][_reference_]] and you possibly get more [[https://en.wikipedia.org/wiki/Indirection][indirection]] than you'd ideally like—Go allows you to keep more control over memory layout and the amount of garbage generated.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
@@ -965,7 +1079,7 @@ Go doesn't support [[https://go.dev/doc/faq#no_pointer_arithmetic][_pointer_arit
 
   p++ // invalid operation: p++ (non-numeric type *int)
 
-Not all values are addressable:
+All variables are addressable, but not all values are addressable:
 
   &42 // invalid operation: cannot take address of 42 (untyped int constant)
 
@@ -1006,7 +1120,7 @@ You can _dereference_ a pointer (i.e. obtain the value it points to) using the `
 
 .play -edit src/pointers_dereference.go /^//START/,/^//END/
 
-A common source of confusion is that the asterisk is used both in the name of pointer types (e.g. `*int`) and as the pointer-dereference operator (e.g. `*i`).
+A common source of confusion is that the asterisk is used both in the name of pointer types (e.g. `*int`) and as the pointer-dereference operator (e.g. `*p`).
 
 Assigning a value to a dereferenced pointer changes the value at that address:
 
@@ -1020,99 +1134,22 @@ Dereferencing a nil pointer causes a panic!
 
 * new
 
-Built-in function `new(T)` returns a pointer to a value of type `T` initialized to `T`'s zero value:
+Go has a builtin named "new", which has nothing to do with C languages' `new` keyword.
 
-`new` is useful for declaring a pointer to a value without first having to declare an intermediate variable for the value in question. Compare
+It takes a type name `T` and returns a `*T` pointer that points to `T`'s the zero value.
 
-.play -edit src/pointers_new_before.go /^//START/,/^//END/
-
-to
+`new` can spare you the declaration of an intermediate variable; compare
 
 .play -edit src/pointers_new.go /^//START/,/^//END/
 
-If you come from Java or C#, be aware that their `new` keyword has got nothing to do with Go's `new` built-in function.
+to
 
-The use of `new` is somewhat controversial in Go; [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=8m10s][some influential people in the Go community]] believe that it's not really needed. Use it sparingly.
+.play -edit src/pointers_new_before.go /^//START/,/^//END/
 
+However, be aware that `new` is somewhat controversial; [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=8m10s][some influential people in the Go community]] openly disparage it. Use it sparingly.
 
+That's all you need to know about pointers for now. Let's talk about functions.
 
-
-
-* If and switch statements
-
-
-
-* If statements
-
-The condition must be of type `bool` and needs not be enclosed in parens.
-However, braces around the body are mandatory.
-
-.play -edit src/if_simple.go /^//START/,/^//END/
-
-A [[https://go.dev/ref/spec#Statements][_simple_statement_]] (usually a short variable declaration) can precede the condition:
-
-.play -edit src/if_short_variable_decl.go /^//START/,/^//END/
-
-The scope of such variables is restricted to the if(-else) statement.
-
-: mandatory braces: no dangling-else problem like in C, JS, etc.
-: short-var-decl: useful for error handling
-
-
-
-* If-else statements
-
-Braces around the body of an `else` (not followed by an `if`) are also mandatory.
-
-.play -edit src/if_else.go /^//START/,/^//END/
-
-If-else chains are considered non-idiomatic, and can often be advantageously replaced by a _tagless_ `switch`. `else` is one of the least popular keyword in Go!
-
-Go has no conditional ternary operator.
-
-
-
-* Switch statement
-
-The switch expression, whose type must be comparable, is evaluated once.
-
-The case expressions (not necessarily constants), are evaluated left-to-right and top-to-bottom and tested for equality against the case expression until a match is found.
-
-The first match's case gets executed. Otherwise, the default case (if any) gets executed.
-
-.play -edit src/switch.go /^//START/,/^//END/
-
-Unlike in C and other languages, no `break` keyword is required at the end of cases. Use `fallthrough`, if needed (which is rare).
-
-: A short-variable-declaration statement can precede the switch condition.
-: The default clause can occur at any place among the the normal cases.
-
-
-
-* Tagless switch
-
-You can omit the switch expression, which is equivalent to using `true`:
-
-.play -edit src/tagless_switch.go /^//START/,/^//END/
-
-This form of `switch` statement is preferred to a long if-else chain.
-
-There is another form of switch known as _type_switch_, which you can ignore for now.
-
-
-
-* Namecheck project: validation of GitHub usernames
-
-A prospective username is considered [[https://docs.github.com/en/site-policy/other-site-policies/github-username-policy][acceptable by GitHub]] if it fulfils the following requements:
-
-1. The username does not start or end (or both) with a hyphen and does not contain two consecutive hyphens.
-2. The username contains between 3 and 39 alphanumeric or hyphen characters,
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
-* Functions
 
 
 * Calling a function
@@ -1122,7 +1159,7 @@ after the name of the function, using commas as delimiters:
 
 .play -edit src/function_call.go /^//START/,/^//END/
 
-[[https://docs.python.org/3/glossary.html#term-argument][Unlike Python]] (and others), Go doesn't allow you
+Unlike languages like [[https://docs.python.org/3/glossary.html#term-argument][Python]], Go doesn't allow you
 
 - to specify arguments by keyword or name,
 - to specify a default value for a parameter of your function.
@@ -1135,25 +1172,40 @@ Go's [[https://en.wikipedia.org/wiki/Evaluation_strategy][evaluation strategy]] 
 
 Each argument expression is eagerly evaluated, and the result is bound to the corresponding parameter variable within the function.
 
-In brief, functions only operate on *copies* of their arguments:
+In other words, functions operate only on *copies* of their arguments.
 
 .play -edit src/call_by_value.go /^//START/,/^//END/
+
+In the example above, the incrementation performed by function `incr` on its argument is *not* visible in the caller (the `main` function). Can you explain why?
+
+
+
+* Evaluation strategy: call by value (cont'd)
+
+Contrast the previous program to the following one:
+
+.play -edit src/call_by_value_ptr.go /^//START/,/^//END/
+
+In the example above, function `incr` takes, not an `int`, but a `*int`.
+
+It operates on a copy (`p`) of its pointer argument (`&i`), and that copy also points to `i`. Therefore, the incrementation performed by function `incr` on `*p` _is_ visible in the caller.
 
 
 
 * Evaluation strategy: call by sharing?
 
-However, because some types (strings, slices, maps, channels, functions)
-are composed of a pointer to some hidden data structure in memory.
+Some types (most notably slices, maps, channels, and functions) are actually designed in such a way that they behave "like" pointers when passed to a function.
 
 [[https://en.wikipedia.org/wiki/Evaluation_strategy#Call_by_sharing][_Call_by_sharing_]] is perhaps a more appropriate term than _call_by_value_ to describe
 what happens when values of such types are passed to a function.
 
 .play -edit src/call_by_sharing.go /^//START/,/^//END/
 
+In the example above, the changes made by function `add` to its `map[string]string` argument (which behaves "like" a pointer) are visible in the caller (the `main` function).
 
 
-* Function declaration
+
+* Function declaration & multiple results
 
 Here is a simple example of a named function:
 
@@ -1167,32 +1219,33 @@ A function can return multiple results, whose types must be specified within par
 
   func CountWordsInFile(path string) (int, error) {
     var count int
-    // ...
+    // omitted implementation
     return count, nil
   }
 
-Multiple function results are key to error reporting in Go!
+Go's support for multiple function results is key to error reporting!
 
-There's [[https://go.dev/doc/faq#overloading][no function overloading in Go]]: no two functions within the same scope
-can have the same name but different signatures.
+: Bonus question: can you explain why function `CountWordsInFile` returns an error whereas function `CountWords` does not?
+
+Contrary to more traditional OO languages, Go doesn't allow [[https://go.dev/doc/faq#overloading][function overloading]]: no two functions within the same scope can have the same name but different signatures.
 
 : however, no tuples in Go!
 
 
 
-* Namecheck project: Twitter's first validation rule
+* Namecheck project: validation of GitHub usernames
 
-Write a function that implements Twitter's first validation rule:
+1. Extract the validation logic to a function named `IsValid`; it should return `true` if its string argument is a valid GitHub username, and `false` otherwise:
 
-  func containsNoIllegalPattern(username string) bool
+  func IsValid(username string) bool
 
-It should return true if its parameter does _not_ contain any case-insensitive match of "twitter" (e.g. "TwItTEr"), and false otherwise.
-
-Hint: no need for regular expressions; instead look up the `strings` package.
+2. Write a few "tests" for `IsValid` in the `main` function.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
-: hint: keep it simple
+If you're still ignoring errors, do you think that's judicious?
+
+You'll eventually need to learn how to properly handle errors but, for now, let's keep learning about functions.
 
 
 
@@ -1216,19 +1269,19 @@ The code above is roughly equivalent to the following:
     return count, err
   }
 
-Named results can be useful for documenting the results' roles and simplifying some implementations, but use them sparingly.
+Named results can be useful for documenting the results' roles and simplifying some implementations, but you should use them sparingly.
 
 
 
 * Variadic functions
 
-You can declare a function that accepts an arbitrary number of identically typed parameters:
+A variadic parameter (denoted by `...T`) indicates an arbitrary number (zero or more) of parameters of type `T`:
 
 .play -edit src/function_variadic.go /^//START/,/^//END/
 
-The variadic argument (`rest`, here) is a _slice_ and must be the last to appear in the parameter list.
+The variadic parameter (if any) is a _slice_ and can only appear last in the function's parameter list.
 
-You've already used a variadic function... Which one? Check its signature in the doc.
+You've already used a variadic function... Which one? Inspect its signature in the doc.
 
 
 
@@ -1238,6 +1291,8 @@ The type of identically typed consecutive parameters can be factored out:
 
 .play -edit src/function_factored_type_in_param_list.go /^//START/,/^//END/
 
+Consult the documentation of `strings.Trim` for an example of this syntax.
+
 Similarly, the type of identically typed consecutive results can be factored out:
 
 .play -edit src/function_factored_type_in_result_list.go /^//START/,/^//END/
@@ -1246,16 +1301,15 @@ Similarly, the type of identically typed consecutive results can be factored out
 
 * Recursion
 
-Go supports recursion: a function can call itself (either directly or indirectly).
+Go supports [[https://en.wikipedia.org/wiki/Recursion#In_computer_science][recursion]]: a function can call itself, either directly or indirectly.
+
+Recursion may seem a bit tricky and academic at first, but it's particularly useful for traversing recursive data structures, such as linked lists and binary trees.
 
 Here is a recursive implementation of the [[https://en.wikipedia.org/wiki/Factorial][factorial function]] from mathematics:
 
 .play -edit src/recursion.go /^//START/,/^//END/
 
-Recursion is particularly useful for traversing recursive data structures, such as linked lists and trees. However, it requires a bit of getting used to!
-
-Because call stacks grow and shrink as needed, unless you have a bug somewhere,
-you're less likely to cause a stack overflow by recursing than in other languages.
+Because Go's call stacks are elastic (they grow and shrink as needed), recursion is less likely (unless there is a bug!) to cause a stack overflow than in other languages.
 
 
 
@@ -1286,7 +1340,7 @@ Go supports anonymous functions but lacks a concise "lambda" notation:
 
   incr := func(i int) int { return i + 1 }
 
-A _closure_ is an anonymous function that references variables from outside its body:
+A _closure_ is an anonymous function that references variables from an enclosing scope:
 
 .play -edit src/function_closure.go /^//START/,/^//END/
 
@@ -1310,38 +1364,7 @@ by the presence (in a pair of parentheses between the keyword `func` and the met
 
 Methods are tightly related to _interfaces_, which are the primary mechanism for polymorphism. More about that later in the course.
 
-
-
-* A glimpse at defer
-
-*defer* allows you to make sure that something unconditionally happens when a function returns, regardless of its point of exit.
-
-It's particularly useful for cleaning up, reclaiming resources, etc.
-
-More about `defer` later in the course!
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 300 _
-
-
-
-* Namecheck project: Twitter's second validation rule
-
-Write a function that implements Twitter's second validation rule:
-
-  func looksGood(username string) (bool, error)
-
-It should return true if its parameter is composed of 4 to 15 alphanumeric or underscore characters, and false otherwise. Hint: use the [[https://pkg.go.dev/regexp][`regexp` package]].
-
-Does the function's signature satisfy you? What signature would you prefer? Why?
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-: transition: we need to learn about error handling in Go, and for that we need to learn about if and switch statements
-: ^\w{4,15}$
-
-
-
-* Error handling
+Now let's learn how to handle and report errors!
 
 
 
@@ -1492,12 +1515,12 @@ Either consume it or report it, but not both. Why not? Discuss.
 
 `errors.New` allows you to create a simple error value:
 
-  err := errors.New("namecheck: failure to check availability of 'jub0bs' on Twitter")
+  err := errors.New("namecheck: failure to check availability of 'jub0bs' on GitHub")
 
 \... but `fmt.Errorf` is more flexible:
 
   username := "jub0bs"
-  platform := "Twitter"
+  platform := "GitHub"
   err := fmt.Errorf("namecheck: failure to check availability of %q on %s", username, platform)
 
 By convention, error messages
@@ -1546,36 +1569,13 @@ if some programming error renders the package unusable.
 
 
 
-* Namecheck project: rethinking the looksGood function
-
-1. Exercise function `looksGood` in your `main` function.
-
-2. Treat the error in a sensible way.
-
-3. Take a few moments to think about function `looksGood`...
-
-- Is it easy to use?
-- Does its signature make sense?
-- Who, between the caller and library author, would be to blame for a non-nil error?
-- How would you improve function `looksGood`?
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-: we're re-compiling the regexp at each call
-
-
-
 * Namecheck project: fail early if the regexp is unusable
 
 1. In the documentation of the `regexp` package, identify a function that compiles a regular expression and panics if the pattern is invalid.
 
-2. Use that function to declare a variable of type `*regexp.Regexp` at the top level.
+2. Use that function to declare a variable of type `*regexp.Regexp` at the package level.
 
-3. Adapt `looksGood`'s implementation to make use of that variable, and simplify `looksGood`'s signature to
-
-  func looksGood(username string) bool
-
-4. Fix your `main` function accordingly.
+3. Refactor your `IsValid` function to make use of that variable.
 
 .image https://i.redd.it/48emz1dvfz441.png 200 _
 
@@ -1585,23 +1585,11 @@ if some programming error renders the package unusable.
 
 
 
-* Namecheck project: validation of Twitter usernames
-
-1. Write a function named `IsValid` that returns `true` if its parameter is a valid username on Twitter, and `false` otherwise:
-
-  func IsValid(username string) bool
-
-2. Write a few "tests" for `IsValid` in the `main` function.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
 * Namecheck project: the need for dedicated packages
 
-All the code we've written in `main.go` so far is specific to Twitter, which is a bit messy.
+All the code we've written in `main.go` so far is specific to GitHub, which is a bit messy.
 
-It would be preferable to create a dedicated library package for each of the supported platforms (Twitter, GitHub, etc.)
+It would be preferable to create a dedicated library package for each of the social media we wish to support.
 
 Let's learn how to create a library package and use it in our `main` package.
 
@@ -1710,13 +1698,13 @@ Avoid stutter in package-level identifiers (see [[https://www.youtube.com/watch?
   log.LogInfo // bad
   log.Info    // good
 
-  strings.StringReader // bad
-  strings.Reader       // good
+  strings.StringReader // verbose
+  strings.Reader       // concise
 
 Avoid redundancy in factory functions if the package exports a single type:
 
-  twitter.NewTwitter // redundant
-  twitter.New        // much better
+  github.NewGitHub // verbose
+  github.New       // concise
 
 Only choose more specific factory-function names if the package exports multiple types,
 such as `Encoder` and `Decoder` in the `encoding/json` package:
@@ -1795,23 +1783,23 @@ Exported functions should communicate anticipated failures to client code as val
 
 
 
-* Namecheck project: twitter package
+* Namecheck project: github package
 
-1. Create a folder named "twitter" at the root of your project.
+1. Create a folder named "github" at the root of your project.
 
-2. Create a "twitter.go" file in there:
+2. Create a file named "github.go" in that folder:
 
   namecheck
+  ├── github
+  │   └── github.go
   ├── go.mod
-  ├── main.go
-  └── twitter
-      └── twitter.go
+  └── main.go
 
-3. Add the appropriate package clause in `twitter.go`.
+3. Add the appropriate package clause in `github.go`.
 
-4. Move all the Twitter-specific stuff from `main.go` to `twitter.go`.
+4. Move all the GitHub-specific code from `main.go` to `github.go`.
 
-5. Adjust your `main.go`. You'll need to import your `twitter` package there.
+5. Adjust your `main.go`. You'll need to import your `github` package there.
 
 
 
@@ -1914,21 +1902,21 @@ Respect this convention, or your test functions will be ignored by `go`test`.
 
 
 
-* Example of a test function for the twitter package
+* Example of a test function for the github package
 
-  package twitter_test // black-box testing
+  package github_test // black-box testing
 
   import "testing"
-  // import declaration of your twitter package (omitted here)
+  // import declaration of your github package (omitted here)
 
-  func TestUsernameContainsTwitter(t *testing.T) {
+  func TestUsernameContainsTwoConsecutiveHyphens(t *testing.T) {
     const (
-      username = "jub0bsOnTwitter"
+      username = "jub0bs--on-GitHub"
       want     = false
     )
-    got := twitter.IsValid(username)
+    got := github.IsValid(username)
     if got != want {
-      t.Errorf("twitter.IsValid(%q): got %t; want %t", username, got, want)
+      t.Errorf("github.IsValid(%q): got %t; want %t", username, got, want)
     }
   }
 
@@ -1938,18 +1926,18 @@ The message format used here ("got ...; want ...") is widely used.
 
 
 
-* Namecheck project: test twitter's IsValid function
+* Namecheck project: test github's IsValid function
 
-Create a file named `twitter_test.go` in the `twitter` folder.
+Create a file named `github_test.go` in the `github` folder.
 
   namecheck
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
   ├── go.mod
-  ├── main.go
-  └── twitter
-      ├── twitter.go
-      └── twitter_test.go
+  └── main.go
 
-Follow the black-box approach (use `twitter_test` as the package name)
+Follow the black-box approach (use `github_test` as the package name)
 and write the test function shown on the previous slide.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
@@ -2001,9 +1989,9 @@ What would a low coverage say about your tests? What about a high coverage? Disc
 
 
 
-* Namecheck project: code coverage of twitter package
+* Namecheck project: code coverage of github package
 
-Inspect the code coverage of your `twitter` package.
+Inspect the code coverage of your `github` package.
 
 Write enough good test cases to reach a code coverage that satisfies you.
 
@@ -2013,27 +2001,7 @@ Write enough good test cases to reach a code coverage that satisfies you.
 
 * Namecheck project: validation of GitHub usernames
 
-  namecheck
-  ├── github
-  │   ├── github.go
-  │   └── github_test.go
-  ├── go.mod
-  ├── main.go
-  └── twitter
-      ├── twitter.go
-      └── twitter_test.go
-
-A prospective username is valid on GitHub if it
-
-- contains between 3 and 39 alphanumeric or hyphen characters,
-- doesn't start or end (or both) with a hyphen,
-- doesn't contain two consecutive hyphens.
-
-
-
-* Namecheck project: validation of GitHub usernames
-
-Write a function named `IsValid` that returns true if its parameter is a valid username on GitHub, and false otherwise:
+Write a function named `IsValid` that returns true if its string argument is a valid username on GitHub, and false otherwise:
 
   func IsValid(username string) bool {
     // returns true if username is valid on GitHub
@@ -2211,7 +2179,7 @@ One solution is to enclose the defer statement in a smaller function:
 
 1. Unit tests (in the pure sense of the term) operate only in memory. In particular, unit tests are not supposed to communicate with the network.
 
-2. Any test case you write will depend on the state of GitHub/Twitter. If you assert that username "babar" is available on GitHub and someone register an account with that username tomorrow, your test will start failing.
+2. Any test case you write will depend on the state of GitHub. If you assert that username "babar" is available on GitHub and someone register an account with that username tomorrow, your test will start failing.
 
 3. Testing some cases (other status codes, non-nil errors) is currently difficult.
 
@@ -2232,35 +2200,33 @@ Interfaces will allow us to solve this issue. Patience!
 
 
 
-* Namecheck project: availability on Twitter
+* Namecheck project: simulate support for Reddit
 
-We cannot take the same shortcut for Twitter as we did for GitHub, because
+We could add support for many other social media, but that would take time and distract us from the main topic of this course. For now, we can just fake it.
 
-  https://twitter.com/USERNAME
+1. Create a `reddit` package.
 
-returns a `200` response regardless of whether the user `USERNAME` actually exists.
+2. Simply add a stub implementations of functions `IsValid` and `IsAvailable` in your `reddit` package:
 
-In Twitter's case, we need to do things more properly and call our to their API. However, obtaining an API key from Twitter is a long and tedious procedure.
+  func IsValid(username string) bool { return false }
 
-For your convenience, I've set up a little proxy that uses my own Twitter API key. You'll be able to call my proxy in your `IsAvailable` function, but you'll need to learn more about structs first.
+  func IsAvailable(username string) (bool, error) { return false, nil }
 
-For now, just write a fake implementation of `IsAvailable` in your `twitter` package:
+Actually implementing those functions is left as an exercise for after the course.
 
-  func IsAvailable(username string) (bool, error) {
-    return false, nil
-  }
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 
 
-* Namecheck project: check a username on Twitter and Github
+* Namecheck project: check a username on Github and Reddit
 
 Flesh out your `main` function:
 
-1. Check the validity of the username of interest on Twitter. Print the result.
+1. Check the validity of the username of interest on GitHub. Print the result.
 
-2. If the username is valid, check its availability on Twitter. Print the error if it's non-`nil` or the boolean result otherwise.
+2. If the username is valid, check its availability on GitHub. Print the error if it's non-`nil` or the boolean result otherwise.
 
-3. Repeat steps 1 & 2 for GitHub.
+3. Repeat steps 1 & 2 for Reddit.
 
 4. Does the code in your `main` function not suffer from duplication?
 
@@ -2272,17 +2238,13 @@ Flesh out your `main` function:
 
 Our project is starting to take shape, but it still suffers from limitations...
 
-One issue is that, although the `twitter` and `github` packages both export `IsValid` and `IsAvailable` functions with identical signatures, nothing relates them.
+One issue is that, although the `github` and `reddit` packages both export `IsValid` and `IsAvailable` functions with identical signatures, nothing relates them.
 
-We seem to be missing a common abstraction to indiscriminately use the functionalities from the `twitter` and `github` packages...
+We seem to be missing a common abstraction to indiscriminately use the functionalities from the `github` and `reddit` packages...
 
-Again, interfaces will allow us to solve that issue.
+Again, interfaces will allow us to solve that issue. For now, let's learn about loops.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 250 _
-
-
-
-* Loops
 
 
 
@@ -2335,9 +2297,7 @@ The `range` keyword can be used in conjunction with `for` to iterate over some d
 
 A for-range loop can also be used to iterate over strings, arrays, maps, and channels. More about that in due time.
 
-
-
-* Arrays
+Now, let's learn about arrays and slices.
 
 
 
@@ -2439,10 +2399,6 @@ This is what [[https://go.dev/doc/effective_go#arrays][Effective Go]] has to say
 _Arrays_are_useful_when_planning_the_detailed_layout_of_memory_and_sometimes_can_help_avoid_allocation,_but_primarily_they_are_a_building_block_for_slices_ [...]
 
 _Slices_ are an abstraction over arrays. In most situations, the use of slices should be favored over the use of arrays.
-
-
-
-* Slices
 
 
 
@@ -2648,13 +2604,13 @@ One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-usi
       want     bool
     }
     testCases := []TestCase {
-      {"contains 'Twitter'", "jub0bsOnTwitter", false},
+      {"contains two consecutive hyphens", "jub0bs--on-GitHub", false},
       // other test cases...
     }
     for _, tc := range testCases {
-      got := twitter.IsValid(tc.username)
+      got := github.IsValid(tc.username)
       if got != tc.want {
-        t.Errorf("twitter.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
+        t.Errorf("github.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
       }
     }
   }
@@ -2684,9 +2640,9 @@ An improvement over table-driven tests is [[https://go.dev/blog/subtests#table-d
   // the rest of the testing function is unchanged
   for _, tc := range testCases {
     f := func(t *testing.T) {
-      got := twitter.IsValid(tc.username)
+      got := github.IsValid(tc.username)
       if got != tc.want {
-        t.Errorf("twitter.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
+        t.Errorf("github.IsValid(%q): got %t; want %t", tc.username, got, tc.want)
       }
     }
     t.Run(tc.desc, f)
@@ -3142,36 +3098,7 @@ Generics promote code reusability while providing some compile-time guarantees.
 
 You don't need to master generics at this stage of your Go learning. For more details, see [[https://go.dev/doc/tutorial/generics][Tutorial: Getting started with generics]].
 
-
-
-* Namecheck project: availability on Twitter
-
-Implement `IsAvailable` in the `twitter` package:
-
-  func IsAvailable(username string) (bool, error) {
-    const tmpl = "https://europe-west6-namechecker-api.cloudfunctions.net/userlookup?username=%s"
-    endpoint := fmt.Sprintf(tmpl, username)
-    resp, err := http.Get(endpoint)
-    if err != nil {
-      return false, err
-    }
-    defer resp.Body.Close()
-    if resp.StatusCode != http.StatusOK {
-      return false, errors.New("unknown availability")
-    }
-    var dto struct {
-      Data any `json:"data"`
-    }
-    dec := json.NewDecoder(resp.Body)
-    if err := dec.Decode(&dto); err != nil {
-      return false, err
-    }
-    return dto.Data == nil, nil
-  }
-
-: the absence of a data field in the response body indicates the username's availability
-: anonymous struct
-: simulateLatency=true
+Now, let's learn about methods, which are the key to interfaces.
 
 
 
@@ -3202,13 +3129,13 @@ Live demo on [[https://go.dev/play/p/axkpaElUyHI][the Playground]].
 
 To pave the way for the introduction of useful interface types in our project, let's create some types that allows users to check the validity and availability of usernames on each platform and turn our two functions into methods.
 
-1. In the `twitter` package, declare a `Twitter` type based on an empty struct.
+1. In the `github` package, declare a `GitHub` type based on an empty struct.
 
 2. Turn `IsValid` and `IsAvailable` into methods on that type (use a pointer receiver).
 
-3. Adjust your tests in `twitter_test.go` and `main.go`.
+3. Adjust your tests in `github_test.go` and `main.go`.
 
-4. Repeat steps 1-4 for the `github` package.
+4. Repeat steps 1-4 for the `reddit` package.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -3329,9 +3256,8 @@ Many of the interface types provided by Go's standard library are single-method:
   │   └── github_test.go
   ├── go.mod
   ├── namecheck.go
-  └── twitter
-      ├── twitter.go
-      └── twitter_test.go
+  └── reddit
+      └── reddit.go
 
 3. From the root of your project, check that `main.go` still compiles:
 
@@ -3349,7 +3275,7 @@ Many of the interface types provided by Go's standard library are single-method:
     IsValid(string) bool
   }
 
-2. Do `*twitter.Twitter` and `*github.GitHub` satisfy that interface? If not, make it so!
+2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Justify.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3365,7 +3291,7 @@ Many of the interface types provided by Go's standard library are single-method:
     IsAvailable(string) (bool, error)
   }
 
-2. Do `*twitter.Twitter` and `*github.GitHub` satisfy that interface? If not, make it so!
+2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Justify.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3416,7 +3342,7 @@ You can declare a larger interface type simply by listing the more elementary in
 - `Validator`
 - `Availabler`
 
-2. Do `*twitter.Twitter` and `*github.GitHub` satisfy it?
+2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Justify.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3426,12 +3352,12 @@ You can declare a larger interface type simply by listing the more elementary in
 
 1. In your `main` function, create a slice of `namecheck.Checker` with two elements:
 
-- a pointer to a `twitter.Twitter`
 - a pointer to a `github.GitHub`
+- a pointer to a `reddit.Reddit`
 
 2. Simplify the existing code by ranging over the slice of `namecheck.Checker` values.
 
-3. There currently is no way to ask a `Checker` to which platform (Twitter or GitHub) it's dedicated. Any idea?
+3. There currently is no way to ask a `Checker` to which platform (GitHub or Reddit) it's dedicated. Any idea?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3461,7 +3387,7 @@ If a type satisfies `fmt.Stringer`, its `String` method governs the textual repr
 
 1. Modify the declaration of the `namecheck.Checker` interface so that the latter also be an `fmt.Stringer`.
 
-2. Do `*twitter.Twitter` and `*github.GitHub` still satisfy the `namecheck.Checker` interface? If not, fix that.
+2. Do `*github.GitHub` and `*reddit.Reddit` still satisfy the `namecheck.Checker` interface? If not, fix that.
 
 3. Make good use of `namecheck.Checker`'s new `String` method in your `main` function.
 
@@ -3601,8 +3527,8 @@ In other words, you should resist the temptation to declare interface types upfr
 Instead, start with concrete types and let interfaces emerge organically, as needed
 (e.g. for abstraction purposes).
 
-Note that we declared the `twitter.Twitter` and `github.GitHub` struct types first,
-and only then did we declare the interface types that they satisfy.
+Note that we declared the `github.GitHub` and `reddit.Reddit` struct types first,
+and only then did we declare the interface types that pointers to those types satisfy.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
@@ -3673,15 +3599,15 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 1. In `namecheck.go`, judiciously declare a useful interface named "Getter" that type `*http.Client` already satisfies.
 
-2. In your `Twitter` and `GitHub` struct types, add a field of type `namecheck.Getter`:
+2. In your `GitHub` and `Reddit` struct types, add a field of type `namecheck.Getter`:
 
-  type Twitter struct {
+  type GitHub struct {
     Getter namecheck.Getter
   }
 
 5. In your `IsAvailable` methods, call the `Getter`'s method instead of `http.Get`.
 
-6. In your `main` function, _inject_ the actual HTTP client when you instantiate the `Twitter` and `GitHub` struct types.
+6. In your `main` function, _inject_ the actual HTTP client when you instantiate the `GitHub` and `Reddit` struct types.
 
 : Now you have everything you need to create a "fake" Getter for testing purposes!
 
@@ -3709,8 +3635,8 @@ A [[https://pkg.go.dev/net/http#HandlerFunc][frequently useful]] trick to implem
 
 Then, declare a method that simply delegates to the underlying function! 🤯
 
-  func (cf ClimberFunc) Climb(meters uint) error {
-    return cf(meters)
+  func (f ClimberFunc) Climb(meters uint) error {
+    return f(meters)
   }
 
 : Note that the method's implementation simply delegates to the underlying function.
@@ -3733,9 +3659,6 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
 
 3. Now write a few unit tests for `github.GitHub`'s `IsAvailable` method and run them.
 
-4. Is our stub type sufficient for testing `twitter.Twitter`'s `IsAvailable` method?
-If not, what would you change?
-
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 150 _
 
 : https://www.martinfowler.com/articles/mocksArentStubs.html
@@ -3744,7 +3667,7 @@ If not, what would you change?
 
 * Namecheck project: simulate support for many platforms
 
-1. In `main.go`, judiciously populate your `[]namecheck.Checker` slice with twenty pointers to the same `twitter.Twitter` instance.
+1. In `main.go`, judiciously populate your `[]namecheck.Checker` slice with twenty pointers to the same `github.GitHub` variable.
 
 2. Similarly, populate your slice of checkers with twenty pointers to the same `github.GitHub` instance.
 
@@ -3775,12 +3698,9 @@ We'll experiment with concurrency inside another `main.go`. Later, we'll write a
   │   └── github_test.go
   ├── go.mod
   ├── namecheck.go
-  └── twitter
-      ├── twitter.go
-      └── twitter_test.go
-
-
-
+  └── reddit
+      ├── reddit.go
+      └── reddit_test.go
 
 
 
@@ -5626,7 +5546,7 @@ A relative import relies on the location of the imported package relative to tha
 
   package main
 
-  import ./twitter
+  import ./github
 
 Avoid relative imports like the plague!
 
@@ -5686,7 +5606,7 @@ An interface value is considered `nil` if and only if
 Be careful: an interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
 
   ---------------------------------------
-  | pointer to twitter.Twitter's itable |
+  | pointer to github.GitHub's itable |
   ---------------------------------------     !=     nil
   |                 nil                 |
   ---------------------------------------
@@ -5743,6 +5663,5 @@ The following program contains a subtle bug. Can you identify it?
 Avoid declaring variables of a concrete type that happens to satisfy `error`!
 
 See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=13m20s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
-
 
 

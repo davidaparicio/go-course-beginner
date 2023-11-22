@@ -4,8 +4,7 @@ import "fmt"
 
 // START OMIT
 func main() {
-	r := 'b'
-	switch r {
+	switch 'e' {
 	case 'a', 'e', 'i', 'o', 'u':
 		fmt.Println("ASCII vowel")
 	case 'y':

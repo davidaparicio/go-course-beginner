@@ -4,7 +4,7 @@ import "fmt"
 
 func main() {
 	// START OMIT
-	var p *int
-	fmt.Println(*p) // panic
+	var p *int      // nil
+	fmt.Println(*p) // panic!
 	// END OMIT
 }
