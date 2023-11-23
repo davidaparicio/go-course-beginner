@@ -1318,17 +1318,17 @@ Because Go's call stacks are elastic (they grow and shrink as needed), recursion
 Functions can [[https://pkg.go.dev/net/http/#HandleFunc][take other functions as parameters]], [[https://go.dev/play/p/LfT4e0lPmNV][return functions as results]],
 be stored in variables, etc.
 
+.play -edit src/function_value.go /^//START/,/^//END/
+
+Function types are *not* comparable:
+
+.play -edit src/function_uncomparable.go /^//START/,/^//END/
+
+The zero value of function types is `nil`. Calling a `nil` function causes a panic!
+
 .play -edit src/function_nil.go /^//START/,/^//END/
 
-Each function has a type.
-
-Function types are *not* comparable.
-
-The zero value of function types is `nil`.
-
-Be careful: calling a `nil` function causes a panic!
-
-: greetings is a function-valued variable
+: how is a function-valued parameter
 : functions as parameters: useful for decorators/middleware
 : function-typed results can also be useful for cleaning up; see Mat Ryer's talk
 
@@ -1340,7 +1340,7 @@ Go supports anonymous functions but lacks a concise "lambda" notation:
 
   incr := func(i int) int { return i + 1 }
 
-A _closure_ is an anonymous function that references variables from an enclosing scope:
+A [[https://en.wikipedia.org/wiki/Closure_(computer_programming)][_closure_]] is an anonymous function that references variables from an enclosing scope:
 
 .play -edit src/function_closure.go /^//START/,/^//END/
 
@@ -1354,29 +1354,26 @@ A _closure_ is an anonymous function that references variables from an enclosing
 
 Methods are functions that are attached to a specific type.
 
-They distinguish themselves from _package-level_functions_, e.g.
+Methods distinguish themselves from _package-level_functions_ by the presence (in a pair of parentheses between the keyword `func` and the method's name) of an extra parameter called the _method's_receiver_:
 
   func MatchString(pattern string, s string) (matched bool, err error) // package-level function
-
-by the presence (in a pair of parentheses between the keyword `func` and the method's name) of an extra parameter called the _method's_receiver_:
-
-  func (re *Regexp) MatchString(s string) bool // method on the *Regexp type
+  func (re *Regexp) MatchString(s string) bool                         // method on the *Regexp type
 
 Methods are tightly related to _interfaces_, which are the primary mechanism for polymorphism. More about that later in the course.
 
-Now let's learn how to handle and report errors!
+👉 Now let's learn how to handle and report errors!
 
 
 
 * Errors are values
 
-There are no exceptions in Go! Anticipated failures are reported as [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=16m13s]["normal" values]] of the built-in interface type `error`.
+There are no exceptions in Go! Anticipated failures are reported as [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=16m13s]["normal" values]] of the [[https://pkg.go.dev/builtin#error][built-in interface type `error`]].
 
-A function that can fail returns an additional `error` result (the last one, by convention):
+A function that can fail typically returns an additional `error` result; by convention, this result is the function's last:
 
   func Fetch(uri string) ([]Item, time.Time, error)
 
-A non-nil `error` result indicates to the caller that the function failed in some way and that its "normal" results are unusable.
+A non-`nil` `error` result indicates to the caller that the function call failed in some way and that the other results are unusable. Conversely, a `nil` error indicates that the function call succeeded.
 
 "err" is a conventional name for error values and the following nil-check idiom is typical:
 
@@ -1412,11 +1409,6 @@ You may hate Go's stance on error handling but, in time, you will grow to love i
 
 
 
-* Line of sight
-
-Always deal with the failure case first.
-
-Don't do this:
 
   v, err := fallibleFunction()
   if err == nil {
@@ -1425,35 +1417,56 @@ Don't do this:
     // failure: handle error
   }
 
-Do this instead:
+* Line of sight
+
+Don't confine the happy path of your functions to nested "if" branches, or you'll end up with deeply nested code (a so-called "[[https://en.wikipedia.org/wiki/Pyramid_of_doom_(programming)][pyramid of doom]]"), which is hard to read:
+
+  v, err := fallibleFunction()
+  if err == nil {
+          v2, err := faillibleFunction2()
+          if err == nil {
+                  v3, err := fallibleFunction3()
+                  if err == nil {
+                          // happy path <--------------
+                  } else {
+                            // failure: handle 3rd error
+                  }
+          } else {
+                    // failure: handle 2nd error
+          }
+  } else {
+            // failure: handle 1st error
+  }
+
+
+
+* Line of sight (cont'd)
+
+Instead, invert the conditions and deal with failure cases first:
 
   v, err := fallibleFunction()
   if err != nil {
-    // failure: handle error and perhaps return early
+          // failure: handle 2nd error
   }
-  // success; do something interesting with v
+  v2, err := faillibleFunction2()
+  if err == nil {
+          // failure: handle 2nd error
+  }
+  v3, err := faillibleFunction3()
+  if err == nil {
+          // failure: handle 2nd error
+  }
+  // happy path <--------------
 
-: Narrow code is better than deeply nested code!
+This idiom (applicable to other languages) greatly contributes to the code readability.
 
-
-
-* Line of sight (cont'd)
-
-This idiom greatly contributes to the readability of Go code. Your code ends up looking like a column of a broadsheet newspaper:
-
-.image https://upload.wikimedia.org/wikipedia/commons/4/44/New_York_Times_1914-07-29.jpg 250 _
-
-By avoiding the `else` keyword and eliminating failure cases as they arise,
-
-- you [[https://go.dev/doc/effective_go#if][keep the "happy path" on the left]],
-- you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]],
-- you [[https://www.youtube.com/watch?v=yd_rtwYaXps&t=33m30s][reduce the cognitive load]] required to read and understand your code.
+By avoiding the `else` keyword and eliminating failure cases as they arise, you [[https://go.dev/doc/effective_go#if][keep the happy path on the left]], you [[https://en.wikibooks.org/wiki/Computer_Programming/Coding_Style/Minimize_nesting][minimize nesting]], you [[https://www.youtube.com/watch?v=yd_rtwYaXps&t=33m30s][reduce the cognitive load]] required to read and understand your code.
 
 
 
 * Line of sight (cont'd)
 
-More reading material about this idiom:
+More reading material about this idiom and its relevance in Go:
 
 - [[https://github.com/golang/go/wiki/CodeReviewComments#indent-error-flow][Go Code Review Comments - Indent Error Flow]]
 - [[https://go.dev/talks/2013/bestpractices.slide#3][Francesc Campoy Flores - Twelve Go Best Practices]]
