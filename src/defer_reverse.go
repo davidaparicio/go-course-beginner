@@ -4,9 +4,9 @@ import "fmt"
 
 // START OMIT
 func main() {
-	for i := 0; i < 3; i++ {
-		defer fmt.Println(i) // HL
-	}
+	defer fmt.Println("foo")
+	defer fmt.Println("bar")
+	defer fmt.Println("baz")
 }
 
 //END OMIT

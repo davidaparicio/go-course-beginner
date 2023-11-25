@@ -109,11 +109,14 @@ Go was created in 2007 at Google by
 Back in 2007, C++'s increasing complexity, slow compilation, and poor support for concurrency were [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][recurring sources of frustration]] for the two Roberts at Google,
 where C++ is heavily used for implementing distributed systems.
 
-.image https://imgs.xkcd.com/comics/compiling.png 200 _
+.image https://imgs.xkcd.com/comics/compiling.png 180 _
 
-They enlisted the help of Ken Thompson and started working on a new language, which would ultimately become Go.
+They enlisted the help of Ken Thompson and started working on a new language, which ultimately became Go... For more on the origins of Go, see
 
-For more on the origins of Go, see [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]] and [[https://www.youtube.com/watch?v=6oF0UblqkGs&t=465s][Carmen Andoh - 10 Years of Go (GopherConAU 2019)]].
+- [[https://www.youtube.com/watch?v=YXV7sa4oM4I][Rob Pike - The Go Programming Language and Environment]]
+- [[https://www.youtube.com/watch?v=6oF0UblqkGs&t=465s][Carmen Andoh - 10 Years of Go (GopherConAU 2019)]]
+- [[https://www.youtube.com/watch?v=igFz-5rdn2Y&t=85s][Cameron Balahan - Keynote: The State Of Go (GopherCon Europe 2023)]].
+
 
 
 
@@ -129,6 +132,7 @@ For more on the origins of Go, see [[https://www.youtube.com/watch?v=YXV7sa4oM4I
 - 2022: Go 1.18 adds generics to the language.
 - 2023: Go 1.21 (the latest version) is released.
 
+: Russ joined the Go Team between 2007 and 2009: https://research.swtch.com/back
 
 
 * Logo & mascot
@@ -330,10 +334,11 @@ Go's solution to dependency management is known as the [[https://go.dev/doc/modu
 The terms _package_ and _module_ are confusingly similar, but don't conflate the two!
 
 - A _package_ is a unit of code composed of one or more source files.
-- A _module_ is a collection of packages versioned together using [[https://semver.org/][semantic versioning]].
+- A _module_ is a collection of packages versioned together using [[https://semver.org/][semantic versioning]] (and stored in a file tree with a `go.mod` file at its root).
 
-.image img/modules_vs_packages.svg 300 _
+.image img/modules_vs_packages.svg 250 _
 
+: https://go.dev/blog/using-go-modules
 : https://excalidraw.com/#json=buuEXMFgpGowzDhZMWzi7,5QOjQiY9GoMUNHGHCGL5_w
 
 
@@ -346,11 +351,11 @@ For instance, if you intend to publish your code on GitHub, the path of your mod
 
   github.com/YOUR_GITHUB_USERNAME/REPO_NAME
 
-A module's path prefixes import paths of all the packages contained within the module:
-
-  package main
+A module's path acts as the import path for the module's root directory. It prefixes the import paths of all the packages contained within the module:
 
   import "github.com/YOUR_GITHUB_USERNAME/REPO_NAME/SOME_PACKAGE_NAME"
+
+Note the absence of a central server (like [[https://npmjs.com]]) where modules ought to be published! As the Go team [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-11][puts it]]: "Relying on domain names avoided a rush to claim valuable entries in a flat [namespace]."
 
 
 
@@ -364,9 +369,11 @@ To do so, `cd` to the root of your project and run a command of the following fo
 
   $ go mod init <your-module-path>
 
-Initializing a module creates a text file named `go.mod` at the root of your project.
+Initializing a module creates a text file named `go.mod` in the current directory.
 
-Don't edit the `go.mod` file manually. Instead, you can interact with it solely through the use of the `mod` subcommand. For help, run
+Don't forget to track this file in your version-control system, as it contains vital information about your project!
+
+Resist the temptation to edit that file manually. Instead, you can interact with it solely through the use of the `mod` subcommand. For help, run
 
   $ go help mod
 
@@ -406,7 +413,7 @@ A `go.mod` file will be created at the root of your project:
 
 2. Write a "Hello World" program in main.go
 
-3. Compile it by running the following command, which creates a standalone native binary (named `main` on *nix systems or `main.exe` on Windows):
+3. Compile it by running the following command, which creates a self-contained (statically linked) native binary named `main` on *nix systems (or `main.exe` on Windows):
 
   $ go build main.go
 
@@ -415,6 +422,7 @@ A `go.mod` file will be created at the root of your project:
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 : for now, we'll code in this source file, but we'll reorganize our code later
+: multiple compilers: gc (canonical one), gogcc, gollvm
 
 
 
@@ -587,7 +595,7 @@ All of a package's source files
 - start with the same _package_clause_, and
 - are located in the same folder on the disk.
 
-For instance, all the source files of the `fmt` package start with
+`fmt` is an example of a multi-file package. All its source files start with
 
   package fmt
 
@@ -687,7 +695,7 @@ A named import is convenient when you perceive the default name as inappropriate
 
   import ml "github.com/jub0bs/missilelauncher"
 
-Moreover, named imports are especially useful when your code imports multiple packages whose default names collide,
+Moreover, named imports are especially useful when your code imports multiple packages whose default names conflict,
 
   import "math/rand"
   import crand "crypto/rand"
@@ -869,7 +877,7 @@ The `:=` operator is convenient for assigning the results of a function to varia
 
   i, err := strconv.Atoi("42") // declares i and err
 
-If an identifier is already used by a variable in scope,  the `:=` operator simply updates that variable:
+The `:=` operator allows you to perform [[https://go.dev/doc/effective_go#redeclaration][a mixture of declaration and assignment]]:
 
   i, err := strconv.Atoi("42") // declares i and err
   j, err := strconv.Atoi("96") // declares j, but only updates err
@@ -979,7 +987,7 @@ A [[https://go.dev/ref/spec#Statements][_simple_statement_]] (usually a short va
 
 .play -edit src/if_short_variable_decl.go /^//START/,/^//END/
 
-The scope of such variables is restricted to the if(-else) statement.
+Because the scope of such variables is restricted to the if(-else) statement, this syntax frees you to reuse the same variable name ("err", in this case).
 
 : mandatory braces: no dangling-else problem like in C, JS, etc.
 : short-var-decl: useful for error handling
@@ -1136,7 +1144,7 @@ Dereferencing a nil pointer causes a panic!
 
 Go has a builtin named "new", which has nothing to do with C languages' `new` keyword.
 
-It takes a type name `T` and returns a `*T` pointer that points to `T`'s the zero value.
+`new(T)` allocates a value equal to type `T`'s zero value and returns its address.
 
 `new` can spare you the declaration of an intermediate variable; compare
 
@@ -1243,9 +1251,9 @@ Contrary to more traditional OO languages, Go doesn't allow [[https://go.dev/doc
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
-If you're still ignoring errors, do you think that's judicious?
+If you're still ignoring errors, do you think that's judicious? You'll eventually need to learn how to properly handle errors.
 
-You'll eventually need to learn how to properly handle errors but, for now, let's keep learning about functions.
+👉 For now, let's keep learning about functions.
 
 
 
@@ -1299,20 +1307,6 @@ Similarly, the type of identically typed consecutive results can be factored out
 
 
 
-* Recursion
-
-Go supports [[https://en.wikipedia.org/wiki/Recursion#In_computer_science][recursion]]: a function can call itself, either directly or indirectly.
-
-Recursion may seem a bit tricky and academic at first, but it's particularly useful for traversing recursive data structures, such as linked lists and binary trees.
-
-Here is a recursive implementation of the [[https://en.wikipedia.org/wiki/Factorial][factorial function]] from mathematics:
-
-.play -edit src/recursion.go /^//START/,/^//END/
-
-Because Go's call stacks are elastic (they grow and shrink as needed), recursion is less likely (unless there is a bug!) to cause a stack overflow than in other languages.
-
-
-
 * Functions are first-class values
 
 Functions can [[https://pkg.go.dev/net/http/#HandleFunc][take other functions as parameters]], [[https://go.dev/play/p/LfT4e0lPmNV][return functions as results]],
@@ -1347,6 +1341,23 @@ A [[https://en.wikipedia.org/wiki/Closure_(computer_programming)][_closure_]] is
 : lexical closure: an anonymous function that captures variables from its lexical environment
 : the anonymous function closes over / is bound to the sum variable
 : Anonymous functions are often conveniently used in conjunction with the `go` keyword to launch goroutines.
+
+
+
+* Recursion
+
+Go supports [[https://en.wikipedia.org/wiki/Recursion#In_computer_science][recursion]]: a function can call itself, either directly or indirectly.
+
+Recursion may seem a bit tricky and academic at first, but it's particularly useful for traversing recursive data structures, such as linked lists and binary trees.
+
+Here is a recursive implementation of the [[https://en.wikipedia.org/wiki/Factorial][factorial function]] from mathematics:
+
+.play -edit src/recursion.go /^//START/,/^//END/
+
+Because Go's call stacks are elastic (they grow and shrink as needed), recursion is less likely (unless there is a bug!) to cause a stack overflow than in other languages.
+
+: another example: https://go.dev/play/p/0S57WLB0YRv
+: Closures can also be recursive, but this requires the closure to be declared with a typed var explicitly before it’s defined.
 
 
 
@@ -1466,131 +1477,223 @@ By avoiding the `else` keyword and eliminating failure cases as they arise, you 
 
 * Line of sight (cont'd)
 
-More reading material about this idiom and its relevance in Go:
+For more about this idiom and its relevance in Go, consult the following resources:
 
 - [[https://github.com/golang/go/wiki/CodeReviewComments#indent-error-flow][Go Code Review Comments - Indent Error Flow]]
 - [[https://go.dev/talks/2013/bestpractices.slide#3][Francesc Campoy Flores - Twelve Go Best Practices]]
 - [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer - Code: Align the happy path to the left edge]]
 - [[https://dave.cheney.net/2019/07/09/clear-is-better-than-clever][Dave Cheney - Clear is better than clever]]
+- [[https://www.youtube.com/watch?v=ltqV6pDKZD8&t=1426s][Edward Muller - Go Anti-Patterns (GopherCon 2017)]]
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 250 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
 
 : also about cognitive load: https://go.dev/talks/2013/bestpractices.slide#3
 
 
 
-* Different ways of treating an error value
+* Handling a non-nil error value
 
-*Reporting*it*to*the*caller*
+What should you do when a function call returns a non-`nil` error?
 
-- bubbling it up as is
-- wrapping it in some custom higher-level error type
-
-*Consuming*it*
-
-- logging it
-- printing it to stderr
-
-*Inspecting*it*(before*deciding*what*to*do)*
-
-- comparing it to some sentinel error value (e.g. [[https://pkg.go.dev/context#DeadlineExceeded][`context.DeadlineExceeded`]])
-- inquiring about the concrete type of the error value
-- looking up its underlying cause (if any)
-
-The best way of treating an error value is highly context-dependent.
-
-: bubble it up: you lose context
-
-
-
-* Consuming or reporting? You must choose!
-
-However you choose to handle an error value, do _not_ both consume it and report it!
-
-  func foo() error {
-    v, err := fallibleFunction()
+  func YourFunction(username string) bool {
+    v, err := foo(username)
     if err != nil {
-      log.Println(err) // bad!
-      return err       // bad!
+      // ???
     }
-    // do something interesting with v
+    // ...
   }
 
-Either consume it or report it, but not both. Why not? Discuss.
+The best course of action depends on the context...
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
+
+
+
+* Bubbling a non-nil error up to the caller
+
+If your function cannot handle a non-`nil` error value, simply bubble it up to the caller:
+
+  func YourFunction(username string) (bool, error) {
+    v, err := foo(username)
+    if err != nil {
+      return false, err
+    }
+    // ...
+  }
+
+Additionally, you can add some contextual information about the failure by wrapping the error value into a higher-level one, thereby building a chain of errors. In particular, see the documentation of [[https://pkg.go.dev/fmt#Errorf][the `fmt.Errorf` function]] about the `%w` formatting directive.
+
+  func YourFunction(username string) (bool, error) {
+    v, err := foo(username)
+    if err != nil {
+      return false, fmt.Errorf("failure to check %q: %w", username, err)
+    }
+    // ...
+  }
+
+
+
+* Consuming a non-nil error
+
+In other cases, you may not want to expose the error to the caller and instead absorb/consume it, perhaps by logging it or printing it to stderr:
+
+  func YourFunction(username string) bool {
+    v, err := foo(username)
+    if err != nil {
+      log.Println(err)
+    }
+    // ...
+  }
+
+This approach is best reserved to the `main` function (or, at least, high in the call stack).
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
+
+
+* Bubbling up or consuming a non-nil error? Don't do both!
+
+However you choose to handle a non-`nil` error, do _not_ both report it and consume it!
+
+  func YourFunction(username string) (bool, error) {
+    v, err := foo(username)
+    if err != nil {
+      log.Println(err)
+      return false, err
+    }
+    // ...
+  }
+
+If the caller does the same, and the caller's caller does the same, etc., you will end up with multiple entries for the same error in your logs.
+
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
 
 : I've seen people logging the error at every stage of the call stack! => duplicate entries in logs, confusing
 
 
 
-* Creating error values from scratch
+* Beyond if err != nil
 
-`errors.New` allows you to create a simple error value:
+When you get a non-`nil` error, you can also ask programmatic questions about the nature of that error or the contents of its error chain.
+
+For instance, to find out whether the error chain contains some sentinel error value (such as [[https://pkg.go.dev/context#DeadlineExceeded][`context.DeadlineExceeded`]]), you can use [[https://pkg.go.dev/errors#Is][the `errors.Is` function]]:
+
+  if errors.Is(err, context.DeadlineExceeded) {
+    // err (or a node in its error chain) is context.DeadlineExceeded
+  }
+
+[[https://pkg.go.dev/errors][The `errors` package]] allows you to ask more sophisticated questions, such as whether an error chain contains an error of some concrete type (see [[https://pkg.go.dev/errors#As][the `errors.As` function]]) , but this is an advanced topic that requires a preliminary understanding of interfaces.
+
+
+
+* Creating error values
+
+In some situations, you'll need to create an error value from scratch.
+
+[[https://pkg.go.dev/errors#New][`errors.New`]] allows you to create a simple error value with the desired error message:
 
   err := errors.New("namecheck: failure to check availability of 'jub0bs' on GitHub")
 
-\... but `fmt.Errorf` is more flexible:
+However, [[https://pkg.go.dev/fmt#Errorf][`fmt.Errorf`]] is more flexible, as it accepts a format string:
 
   username := "jub0bs"
   platform := "GitHub"
   err := fmt.Errorf("namecheck: failure to check availability of %q on %s", username, platform)
 
-By convention, error messages
+Note the parallel between these two couples of functions:
 
-- are of the form "<package-name>: <human-readable-error-message>",
-- should be lowercase,
-- should not contain linebreaks.
+- `fmt.Println` and `fmt.Printf`
+- `errors.New` and `fmt.Errorf`
 
-You can also create your own error types (i.e. types that satisfy the `error` interface).
+
+
+* Good practices about error messages
+
+Convention dictates that error messages
+
+- [[https://github.com/golang/go/wiki/CodeReviewComments#error-strings][be lowercase]],
+- not contain line breaks,
+- be of the form "<package-name>: <human-readable-error-message>".
+
+Here is a typical example:
+
+  namecheck: failure to check availability of 'jub0bs' on GitHub
+
+Also, remember that error messages are for humans, not machines!
+
+If you want to provide programmatic access to contextual information about the failure, don't simply bury that information in an error message, because that would force your users to parse the message in order to extract that information... 😖
+
+Instead, declare your own type and make it behave like an error. More about that later.
 
 
 
 * Panic
 
-A panic is a run-time event that indicates an exceptional and irrecoverable failure.
+A panic is a run-time event that indicates an exceptional and irrecoverable failure. Panics can (but rarely should) be [[https://go.dev/blog/defer-panic-and-recover][_recovered_]].
 
-A panic can be triggered by a run-time error (such as calling a `nil` function) or by some direct or indirect call to built-in function `panic`.
-
-A panic stops the program's normal execution, runs deferred function calls as it unwinds the stack, prints an error message and goroutine traces, and exit the program with a non-zero status:
+A panic can be triggered by a run-time error or by some direct or indirect call to [[https://pkg.go.dev/builtin#panic][the built-in `panic` function]].
 
 .play -edit src/panic.go /^//START/,/^//END/
 
-Panics can (but rarely should) be [[https://go.dev/blog/defer-panic-and-recover][_recovered_]].
+When a panic occurs anywhere in your program,
+
+- the program's normal execution stops,
+- deferred function calls are executed as it the stack is unwound,
+- an error message and goroutine traces are printed to stderr, and
+- the program exits with a non-zero status.
 
 : recover: if you consume a third-party package that panic willy-nilly
 : Panics may be reminiscent of Java's run-time exceptions, but the two cultures are radically different!
 
 
 
+* Naming convention for functions designed to panic
+
+For convenience, some functions are designed to panic. The name of such functions typically start with "Must".
+
+For example, [[https://pkg.go.dev/regexp][the `regexp` package]] provides [[https://pkg.go.dev/regexp#MustCompile][a function named `Compile`]] for parsing a pattern and creating a `*regexp.Regexp` value out of it. If the pattern isn't a valid regular expression, `Compile` returns a non-`nil` error.
+
+  func Compile(pattern string) (*regexp.Regexp, error)
+
+However, you sometimes want to declare a `*regexp.Regexp` as the package level or, if the pattern isn't valid, simply fail package initialization. Therefore, the `regexp` package also provides [[https://pkg.go.dev/regexp#MustCompile][a panicking wrapper, named `MustCompile`]], around `Compile`:
+
+  func MustCompile(pattern string) *Regexp {
+    re, err := Compile(pattern)
+    if err != nil {
+      panic(`regexp: Compile(` + quote(pattern) + `): ` + err.Error())
+    }
+    return re
+  }
+
+
+
 * Don't panic for no good reason
 
-Do not panic in your functions for anticipated and mundane failures:
+Resist the temptation to make your functions panic for anticipated and mundane failures, such as
 
-- a file couldn't be opened
-- a HTTP request failed
-- the connection to the database dropped
+- a file that couldn't be opened,
+- the database server closing the connection,
+- a HTTP request that never reached the target Web server, etc.
 
 In idiomatic Go, such failures are instead reported to the caller as `error` values.
 
-However, panicking during the initialization of your package is legitimate
-if some programming error renders the package unusable.
+However, panicking during the initialization of your package is legitimate, if some programming error renders the package unusable... Does that give you and idea?
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
 
 : examples: invalid regexp pattern, template compilation failure
 
 
 
-* Namecheck project: fail early if the regexp is unusable
+* Namecheck project: properly handle errors (cont'd)
 
-1. In the documentation of the `regexp` package, identify a function that compiles a regular expression and panics if the pattern is invalid.
+1. Use `regexp.MustCompile` to declare a variable of type `*regexp.Regexp` at the package level.
 
-2. Use that function to declare a variable of type `*regexp.Regexp` at the package level.
+2. Refactor your `IsValid` function to make use of that variable.
 
-3. Refactor your `IsValid` function to make use of that variable.
-
-.image https://i.redd.it/48emz1dvfz441.png 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : if the regexp is invalid, the package is unusable => communicate that by panicking at initialisation
 : more efficient: regexp compiled at most once
@@ -1604,13 +1707,9 @@ All the code we've written in `main.go` so far is specific to GitHub, which is a
 
 It would be preferable to create a dedicated library package for each of the social media we wish to support.
 
-Let's learn how to create a library package and use it in our `main` package.
+👉 Let's learn how to create a library package and how to use it in our `main` package.
 
 .image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 200 _
-
-
-
-* Designing and organizing packages
 
 
 
@@ -1622,11 +1721,15 @@ The package *must* declare a `main` function that has no params and returns no r
 
 The name of the enclosing folder is arbitrary.
 
-If a project produces several executables, put each of the main packages in a subfolder of a folder named "cmd" located at the root of your project.
+A main package produces a single executable. If your project produces several executables, put each of the main packages in a subfolder of a parent folder named "cmd" located at the root of your project:
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/witch-learning.svg 200 _
+  namecheck
+  └── cmd
+      ├── cli
+      │   └── main.go
+      └── server
+          └── main.go
 
-: cmd folder: we'll do this ourselves
 
 
 
@@ -1655,7 +1758,7 @@ There's one exception to this rule that relates to testing. More on that later.
 
 A package is composed of one to several source files.
 
-All of a package's source files must be placed in the same folder. Source files from different packages cannot be in the same folder!
+All of a package's source files must be placed in the same folder. In general (there's one exception), source files from different packages cannot be in the same folder.
 
 All of the members of a package are accessible to all of the package's source files.
 
@@ -1669,17 +1772,41 @@ Each source file must import the packages that it needs.
 
 * Naming a package
 
-[[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=5m45s][A well-designed package starts with its name]]! The name of a package should be
+Convention dictates that package names be lowercase alphanumeric (no underscores) and nouns rather than verbs (usually).
 
-- lowercase alphanumeric (no underscores!),
-- concise (_net_ rather not _network_, _strconv_ rather than _stringconversion_)
-- descriptive (avoid painfully generic names like "util", "helpers", or "common"),
-- a noun rather than a verb (usually),
-- a clue to its purpose (rather than its content).
+[[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=5m45s][A well-designed package starts with its name]]! Because the name will appear in qualified identifiers in your users' code, choosing a good name is important. A good name is
 
-Don't prevent clients of your package from using a good name in their code.
-If you name your package "user", your clients cannot name a variable "user"
-without shadowing the name of your package.
+- *concise* (_net_ rather not _network_, _strconv_ rather than _stringconversion_, etc.)
+- yet *descriptive* (avoid painfully generic names like "util", "helpers", or "common").
+
+The name should be [[https://www.youtube.com/watch?v=ltqV6pDKZD8&t=734s][a clue to the package's purpose rather than to its contents]]. Rob Pike also says: [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=1090s][Design the architecture, name the components, document the details.]]
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
+
+
+
+* Naming a package (cont'd)
+
+Finally, don't prevent the users of your package from choosing a good identifier.
+
+For example, if you choose "cors" for the name of your [[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS][CORS]]-middleware library package, its users cannot declare a variable named "cors" without shadowing the name of your package.
+
+This consideration drove me to name [[https://pkg.go.dev/github.com/jub0bs/fcors][my own library]] "fcors" rather than simply "cors":
+
+  import "github.com/jub0bs/fcors"
+
+  func main() {
+    cors, err := fcors.AllowAccess(
+      fcors.FromOrigins("https://example.com"),
+      fcors.WithMethods(
+        http.MethodGet,
+        http.MethodPost,
+      ),
+      fcors.WithRequestHeaders("Authorization"),
+    )
+    // ...
+  }
+
 
 : concise: fmt, not format; strconv, not stringconversion
 : avoid painfully generic (!) names / catchall names
@@ -1704,17 +1831,18 @@ without shadowing the name of your package.
 
 * Good naming practices for package identifiers
 
-Bear in mind that identifiers will be [[https://go.dev/ref/spec#Qualified_identifiers][prefixed by their package name]] at call sites.
+Bear in mind that [[https://go.dev/ref/spec#Qualified_identifiers][qualified identifers]] contain their package name.
 
 Avoid stutter in package-level identifiers (see [[https://www.youtube.com/watch?v=MzTcsI6tn-0&t=23m40s][Brian Ketelsen - Go best practices]]):
 
-  log.LogInfo // bad
-  log.Info    // good
+  package coffee
 
-  strings.StringReader // verbose
-  strings.Reader       // concise
+  func RoastCoffee(tempC uint) error // verbose
+  func Roast(tempC uint) error       // concise
 
-Avoid redundancy in factory functions if the package exports a single type:
+: example adapted from https://www.youtube.com/watch?v=cAWlv2SeQus&t=18m30s
+
+If the package exports a single type, avoid redundancy in the name of factory functions:
 
   github.NewGitHub // verbose
   github.New       // concise
@@ -1731,23 +1859,23 @@ such as `Encoder` and `Decoder` in the `encoding/json` package:
 
 * Subpackages
 
-Subpackages of a package are simply packages located in subfolders of that package.
+Subpackages of a package are packages located in subfolders of that package.
 
-They allow grouping of functionalities related to but more specific than those provided by their superpackage.
+Their location in the file system simply reflects that the functionalities they provide are related to but more specific than those provided by their parent package.
 
 .image img/encoding_core_lib.png 150 _
 
-A package doesn't have any special relationship with its subpackages:
+Perhaps surprisingly, a package and its subpackages don't have any special relationship:
 
-- if package `foo/bar` depends on package `foo`, `foo/bar` must import `foo`;
-- `foo/bar` does not have access to identifiers not exported by `foo`;
+- If package `foo/bar` depends on package `foo`, `foo/bar` must import `foo`.
+- `foo/bar` does not have access to identifiers not exported by `foo`.
 - `foo` does not have access to identifiers not exported by `foo/bar`.
 
 : encoding defines a general interface that all the subpackages implement
 
 
 
-* No dependency cycles allowed by the compiler
+* No import cycles allowed by the compiler
 
 For example, package `foo` cannot import package `bar` if `bar` itself imports `foo`.
 
@@ -1755,7 +1883,7 @@ For example, package `foo` cannot import package `bar` if `bar` itself imports `
 
 Imports form a _directed_acyclic_graph_, like the graph of commits in a Git repository.
 
-This design decision by the Go team is a key enabler of fast compilation.
+This design decision by the Go team is the kind of [[https://wiki.c2.com/?LiberatingConstraint][liberating constraint]] that enabled fast compilation of Go programs.
 
 .image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 200 _
 
@@ -1763,11 +1891,11 @@ This design decision by the Go team is a key enabler of fast compilation.
 
 
 
-* Avoiding dependency cycles with subpackages
+* Avoiding import cycles in your projects
 
-A rule of thumb is that a superpackage doesn't depend on any of its subpackages.
+A rule of thumb is that a parent package shouldn't depend on any of its subpackages.
 
-For example, here is a partial view of the `encoding` package and its subpackages:
+For example, here is a partial view of [[https://pkg.go.dev/encoding][the `encoding` package]] and its subpackages:
 
 .image img/dep_arrows_dont_point_down.svg _ 1000
 
@@ -1777,9 +1905,11 @@ Note that no dependency arrows points down.
 
 * Flat is better
 
-To a deep and narrow package hierarchy, prefer a shallow and possibly wide one:
+To a deep and narrow package hierarchy, prefer a shallow (and possibly wide) one:
 
 .image img/pkg_shallow_and_wide.svg 400 _
+
+Note: at the end of the course, compare the structure of your project to these diagrams.
 
 
 
@@ -1814,17 +1944,15 @@ Exported functions should communicate anticipated failures to client code as val
 
 5. Adjust your `main.go`. You'll need to import your `github` package there.
 
-
-
-* Testing
+👉 Now, let's learn how to write and run tests for the `github` package.
 
 
 
-* First-party support for testing
+* Go's support for testing
 
 Testing plays a key role in the Go ecosystem, and is supported out of the box.
 
-The [[https://pkg.go.dev/testing/][`testing` package]] allows you to test your packages through
+[[https://pkg.go.dev/testing/][The `testing` package]] allows you to test your packages through
 
 - unit tests or integration tests
 - example tests (executable examples that end up in the package's documentation),
@@ -1862,7 +1990,7 @@ Test files are otherwise regular source files in which you write _test_functions
 
 * White-box testing and black-box testing
 
-You have two options in the name used in the package clause of your test files for package `foo`: `foo` or `foo_test`. This choice determines your testing approach.
+You have two options for the name used in the package clause of your test files for package `foo`: `foo` or `foo_test`. This choice determines your testing approach.
 
 *White-box*testing*
 
@@ -1884,16 +2012,45 @@ Your tests then only have access to the exported members of package `foo`.
 
 
 
-* White or black box?
+* Should you write white- or black-box tests?
 
-White-box testing is the approach favored in the standard library. It is convenient,
-but can lead to prohibitive coupling between tests and implementation details.
+White-box testing is expedient but can lead to prohibitive coupling between tests and implementation details.
 
-.image https://pbs.twimg.com/media/EzrMZe6X0AMSozD?format=jpg&name=900x900 300 _
+Although the standard library heavily relies on white-box testing, many Gophers (such as [[https://changelog.com/gotime/173#transcript-153][Mat]] [[https://www.youtube.com/watch?v=cAWlv2SeQus&t=1125s][Ryer]], I, and others) favor black-box testing, partly because it forces them to test their packages strictly through their public API.
 
-Black-box testing is an approach favored by [[https://changelog.com/gotime/173#transcript-153][many Gophers]]: it keeps you honest,
-as a package author, by forcing you to test your packages through their public API.
-It can also be useful to avoid dependency cycles.
+The black-box approach can also be useful to break import cycles in tests.
+
+.image https://pbs.twimg.com/media/EzrMZe6X0AMSozD?format=jpg&name=900x900 250 _
+
+: black-box keeps you honest
+
+
+* An approach mixing white- or black-box testing is possible
+
+Finally, nothing prevents you from adopting a mixed approach in different test files,
+
+  foo
+  ├── foo.go
+  ├── foo1_test.go
+  └── foo2_test.go
+
+with black-box tests in some test files
+
+  // foo1_test.go
+  package foo_test
+
+  // ...
+
+and white-box tests in others:
+
+  // foo2_test.go
+  package foo
+
+  // ...
+
+
+
+
 
 
 
@@ -1915,7 +2072,7 @@ Respect this convention, or your test functions will be ignored by `go`test`.
 
 
 
-* Example of a test function for the github package
+* Example of a test function for the IsValid function
 
   package github_test // black-box testing
 
@@ -1933,27 +2090,11 @@ Respect this convention, or your test functions will be ignored by `go`test`.
     }
   }
 
-The `testing.T` type provides methods (such as `Errorf`) that allow you to indicate that a test is failing, via an informative message.
+The `*testing.T` type provides methods (such as `Errorf`) that allow you to indicate that the test has failed via an informative message, which typically adheres to this format:
 
-The message format used here ("got ...; want ...") is widely used.
+  <function-call>: got <actual-result>; want <expected-result>
 
-
-
-* Namecheck project: test github's IsValid function
-
-Create a file named `github_test.go` in the `github` folder.
-
-  namecheck
-  ├── github
-  │   ├── github.go
-  │   └── github_test.go
-  ├── go.mod
-  └── main.go
-
-Follow the black-box approach (use `github_test` as the package name)
-and write the test function shown on the previous slide.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+Some assertion libraries (like [[https://github.com/stretchr/testify/][github.com/stretchr/testify]]) exist but are dispensable.
 
 
 
@@ -1977,7 +2118,26 @@ You can also selectively run some test functions by specifying a regexp, e.g.:
 
 
 
-* Code coverage
+* Namecheck project: test github's IsValid function
+
+1. Create a file named `github_test.go` in the `github` folder.
+
+  namecheck
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
+  ├── go.mod
+  └── main.go
+
+2. Follow the black-box approach (use `github_test` as the package name) and write a test for your `IsValid` function, and then run that test.
+
+3. Momentarily introduce a bug in your `IsValid` function to make the test fail.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
+* Measuring code coverage
 
 To determine how much of your package's production code is covered by its tests, run
 
@@ -1987,7 +2147,7 @@ To generate a more detailed (machine-readable) coverage report, first run
 
   go test -coverprofile="coverage.out" ./...
 
-Then, for a shell-based breakdown of the coverage by package function, run
+Then, to see (on the command line) a breakdown of the coverage by function, run
 
   go tool cover --func="coverage.out"
 
@@ -1995,102 +2155,83 @@ Alternatively, for a browser-based breakdown of the coverage by statement, run
 
   go tool cover --html="coverage.out"
 
-What would a low coverage say about your tests? What about a high coverage? Discuss.
+
+
+* Namecheck project: improve the github package's code coverage
+
+1. Inspect the code coverage of your `github` package.
+
+2. Write enough good test cases to reach a code coverage that satisfies you.
+
+3. What would a low coverage say about your tests? What about a high coverage?
+
+👉 Now let's write code to check whether a username is available on GitHub.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 : a high code coverage doesn't guarantee that the covered code is well-tested
 : a low code coverage does tell you that you need to write more tests
 
 
 
-* Namecheck project: code coverage of github package
-
-Inspect the code coverage of your `github` package.
-
-Write enough good test cases to reach a code coverage that satisfies you.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/standing.svg 200 _
-
-
-
-* Namecheck project: validation of GitHub usernames
-
-Write a function named `IsValid` that returns true if its string argument is a valid username on GitHub, and false otherwise:
-
-  func IsValid(username string) bool {
-    // returns true if username is valid on GitHub
-  }
-
-Adapt the test cases in `github_test.go` and make them pass.
-
-Keep writing test cases until you're satisfied with the overall code coverage.
-
-.image https://go.dev/blog/store/gophers.jpg 300 _
-
-
-
 * Namecheck project: availability on GitHub
-
-Let's write a function that checks the availability of a username on GitHub.
 
 1. In the `github` package, add the following stub:
 
-  func IsAvailable(username string) (bool, error) {
-    return false, nil
-  }
+  func IsAvailable(username string) (bool, error) { return false, nil }
 
 2. Study the second code snippet in [[https://pkg.go.dev/net/http/#pkg-overview][the Overview section of the `net/http` package]].
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+3. `IsAvailable` should send a `GET` request to `https://github.com/<username>` and,
 
+: where USERNAME stands for the username whose availability we'd like to check.
 
-
-* Namecheck project: availability on GitHub (cont'd)
-
-3. Now implement `IsAvailable` for real. It should send a `GET` request to
-
-  https://github.com/USERNAME
-
-where USERNAME stands for the username whose availability we'd like to check.
-
-- If the response's status code is `404`, `IsAvailable` should return `true` and `nil`.
-- If the response's status code is `200`, `IsAvailable` should return `false` and `nil`.
+- if the response's status code is `404`, it should return `true` and `nil`;
+- If the response's status code is `200`, it should return `false` and `nil`.
 - For any other status code or in case an error occurs, `IsAvailable` should return `false` and a non-nil error.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 
 
-* The defer keyword
+* Introducing the defer keyword
 
-[[https://pkg.go.dev/net/http/#pkg-overview][The documentation of the `net/http` package]] warns that the client must close the response body when finished with it. Otherwise, the client risks a [[https://stackoverflow.com/questions/33238518/what-could-happen-if-i-dont-close-response-body/33238755#33238755][_resource_leak_]].
+[[https://pkg.go.dev/net/http/#pkg-overview][The documentation of the `net/http` package]] warns that the client must close the response body when finished with it. Otherwise, the client risks *leaking*resources*
+(the underlying [[https://en.wikipedia.org/wiki/Transmission_Control_Protocol][TCP connection]], a [[https://en.wikipedia.org/wiki/File_descriptor][file descriptor]], and some goroutines).
 
 Note that, in the example, the `defer` keyword precedes the call to `resp.Body.Close`:
 
   defer resp.Body.Close()
 
-This keyword is particularly useful for simplifying functions that perform various clean-up actions, such as closing the body of a `http.Response` when you no longer need to process it.
+`defer` is particularly useful for simplifying functions that perform various clean-up actions, such as closing the body of a `http.Response` when you're done with it.
 
-You'll grow to love the `defer` keyword!
+The `defer` keyword is like a `finally` keyword on steroids. You'll grow to love it!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-balloon.svg 150 _
 
+: https://github.com/bradfitz/exp-httpclient/blob/master/problems.md#too-easy-to-not-call-responsebodyclose
 : Along with concurrency primitives and interfaces, this keyword is a highlight of Go!
 
 
 
 * Mechanics of the defer keyword
 
-A function call preceded by the `defer` keyword gets _unconditionally_ executed _when_the_enclosing_function_terminates_, whether normally or as a result of a panic.
+A defer statement consists of a function call preceded by the `defer` keyword:
+
+  defer foo(username)
+
+That function call gets _unconditionally_ executed _when_the_enclosing_function_terminates_, whether normally or as a result of a panic:
 
 .play -edit src/defer_unconditional.go /^//START/,/^//END/
 
-`defer` is reminiscent of the `finally` keyword from other languages, but it's more powerful because it promotes the co-location of resource acquisition and release.
+Remember that a deferred function call is executed, not at the end of the block in which the defer statements occur, but only when the enclosing function terminates.
+
 
 
 
 * Deferred function calls are executed in reverse order
 
-Deferred function calls are executed in reverse order in which they occur in the enclosing function.
+Deferred function calls are executed in reverse order in which they occur in the enclosing function:
 
 .play -edit src/defer_reverse.go /^//START/,/^//END/
 
@@ -2102,7 +2243,7 @@ This is no accident: you typically want to release resources in reverse order in
 
 * Evaluation of the arguments of a deferred function call
 
-The arguments of a deferred function call are evaluated, not when the function call executes, but when the `defer` statement is reached.
+The arguments of a deferred function call are evaluated, not when the function call eventually executes, but when the `defer` statement actually occurs in the code.
 
 .play -edit src/defer_eval.go /^//START/,/^//END/
 
@@ -2124,13 +2265,11 @@ Notice how `resp.Body.Close` must be called at each possible exit point of the f
 
 * Why is defer useful? (cont'd)
 
-And now with `defer`:
+With `defer`, as soon as we know we got a proper HTTP response, we can program the closure of its body ahead of time and then forget about it!
 
 .code src/defer_IsAvailable_with_defer.go /^//START/,/^//END/
 
-As soon as we're sure we get a proper HTTP response, we can program the closure of its body ahead of time, and then forget about it.
-
-The `defer` keyword allows you to colocate the acquisition and release of a resource in your code, thereby reducing your cognitive load.
+The `defer` keyword allows you to [[https://go.dev/doc/effective_go#defer][colocate the acquisition and release of a resource]] in your code, thereby reducing the reader's cognitive load.
 
 
 
@@ -2152,7 +2291,7 @@ Consider the following function.
     return nil
   }
 
-What's a potential issue, here? How would you fix it?
+Imagine a case where the function `processFiles` function is called with many paths. What would likely happen? And how would you fix the issue?
 
 : we haven't covered loops yet, but you should be able to understand this program
 : eschewing defer is not an answer :)
@@ -2161,21 +2300,25 @@ What's a potential issue, here? How would you fix it?
 
 * A defer pitfall (cont'd)
 
-Remember that deferred function calls are executed, not at the end of the loop iteration in which the defer statements occur, but only when the enclosing function terminates!
+Remember that `defer` is function-based, not block-based. In our earlier example,
+the files will all be closed only when `processFiles` terminates!
 
-In our earlier example, the files will all be closed _only_ when `processFiles` terminates!
-One solution is to enclose the defer statement in a smaller function:
+One solution is to extract the body of the loop to a smaller function:
 
   func processFiles(paths ...string) error {
     for _, path := range paths {
-      if err := processFile(path); err != nil { return err }
+      if err := processFile(path); err != nil {
+        return err
+      }
     }
     return nil
   }
 
   func processFile(path string) error {
       file, err := os.Open(path)
-      if err != nil { return err }
+      if err != nil {
+        return err
+      }
       defer file.Close()
       // do something interesting with file...
   }
@@ -2186,27 +2329,32 @@ One solution is to enclose the defer statement in a smaller function:
 
 
 
-* Namecheck project: IsAvailable's lack of testability
+* Namecheck project: IsAvailable lacks testability
 
-`IsAvailable` unconditionally sends a HTTP request to the social network of interest, which considerable hinders its testability:
+`IsAvailable` unconditionally sends a HTTP request to the social network of interest, which considerably hinders its testability:
 
-1. Unit tests (in the pure sense of the term) operate only in memory. In particular, unit tests are not supposed to communicate with the network.
+🙅 Unit tests (in the pure sense of the term) operate only in memory and be fast. In particular, unit tests are not supposed to communicate with the network.
 
-2. Any test case you write will depend on the state of GitHub. If you assert that username "babar" is available on GitHub and someone register an account with that username tomorrow, your test will start failing.
+🫣 Any test case you write will depend on the state of GitHub. If you assert that username "babar" is available on GitHub and someone register an account with that username tomorrow, your test will start failing.
 
-3. Testing some cases (other status codes, non-nil errors) is currently difficult.
+😓 Testing some cases (other status codes, non-nil errors) is currently difficult.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
 
 
 
-* Namecheck project: IsAvailable's lack of testability (cont'd)
+* Namecheck project: IsAvailable is unflexible
 
-We need a way of somehow injecting the real HTTP client in our production code and injecting a "fake" HTTP client in our tests.
+😖 Callers of `IsAvailable` currently have no way of specifying a custom HTTP client, perhaps to configure a request timeout, or [[https://www.youtube.com/watch?v=cAWlv2SeQus&t=1554s][to satisfy a cloud provider's constraints]].
 
-Interfaces will allow us to solve this issue. Patience!
+We need a way of somehow injecting
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 250 _
+- some real HTTP client in our production code,
+- some "fake" HTTP client in our tests.
+
+Interfaces will allow us to resolve these issues. Patience!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 200 _
 
 : need Internet access to run that unit test
 : success/failure of unit test depends on GitHub
@@ -2215,7 +2363,7 @@ Interfaces will allow us to solve this issue. Patience!
 
 * Namecheck project: simulate support for Reddit
 
-We could add support for many other social media, but that would take time and distract us from the main topic of this course. For now, we can just fake it.
+We could add support for many other social media, but that would take time and distract us from the main topic of this course. For now, we can simulate support for it.
 
 1. Create a `reddit` package.
 
@@ -2277,7 +2425,7 @@ Contrary to C, though, no parentheses are allowed around the three clauses.
 
 * "While" loop
 
-Remember that there is no `while` keyword in Go.
+Recall that Go has no `while` keyword. All loops are introduced by the `for` keyword:
 
 .play -edit src/while.go /^//START/,/^//END/
 
@@ -2285,7 +2433,7 @@ The conditional expression
 
 - must be of boolean type,
 - needs not be parenthesized,
-- can be omitted (to obtain an infinite loop).
+- can be omitted, in order to obtain an [[https://en.wikipedia.org/wiki/Infinite_loop][infinite loop]].
 
 
 * break and continue
@@ -2298,19 +2446,24 @@ the `continue` keyword skips to the next iteration of the (innermost) loop.
 
 .play -edit src/continue.go /^//START/,/^//END/
 
-For nested loops, those keywords can be used in conjunction with [[https://go.dev/ref/spec#Labeled_statements][_labels_]].
+For nested loops, `break` and `continue` can be used in conjunction with [[https://go.dev/ref/spec#Labeled_statements][_labels_]].
 
 
 
 * for-range loop
 
-The `range` keyword can be used in conjunction with `for` to iterate over some data structures, such as a _slice_:
+The `range` keyword can be used in conjunction with the `for` keyword to iterate over some data structures, such as arrays, slices, maps, channels, or strings:
 
 .play -edit src/forrange.go /^//START/,/^//END/
 
-A for-range loop can also be used to iterate over strings, arrays, maps, and channels. More about that in due time.
+In the code snippet above, during each iteration of the loop,
 
-Now, let's learn about arrays and slices.
+- `r` is the current UTF-8-encoded _rune_ (a.k.a. [[https://en.wikipedia.org/wiki/Code_point#In_Unicode][Unicode code point]]) in the string,
+- `i` is the index (in bytes) of the starting position of that rune in the string.
+
+For more about strings, see [[https://go.dev/blog/strings][Rob Pike - Strings, bytes, runes and characters in Go]].
+
+👉 Enough about loops and strings! Let's learn about arrays and slices.
 
 
 
@@ -2500,7 +2653,7 @@ Under the hood, a slice is a data structure simply composed of three machine wor
 
 The backing array may extend past the end of the slice, hence the notion of _capacity_.
 
-The _capacity_ of a slice is a measure of that extent: it is the sum of the length of the slice and the length of the array beyond the slice.
+The _capacity_ of a slice is a measure of that extent: you can think of it as the sum of the slice's length and the number of slots in the backing array past the end of the slice.
 
 .image img/slice_under_hood.svg _ 900
 
@@ -2510,15 +2663,15 @@ The _capacity_ of a slice is a measure of that extent: it is the sum of the leng
 
 * Slices under the hood (cont'd)
 
-When using the `make` function to create a slice, you can specify the length and capacity independently:
+With `make`, you can specify the desired length and capacity of your slice independently:
 
-  roles := make([]string, 0, 3)
-  fmt.Println(len(roles)) // 0
-  fmt.Println(cap(roles)) // 3
+  roles := make([]string, 0, 4) // note: one more parameter for the slice's capacity
+  fmt.Println(len(roles))       // 0
+  fmt.Println(cap(roles))       // 4
 
 .image img/slice_under_hood2.svg 200 _
 
-Doing this is useful as a micro-optimization when you're about to append elements to the slice and you know the final length of the slice in advance.
+Doing this is useful as a micro-optimization when you're about to grow a slice and you already know what its final length will be.
 
 : https://excalidraw.com/#json=TiMTjJURaNLArsUwaeo3q,sY2pt8gItY8QI4JWhWHkZA
 
@@ -2538,7 +2691,7 @@ Moreover, a slice parameter is much more flexible than an array parameter becaus
 
 * Passing a slice in place of a variadic parameter (TODO)
 
-expand 
+expand
 : reminiscent of JavaScript's spread syntax https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
 : reminiscent of Python and Ruby's splat operators
 
@@ -2668,6 +2821,7 @@ It also allows you to limit which subtests to run within a given test function, 
   go test -v -run='^TestIsValid/too.*' ./...
 
 : Run method: results of each subtest detailed in output
+: https://github.com/golang/go/wiki/TableDrivenTests
 
 
 
@@ -2717,7 +2871,11 @@ After appending, the pointer may well point to an element of an old array that i
 
 A map is a built-in type that represent an unordered collection of key-value pairs.
 
-The type of a map of keys of type `K` and values of type `V` is denoted by `map[K]V`.
+Names from other languages include _dictionary_ (Python) and _associative_array_ (PHP).
+
+The type of a map of keys of type `K` and values of type `V` is denoted by
+
+  map[K]V
 
 The key type *must* be comparable:
 
@@ -2741,16 +2899,19 @@ Alternatively, you can use the built-in function `make` to initialize an empty m
 
 
 
-* A map's zero value
+* Maps are reference types
 
 The zero value of map types is `nil`.
 
 .play -edit src/map_zero.go /^//START/,/^//END/
 
-Maps are "reference types": a function that has a parameter of some map type
-only gets a copy of a reference to the underlying data structure (hash table).
+Under the hood, a map is simply a pointer to a [[https://en.wikipedia.org/wiki/Hash_table][hash table]]. Therefore, maps [[https://dave.cheney.net/2017/04/30/if-a-map-isnt-a-reference-variable-what-is-it][can be thought of as "reference types"]].
+
+A function that has a parameter of some map type operates on a copy of a pointer to the same underlying hash table, and any changes it makes to the contents of the map will be visible to the caller.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
+
+: Under the hood, maps are implemented as a hash tables.
 
 
 
@@ -2789,7 +2950,7 @@ Associating a key `k` with a value `v` in a map `m` is simple:
 
   m[k] = v
 
-If the key was already present in the map, the value associated with it prior is lost.
+If the key was already present in the map, the value previously associated with it is lost.
 
 Attempts to store a value in a `nil` map cause a panic!
 
@@ -2832,7 +2993,7 @@ You can iterate over a map using `for` and `range`:
 At each iteration, the variables yielded by the `range` expression hold copies of
 the key and value.
 
-Maps are unordered collections. Not only is the iteration order unspecified, but it is also undeterministic! Try running the code snippet above a few times: the iteration order will typically change from one program execution to the next. See [[https://www.hyrumslaw.com/][Hyrum's Law]].
+Maps are unordered collections. Surprisingly, perhaps, the iteration order is [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-9][specified as nondeterministic]]! Try running the code snippet above a few times: the iteration order will typically change from one program execution to the next. See [[https://www.hyrumslaw.com/][Hyrum's Law]].
 
 
 
@@ -2923,6 +3084,7 @@ reliance on the order of the fields in the struct type declaration makes them
 : won't be affected by reordering of the fields in the type declaration
 : unkeyed literal acceptable for anonymous structs (e.g. in table-driven subtests)
 : legitimate reason to change order of fields: minimize footprint or fit snuggly in cache line
+: the compiler emits no warnings, but go vet does
 
 
 
@@ -3288,7 +3450,7 @@ Many of the interface types provided by Go's standard library are single-method:
     IsValid(string) bool
   }
 
-2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Justify.
+2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Explain.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3304,7 +3466,7 @@ Many of the interface types provided by Go's standard library are single-method:
     IsAvailable(string) (bool, error)
   }
 
-2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Justify.
+2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Explain.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3335,14 +3497,21 @@ But no need to repeat yourself! Interface composition is easier than this in Go.
 
 * Interface composition (cont'd)
 
-You can declare a larger interface type simply by listing the more elementary interfaces it's made of:
+You can declare a larger interface type by simply listing the more elementary interfaces it's made of:
 
   type ReadCloser interface {
     Reader
     Closer
   }
 
-.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+The declaration above is equivalent to the one below but requires no code duplication:
+
+  type ReadCloser interface {
+    Read([]byte) (n int, err error)
+    Close() error
+  }
+
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 150 _
 
 : A mix of methods and interface names is also allowed:
 
@@ -3355,7 +3524,7 @@ You can declare a larger interface type simply by listing the more elementary in
 - `Validator`
 - `Availabler`
 
-2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Justify.
+2. Do `*github.GitHub` and `*reddit.Reddit` satisfy that interface? Explain.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3662,19 +3831,20 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
 
 * Namecheck project: "stub" the HTTP client
 
-1. Create a package named `stub`. In it, declare the following struct type:
+1. Create a package named `namechecktest`. In it, declare the following struct type:
 
   type SuccessfulGetter struct {
     StatusCode int
   }
 
-2. Make `stub.SuccessfulGetter` satisfy your `namecheck.Getter` interface (hint: make use of `http.NoBody`). Its `Get` method should unconditionally succeed and return the specified status code.
+2. Make `namechecktest.SuccessfulGetter` satisfy your `namecheck.Getter` interface (hint: make use of `http.NoBody`). Its `Get` method should unconditionally succeed and return the specified status code.
 
 3. Now write a few unit tests for `github.GitHub`'s `IsAvailable` method and run them.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 150 _
 
 : https://www.martinfowler.com/articles/mocksArentStubs.html
+: rationale for the package name: https://www.youtube.com/watch?v=cAWlv2SeQus&t=1685s
 
 
 
@@ -4059,13 +4229,15 @@ A wait group has three methods:
 
 * How not to misuse wait groups
 
-A `sync.WaitGroup` must not be copied after first use. If a function needs to operate on a wait group that was declared elsewhere, pass a pointer to it (`*sync.WaitGroup`) as an argument to that function.
-
 Calls to `Add` must take place in the spawning goroutine, _not_ within the child goroutine.
 
 Calls to `Add` with a positive delta that occur when the counter is zero must happen before the call to `Wait`.
 
-.image https://go.dev/blog/gopher/plush.jpg 250 _
+Finally, a `sync.WaitGroup` must not be copied after first use. `go`vet` [[https://go.dev/play/p/2KzpEuzFO-j][alerts you about such programming mistakes]].
+
+Therefore, if a function needs to operate on a wait group that was declared elsewhere, pass a *pointer* to it (`*sync.WaitGroup`) as an parameter.
+
+.image https://go.dev/blog/gopher/plush.jpg 200 _
 
 
 
@@ -4865,14 +5037,15 @@ For more about JSON encoding and decoding, see [[https://go.dev/blog/json][Andre
 
 So far, you've exclusively relied on Go's standard library but, thanks to Go's module system, you can of course bring in third-party dependencies.
 
-.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 150 _
 
 For example, you may want to configure your server for [[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS][CORS]], so that your API can be consumed by a browser-based [[https://developer.mozilla.org/en-US/docs/Glossary/Origin][cross-origin]] client. The most popular CORS middleware library for Go may be [[https://github.com/rs/cors][rs/cors]], but I [[https://jub0bs.com/posts/2023-02-08-fearless-cors/][strongly recommend]] my own: [[https://github.com/jub0bs/fcors][jub0bs/fcors]].
 
-To add this CORS middleware library as a dependency to your project, you would run 
+To add this CORS middleware library as a dependency to your project, you would run
 
   go get github.com/jub0bs/fcors
 
+This command downloads and caches the module locally in `$GOPATH/pkg/mod`.
 
 
 
@@ -4894,11 +5067,13 @@ Once you actually use package `github.com/jub0bs/fcors` in your code, you'll be 
 
 Adding/updating a dependency also creates/updates a file named `go.sum`.
 
-That file contains hash values of the dependency's source code, which the module system relies on to detect integrity issues.
+That file contains cryptographic hashes of the dependency's source code, which the module system relies on to detect integrity issues.
 
-You should track changes to that file in your version-control system. Don't ignore it!
+Don't forget to track changes to this file in your version-control system!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+: example of integrity issue: existing version whose content change after release (either accidentally or for malicious reasons)
 
 
 
@@ -4931,7 +5106,7 @@ You should track changes to that file in your version-control system. Don't igno
 * Select statement
 
 
-The `select` statement is a multiway communication selector: it allows you to randomly select one among several channel communications.
+The `select` statement is a multi-way communication selector: it allows you to randomly select one among several channel communications.
 
 With goroutines and channels, `select` completes the concurrency trifecta.
 It is very powerful, which is why you should invest time to master it.
@@ -5308,6 +5483,8 @@ Then, surround the critical section(s) by calls to the `Lock` and `Unlock` metho
   mu.Lock()   // 🔒
   // critical section
   mu.Unlock() // 🔓
+
+Like a `sync.WaitGroup`, a `sync.Mutex` must not be copied after first use. `go`vet` [[https://go.dev/play/p/set7VxnF7yj][alerts you about such programming mistakes]].
 
 : A popular name for a mutex variable is "mu".
 : at most one goroutine at a time can acquire the lock

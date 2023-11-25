@@ -4,9 +4,9 @@ import "fmt"
 
 func main() {
 	// START OMIT
-	numbers := []int{4, 8, 15, 16, 23, 42}
-	for i, n := range numbers { // HL
-		fmt.Printf("index %d: %d\n", i, n)
+	msg := "Hello, 世界"
+	for i, r := range msg {
+		fmt.Printf("%2d: %q\n", i, r)
 	}
 	// END OMIT
 }

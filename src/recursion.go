@@ -11,8 +11,7 @@ func factorial(n uint) uint {
 }
 
 func main() {
-	const n = 5
-	fmt.Println(factorial(n))
+	fmt.Println(factorial(5))
 }
 
 // END OMIT

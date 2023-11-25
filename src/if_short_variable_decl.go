@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
-	"math"
+	"strconv"
 )
 
-// START OMIT
 func main() {
-	var x, n, limit float64 = 3, 3, 20
-	if v := math.Pow(x, n); v < limit { // HL
-		fmt.Println(v)
+	// START OMIT
+	str := "42.2"
+	if _, err := strconv.Atoi(str); err != nil { // HL
+		fmt.Printf("%q cannot be parsed to an integer: %v\n", str, err)
 	}
-	fmt.Println(limit)
+	str = "89"
+	if _, err := strconv.Atoi(str); err != nil { // HL
+		fmt.Printf("%q cannot be parsed to an integer: %v\n", str, err)
+	}
+	// END OMIT
 }
-
-// END OMIT
