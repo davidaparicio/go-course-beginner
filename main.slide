@@ -315,15 +315,15 @@ The closing parenthesis and the opening brace must indeed appear on the same lin
 
 * Formatting and file encoding
 
-Go uses tabs (not spaces) for indentation. You'll never need to worry about indenting your code yourself, because Go provides a formatting tool: `gofmt`.
+Go [[https://www.youtube.com/watch?v=sln-gJaURzk&t=28m55s][uses tabs (not spaces) for indentation]]. You'll never need to worry about indenting your code yourself, because Go provides a formatting tool: `gofmt`.
 
 You can trigger `gofmt` by pressing the _Format_ button in the Go Playground:
 
-.image img/go_playground_format.png 200 _
+.image img/go_playground_format.png 150 _
 
 Moreover, if you've properly set up your IDE for Go, it will run `gofmt` upon file save.
 
-Before contributing to a Go project, make sure you format your code with `gofmt`!
+`gofmt` is [[https://www.youtube.com/watch?v=sln-gJaURzk&t=30m58s][a huge time saver]], both for writing and reading code. Before contributing changes to a Go project, make sure you format your code with `gofmt`!
 
 Finally, be aware that Go source files [[https://go.dev/ref/spec#Source_code_representation][*must* be encoded in UTF-8]], or compilation will fail.
 
@@ -405,6 +405,22 @@ A `go.mod` file will be created at the root of your project:
 
 
 
+* Compiling a program
+
+To compile a main package, run the following command in your shell:
+
+  $ go build [path-to-package-folder]
+
+The current working directory is assumed if you omit the path argument.
+
+A self-contained (statically linked) native executable will be created in the current working directory.
+
+The name of the executable is inferred from the name of the directory that contains the main package in question (but with a `.exe` suffix on Windows).
+
+.image https://go.dev/blog/5years/gophers5th.jpg 200 _
+
+
+
 * Namecheck project: Hello World
 
 1. Create, at the root of your project, a file named `main.go`:
@@ -413,13 +429,13 @@ A `go.mod` file will be created at the root of your project:
   ├── go.mod
   └── main.go
 
-2. Write a "Hello World" program in main.go
+2. Write a "Hello World" program in `main.go`; you can get it from the [[https://go.dev/play/p/S8HfNUCy13U][Go Playground]].
 
-3. Compile it by running the following command, which creates a self-contained (statically linked) native binary named `main` on *nix systems (or `main.exe` on Windows):
+3. Compile the program.
 
-  $ go build main.go
+4. Inspect the resulting executable with the `file` shell command.
 
-4. Execute the executable (then delete it).
+5. Run the executable, and then delete it.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -473,7 +489,9 @@ The following command lists all the supported OS/architecture combinations:
 
 2. Compile your Hello World program for that target.
 
-3. Delete the resulting binary.
+3. Inspect the resulting executable with the `file` shell command.
+
+4. Delete the resulting executable.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -481,15 +499,17 @@ The following command lists all the supported OS/architecture combinations:
 
 * Keywords
 
+Below is an exhaustive list of Go's keywords. Which ones are mysterious to you?
+
   break           default           func          interface       select
   case            defer             go            map             struct
   chan            else              goto          package         switch
   const           fallthrough       if            range           type
   continue        for               import        return          var
 
-Which keywords are new to you? Which one(s) seem to be missing?
+Note the absence of a `while` keyword; all loops are introduced by the `for` keyword.
 
-.image https://go.dev/blog/5years/gophers5th.jpg 300 _
+Go also lacks keywords like `try`, `catch`, and `finally`: this should be no surprise if you know that Go has no exception system.
 
 
 
@@ -508,18 +528,11 @@ It's useful for cleanup tasks, such as releasing resources.
 
 *goto* [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/strings/strings.go;drc=132fae93b789ce512068ff4300c665b40635b74e;l=1118][has its uses]], but it's not for the average Go developer. Avoid it.
 
-Go has no `while` keyword: all loops are written with the `for` keyword.
-
-Because Go has no exception system, it lacks keywords like `try`, `catch`, and `finally`.
-
-: defer: a cleaner alternative to finally
-
 
 
 * Predeclared names
 
-Go comes with several predeclared names accessible from anywhere in your code.
-We will cover some of them, but only as needed.
+Go comes with several predeclared names accessible from anywhere in your code. We will cover some of them, but only as needed.
 
 *Constants*
 
@@ -533,6 +546,7 @@ We will cover some of them, but only as needed.
 
 *Built-in*functions*
 
+  min     max
   make    len     cap     new
   append  copy    delete  clear
   panic   recover
@@ -755,6 +769,8 @@ Here are some examples:
     interface{ String() string }      // interface
     chan error                        // channel
 
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+
 
 
 * Every type has a zero value
@@ -903,7 +919,7 @@ Identifiers in Go [[https://go.dev/ref/spec#Identifiers][must]] start with a Uni
 
   identifier = letter { letter | unicode_digit } .
 
-You should [[https://github.com/golang/go/wiki/CodeReviewComments#variable-names][strive for conciseness]]; the smaller the scope, the shorter the name.
+You should [[https://github.com/golang/go/wiki/CodeReviewComments#variable-names][strive for conciseness]]; [[https://go.dev/talks/2014/names.slide#4][the smaller the scope, the shorter the name]].
 
   var index int // too verbose?
   var i int     // likely preferable
@@ -1104,7 +1120,7 @@ However, the `&` operator can be applied to [[https://go.dev/ref/spec#Composite_
 
 
 
-* Pointers: zero value
+* Pointers' zero value
 
 The zero value of all pointer types is `nil`. A `nil` pointer points to nothing.
 
@@ -1114,7 +1130,7 @@ The zero value of all pointer types is `nil`. A `nil` pointer points to nothing.
 
 
 
-* Pointers: comparability
+* Pointers are comparable
 
 Pointer types are comparable, i.e. two pointers of the same type can be compared:
 
@@ -1144,37 +1160,36 @@ Dereferencing a nil pointer causes a panic!
 
 
 
-* new
+* The "new" built-in function
 
-Go has a builtin named "new", which has nothing to do with C languages' `new` keyword.
+Go provides a built-in function named "`new`", which has nothing to do with the "`new`" keyword from object-oriented languages like C# and Java!
 
-`new(T)` allocates a value equal to type `T`'s zero value and returns its address.
+`new(T)` allocates a value equal to type `T`'s zero value and returns that value's address.
 
-`new` can spare you the declaration of an intermediate variable; compare
-
-.play -edit src/pointers_new.go /^//START/,/^//END/
-
-to
+It can spare you the declaration of an intermediate variable. For example, Compare
 
 .play -edit src/pointers_new_before.go /^//START/,/^//END/
 
-However, be aware that `new` is somewhat controversial; [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=8m10s][some influential people in the Go community]] openly disparage it. Use it sparingly.
+to
 
-That's all you need to know about pointers for now. Let's talk about functions.
+.play -edit src/pointers_new.go /^//START/,/^//END/
+
+The `new` function is somewhat controversial; many members of the Go community, [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=8m10s][including some influential ones]], openly disparage it. Use it sparingly.
+
+👉 That's all you need to know about pointers for now. Let's talk about functions.
 
 
 
 * Calling a function
 
-To call a function, specify *all* the required arguments by *position* within parentheses
-after the name of the function, using commas as delimiters:
+To call a function, you must specify one argument for each of the function's positional parameters, in the expected order, and using commas as separators:
 
 .play -edit src/function_call.go /^//START/,/^//END/
 
-Unlike languages like [[https://docs.python.org/3/glossary.html#term-argument][Python]], Go doesn't allow you
+Unlike languages like [[https://docs.python.org/3/glossary.html#term-argument][Python]], Go doesn't allow you to
 
-- to specify arguments by keyword or name,
-- to specify a default value for a parameter of your function.
+- specify arguments by name, or
+- omit an argument and rely on some default value for the corresponding parameter.
 
 
 
@@ -1206,14 +1221,14 @@ It operates on a copy (`p`) of its pointer argument (`&i`), and that copy also p
 
 * Evaluation strategy: call by sharing?
 
-Some types (most notably slices, maps, channels, and functions) are actually designed in such a way that they behave "like" pointers when passed to a function.
+Some types (most notably slices, maps, and channels) can be thought of as "reference types": they're designed in such a way as to behave "like" pointers.
 
 [[https://en.wikipedia.org/wiki/Evaluation_strategy#Call_by_sharing][_Call_by_sharing_]] is perhaps a more appropriate term than _call_by_value_ to describe
 what happens when values of such types are passed to a function.
 
 .play -edit src/call_by_sharing.go /^//START/,/^//END/
 
-In the example above, the changes made by function `add` to its `map[string]string` argument (which behaves "like" a pointer) are visible in the caller (the `main` function).
+In this example, the changes made by the `add` function to its `map[string]string` argument (which behaves "like" a pointer) are visible in the caller (the `main` function).
 
 
 
@@ -1239,7 +1254,7 @@ Go's support for multiple function results is key to error reporting!
 
 : Bonus question: can you explain why function `CountWordsInFile` returns an error whereas function `CountWords` does not?
 
-Contrary to more traditional OO languages, Go doesn't allow [[https://go.dev/doc/faq#overloading][function overloading]]: no two functions within the same scope can have the same name but different signatures.
+Contrary to more traditional object-oriented languages, Go doesn't allow [[https://go.dev/doc/faq#overloading][function overloading]]: no two functions within the same scope can have the same name but different signatures.
 
 : however, no tuples in Go!
 
@@ -1270,7 +1285,7 @@ You can name (either all or none of) your function's results:
     return
   }
 
-Note the "naked" return: often, what to return is implied from the list of named results.
+Note the use of a "naked" return, which yields the current values of the result variables.
 
 The code above is roughly equivalent to the following:
 
@@ -1281,7 +1296,7 @@ The code above is roughly equivalent to the following:
     return count, err
   }
 
-Named results can be useful for documenting the results' roles and simplifying some implementations, but you should use them sparingly.
+Named results can [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/context/context.go;l=179][save you a few lines of code]] but also harm readability. Use named results sparingly for your exported functions, preferably [[https://go.dev/talks/2014/names.slide#10][only when they contribute to the function's documentation]].
 
 
 
@@ -1705,7 +1720,7 @@ However, panicking during the initialization of your package is legitimate, if s
 
 
 
-* Namecheck project: the need for dedicated packages
+* Namecheck project: creating a dedicated package per supported platform
 
 All the code we've written in `main.go` so far is specific to GitHub, which is a bit messy.
 
@@ -1835,9 +1850,9 @@ This consideration drove me to name [[https://pkg.go.dev/github.com/jub0bs/fcors
 
 * Good naming practices for package identifiers
 
-Bear in mind that [[https://go.dev/ref/spec#Qualified_identifiers][qualified identifers]] contain their package name.
+Bear in mind that an exported symbol (e.g. `Println`) is [[https://go.dev/ref/spec#Qualified_identifiers][qualified by its package name]] (e.g. `fmt.Println`) in code that imports that package.
 
-Avoid stutter in package-level identifiers (see [[https://www.youtube.com/watch?v=MzTcsI6tn-0&t=23m40s][Brian Ketelsen - Go best practices]]):
+[[https://go.dev/talks/2014/names.slide#12][Take advantage of this]] to [[https://www.youtube.com/watch?v=MzTcsI6tn-0&t=23m40s][avoid unnecessary redundancy]] when naming a symbol:
 
   package coffee
 
@@ -1846,34 +1861,29 @@ Avoid stutter in package-level identifiers (see [[https://www.youtube.com/watch?
 
 : example adapted from https://www.youtube.com/watch?v=cAWlv2SeQus&t=18m30s
 
-If the package exports a single type, avoid redundancy in the name of factory functions:
+You will encounter some "stutter" in the standard library, though:
 
-  github.NewGitHub // verbose
-  github.New       // concise
+  regexp.Regexp
+  time.Time
 
-Only choose more specific factory-function names if the package exports multiple types,
-such as `Encoder` and `Decoder` in the `encoding/json` package:
-
-  json.NewEncoder
-  json.NewDecoder
-
-: exceptions: regexp.Regexp, time.Time
+If a package exports only one type and a factory function for that type, the function is often simply named "New".
 
 
 
 * Subpackages
 
-Subpackages of a package are packages located in subfolders of that package.
+Subpackages of a given package are packages located in subfolders of that package.
 
-Their location in the file system simply reflects that the functionalities they provide are related to but more specific than those provided by their parent package.
+Subpackages typically provide functionalities that are related to but more specific than those provided by their parent package.
 
 .image img/encoding_core_lib.png 150 _
 
-Perhaps surprisingly, a package and its subpackages don't have any special relationship:
+Beyond this hierarchy in the directory tree, a package and its subpackage don't have any special relationship:
 
-- If package `foo/bar` depends on package `foo`, `foo/bar` must import `foo`.
-- `foo/bar` does not have access to identifiers not exported by `foo`.
-- `foo` does not have access to identifiers not exported by `foo/bar`.
+- If one depends on the other, the former must import the latter.
+- One does not have access to the other's unexported symbols.
+
+One special case is [[https://go.dev/doc/go1.4#internalpackages][_internal_packages_]], but this is a more advanced feature.
 
 : encoding defines a general interface that all the subpackages implement
 
@@ -1905,6 +1915,8 @@ For example, here is a partial view of [[https://pkg.go.dev/encoding][the `encod
 
 Note that no dependency arrows points down.
 
+(This rule of thumb doesn't apply to [[https://go.dev/doc/go1.4#internalpackages][internal packages]].)
+
 
 
 * Flat is better
@@ -1914,6 +1926,36 @@ To a deep and narrow package hierarchy, prefer a shallow (and possibly wide) one
 .image img/pkg_shallow_and_wide.svg 400 _
 
 Note: at the end of the course, compare the structure of your project to these diagrams.
+
+
+
+* Project layout
+
+Under pressure from the community, the Go team recently issued [[https://go.dev/doc/modules/layout][some general guidance about how to structure a module]]; it's a good start.
+
+The best layout very much depends on the problem space of the project considered, but here are a few more useful tips:
+
+✌️ Avoid analysis paralysis. Simply start with a single package, and create new packages only as structure naturally emerges.
+
+😇 The layout of your project should tell a story; good package names help.
+
+😵‍💫 Remember the constraint that no import cycles can occur; it should inform your layout decisions. Avoid [[https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93controller][MVC]] layouts at all costs; they're guaranteed to cause cycles.
+
+
+
+* Project layout (cont'd)
+
+Here are some additional resources about how to structure projects:
+
+- [[https://www.youtube.com/watch?v=cmkKxNN7cs4&t=564s][Mat Ryer - Writing beautiful packages in Go (2018)]]
+- [[https://www.youtube.com/watch?v=oL6JBUk6tj0][Kat Zien - How do you structure your Go apps (GopherCon 2018)]]
+- [[https://www.youtube.com/watch?v=MzTcsI6tn-0][Brian Ketelsen - Code like the Go team (GopherCon Russia 2018)]]
+- [[https://rakyll.org/style-packages/][Jaana B. Dogan - Style guideline for Go packages (2017)]]
+- [[https://medium.com/@benbjohnson/standard-package-layout-7cdbc8391fc1][Ben Jonhson - Standard package layout (2016)]]
+
+.image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 150 _
+
+: context (twitter, github) ; responsibility (storage)
 
 
 
@@ -2623,13 +2665,16 @@ Like arrays, slices can be indexed.
 
 Taking the address of a slice element is legal.
 
-Be careful: indexing a slice in the negatives or beyond its _length_ causes a panic:
 
 .play -edit src/slice_indexing.go  /^//START/,/^//END/
 
+Indexing a slice in the negatives or beyond its _length_ causes a panic:
+
+.play -edit src/slice_indexing_panic.go  /^//START/,/^//END/
+
 So does indexing a `nil` slice:
 
-.play -edit src/slice_indexing2.go  /^//START/,/^//END/
+.play -edit src/slice_indexing_panic_nil.go  /^//START/,/^//END/
 
 
 
@@ -2702,11 +2747,13 @@ Moreover, a slice parameter is much more flexible than an array parameter becaus
 
 
 
-* Passing a slice in place of a variadic parameter (TODO)
+* Passing a slice to variadic function
 
-expand
-: reminiscent of JavaScript's spread syntax https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax
-: reminiscent of Python and Ruby's splat operators
+You can "explode" a slice argument into a variadic parameter using a trailing ellipsis:
+
+.play -edit src/slice_explode.go  /^//START/,/^//END/
+
+This functionality is reminiscent of [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax][JavaScript's spread syntax]], [[https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists][Python's]] and [[https://docs.ruby-lang.org/en/2.0.0/syntax/calling_methods_rdoc.html#label-Array+to+Arguments+Conversion][Ruby's]] `*` operator.
 
 
 
@@ -2957,17 +3004,21 @@ However, you can use [[https://pkg.go.dev/maps#Equal][the `Equal` function]] fro
 .play -edit src/map_equal.go /^//START/,/^//END/
 
 
-* Accessing a value associated with a key in a map
+* Accessing a value associated to a map key
 
-`m[k]` yields the value corresponding to a key `k` in a map `m`.
-
-`m[k]` is *not* addressable!
-
-If the key is absent from the map or if the map is `nil`, the zero value of the map's value type is returned.
-
-To determine whether the key is value is present in the map, you can declare an additional variable (commonly named "ok" or "exists") of boolean type.
+`m[k]` yields the value associated with a key `k` in a map `m`:
 
 .play -edit src/map_access.go /^//START/,/^//END/
+
+`m[k]` is *not* addressable:
+
+.play -edit src/map_value_not_addressable.go /^//START/,/^//END/
+
+If `k` is absent from `m`, then `m[k]` yields the zero value of `m`'s value type. To distinguish an absent key from a key present in the map but associated to the zero value, you can declare an additional variable of boolean type:
+
+.play -edit src/map_access_comma_ok.go /^//START/,/^//END/
+
+This syntax, known as the "comma-ok idiom", is also useful for other operations.
 
 : yields the actual value: you can operate on m[k] directly (e.g. m[k]++ if map value type is integer)
 
@@ -2975,15 +3026,17 @@ To determine whether the key is value is present in the map, you can declare an 
 
 * Storing a key-value pair in a map
 
-Associating a key `k` with a value `v` in a map `m` is simple:
-
-  m[k] = v
-
-If the key was already present in the map, the value previously associated with it is lost.
-
-Attempts to store a value in a `nil` map cause a panic!
+Adding a new key-value pair in a map is straightforward:
 
 .play -edit src/map_store.go /^//START/,/^//END/
+
+If the key was already present in the map, the value associated with it in the map is simply updated:
+
+.play -edit src/map_update.go /^//START/,/^//END/
+
+Be careful: attempts to store a value in a `nil` map cause a panic!
+
+.play -edit src/map_store_panic.go /^//START/,/^//END/
 
 
 
@@ -3241,43 +3294,35 @@ A struct type is comparable only if the types of all its fields are themselves c
 
 * Exercise: design a binary tree
 
+A [[https://en.wikipedia.org/wiki/Binary_tree][binary tree]] is made up of nodes that each contain a value and references to up to two children nodes. Here is an example of a binary tree whose values are integers:
+
+.image img/binary_tree.svg 250 _
+
 1. Open the Go Playground.
 
-2. Declare a struct type named `Tree` to represent one node of a [[https://en.wikipedia.org/wiki/Binary_tree][binary tree]].
+2. Declare a type named `Tree` for representing one node of this kind of binary tree.
 
-- Each node contains a value of type `int`.
-- Each node has at most two children.
-- Each node should hold references to its children (if any), but not to its parent node.
+3. In your `main` function, declare a `Tree` value that corresponds to the tree shown above, then print that value.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
+: https://excalidraw.com/#json=b_AryM5iFA9oUa2kMT6sd,saZDan7wON3vgjTYRDYsgQ
 
 
 * Exercise: design a binary tree (cont'd)
 
-3. Implement the following function:
+4. Implement the following function:
 
   func Size(t *Tree) int
 
 It should return the number of nodes in its argument.
 
-4. Implement the following function:
+5. Implement the following function:
 
   func Sum(t *Tree) int
 
 It should return the sum of the values of all the nodes in its argument.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
-* Exercise: design a binary tree (solution)
-
-A solution is available on the [[https://go.dev/play/p/bxVmvlNAodD][Go Playground]]. Is it satisfactory?
-
-What if we wanted to use another type for node values?
-
-Discuss.
+A solution is available on the [[https://go.dev/play/p/Wwy4gr9Az1_W][Go Playground]]. Is it satisfactory? What if we wanted to use another type for node values? Discuss.
 
 
 
@@ -3285,24 +3330,32 @@ Discuss.
 
 Go 1.18 added _generics_ to the language.
 
-Types and functions can now be parameterized by types (see [[https://go.dev/play/p/TbHjculL0Og][this Playground]]):
+Types and functions can now be parameterized by types (see [[https://go.dev/play/p/CqiNm5rn6Ie][this Playground]]):
 
   type Tree[E any] struct {
-    Elem  E
     Left  *Tree[E]
+    Elem  E
     Right *Tree[E]
   }
 
   func Size(t *Tree[E]) int
   func Sum(t *Tree[E]) E
 
-The `any` type is simply a predeclared alias for `interface{}`.
+Type parameter `T` is constrained by `any` ([[https://pkg.go.dev/builtin#any][a predeclared alias for `interface{}`]]).
+In other words, `T` can be any type: `bool`, `int`, `string`, etc.
+
+
+* A glimpse of generics in Go (cont'd)
+
+You don't need to master generics at this stage of your Go learning, but a basic understanding of generic syntax will benefit you.
 
 Generics promote code reusability while providing some compile-time guarantees.
 
-You don't need to master generics at this stage of your Go learning. For more details, see [[https://go.dev/doc/tutorial/generics][Tutorial: Getting started with generics]].
+You may never write generic code yourself, but you will likely use some of the standard-library packages that provide generic functions, such as `slices`, `maps`, and `cmp`.
 
-Now, let's learn about methods, which are the key to interfaces.
+For more details about generics, see [[https://go.dev/doc/tutorial/generics][Tutorial: Getting started with generics]].
+
+👉 Now, let's learn about methods, which are the key to interfaces.
 
 
 
@@ -3576,7 +3629,7 @@ The declaration above is equivalent to the one below but requires no code duplic
 
 * fmt.Stringer
 
-[[https://pkg.go.dev/fmt#Stringer][documentation]] is an interface type that requires a single method:
+[[https://pkg.go.dev/fmt#Stringer][`fmt.Stringer`]] is an interface type that requires a single method:
 
   type Stringer interface {
     String() string

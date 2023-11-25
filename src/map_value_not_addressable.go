@@ -5,9 +5,9 @@ import (
 )
 
 func main() {
-	// START OMIT
 	m := map[string]string{"red": "#ff0000", "blue": "#0000ff", "empty": ""}
-	v := m["red"] // HL
-	fmt.Println(v)
+	// START OMIT
+	v := &m["blue"] // compilation error
 	// END OMIT
+	fmt.Println(v)
 }
