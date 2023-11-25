@@ -139,11 +139,13 @@ They enlisted the help of Ken Thompson and started working on a new language, wh
 
 Go's logo may strike you as rather uninspired and unremarkable:
 
-.image https://go.dev/blog/go-brand/logos.jpg 200 _
+.image https://go.dev/blog/go-brand/logos.jpg 150 _
 
 However, [[https://go.dev/blog/gopher][Go's mascot]], a [[https://en.wikipedia.org/wiki/Gopher][gopher]], enjoys worldwide recognition:
 
-.image https://go.dev/blog/gopher/gopher.png 200 _
+.image https://go.dev/blog/gopher/gopher.png 150 _
+
+In fact, Go programmers are affectionately known as "Gophers".
 
 : Lapins Crétins vibe!
 
@@ -584,6 +586,8 @@ The _default_name_ of a package corresponds to the last component of its path:
 
 A package is composed of one or more source files that are compiled together.
 
+Packages are indivisible: the smallest thing you can compile in Go is a whole package.
+
 .image https://www.pngkit.com/png/full/412-4127445_gopher-working-hard-to-move-packages-boxes-golang.png 250 _
 
 
@@ -657,7 +661,7 @@ Whether a symbol is exported depends on the case of its first letter:
 * Importing packages
 
 We'll cover two ways of importing packages: normal imports and named imports.
-(For other import syntaxes, see Appendix B.)
+(For other import syntaxes, see Appendix A.)
 
 The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility takes care of adding missing imports, removing unreferenced imports, and organizes imports in a canonical way:
 
@@ -711,8 +715,6 @@ or when one of your source files uses multiple major versions of a _module_:
 
 * Basic types
 
-Go provides the following basic types.
-
 *Booleans*
 
 The type is named `bool` and comes with the usual operators: `&&` (AND), `||` (OR), `!` (NOT).
@@ -728,7 +730,9 @@ Integer types support the increment & decrement operators but only in suffix for
 
 *Strings*
 
-More about strings in Appendix A.
+A `string` is a sequence of bytes usually representing a valid UTF-8 string.
+
+Strings literals are delimited either by double quotes (`"`) or backticks (```).
 
 .image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
 
@@ -2469,13 +2473,13 @@ For more about strings, see [[https://go.dev/blog/strings][Rob Pike - Strings, b
 
 * Arrays
 
-Arrays are fixed-length containers of elements of the same type.
+Arrays are fixed-length sequences of elements of the same type.
 
-Contrary to other languages, Go encodes the length of an array in its type name.
+Contrary to many other languages, Go encodes the length of an array in its type name.
 
 The built-in function `len` yields the length of an array.
 
-You can omit the length in array literals and let the compiler infer it from the number of elements listed in the literal.
+You can omit the length in array literals (and replace it with `...`) to let the compiler infer it from the number of elements listed in the literal.
 
 .play -edit src/arrays.go  /^//START/,/^//END/
 
@@ -2483,11 +2487,11 @@ You can omit the length in array literals and let the compiler infer it from the
 
 
 
-* An array's zero value
+* Arrays are values
 
-Arrays are _not_ "reference types". They cannot take the value `nil`.
+Go arrays [[https://go.dev/doc/effective_go#arrays][differ significantly from C arrays]]. They're _not_ "reference types". An array value is not a pointer to the first element, but denotes the entire collection.
 
-The zero value of an array type is an array full of zero values of its element type.
+The zero value of an array type is not `nil` (an invalid value for array types), but an array full of zero values of its element type.
 
 .play -edit src/array_zero.go  /^//START/,/^//END/
 
@@ -2513,7 +2517,7 @@ Individual elements of an array can be accessed using the usual square-bracket s
 
 Taking the address of an array element is legal. Elements are contiguous in memory.
 
-Be careful: indexing outside the bounds of an array causes either a compilation or a run-time error (panic).
+Indexing an array outside its bounds causes either a compilation or a panic!
 
 .play -edit src/array_indexing.go  /^//START/,/^//END/
 
@@ -2523,8 +2527,7 @@ Be careful: indexing outside the bounds of an array causes either a compilation 
 
 You can iterate over an array using a for-range loop.
 
-The first iteration variable corresponds to the index of the current element.
-The second iteration variable is only a copy of the array's current element.
+The first iteration variable (`i` below) is the index of the current element, whereas the second iteration variable (`role` below) is a _copy_ of the array's current element.
 
 .play -edit src/array_range.go  /^//START/,/^//END/
 
@@ -2536,7 +2539,7 @@ If you only need one of the iteration variables, you can omit the other:
 
 * Direct use of arrays is inflexible
 
-A function taking, as a parameter, an array of a given length cannot accept an array of some other length.
+A function taking, as a parameter, an array of a given length cannot accept an array of any other length.
 
 .play -edit src/array_inflexible.go  /^//START/,/^//END/
 
@@ -2546,7 +2549,9 @@ A function taking, as a parameter, an array of a given length cannot accept an a
 
 * Direct use of arrays can be expensive
 
-Remember that Go's evaluation strategy is call by value. Accordingly, functions that have an array as parameter operate on a full copy of that array!
+Remember that Go's evaluation strategy is call by value and that Go arrays are values.
+
+Functions that take an array operate on an entire copy of their array argument!
 
 .play -edit src/array_expensive.go  /^//START/,/^//END/
 
@@ -2570,9 +2575,9 @@ _Slices_ are an abstraction over arrays. In most situations, the use of slices s
 
 * Slices
 
-Slices are arguably the most fundamental and ubiquitous type in Go.
+Slices are arguably the most fundamental and ubiquitous type in Go. As such, they demand a solid understanding of their mechanics from any serious Gopher.
 
-A slice is a variable-length container of elements of the same type.
+A slice is a variable-length sequential of elements of the same type.
 
 Contrary to arrays, slices do not have have a length specified in their type name,
 and they can grow and shrink over the course of their lifetime.
@@ -2649,29 +2654,35 @@ Under the hood, a slice is a data structure simply composed of three machine wor
 
 
 
-* Slices under the hood (cont'd)
+* Slice length and capacity
 
-The backing array may extend past the end of the slice, hence the notion of _capacity_.
+A slice is only a window into a backing array. In particular, the backing array may extend past the end of the slice, hence [[https://go.dev/ref/spec#Length_and_capacity][the notion of _capacity_]] in addition to that of _length_.
 
-The _capacity_ of a slice is a measure of that extent: you can think of it as the sum of the slice's length and the number of slots in the backing array past the end of the slice.
+The capacity of a slice is the maximum length the slice may assume before running out of space in the backing array. For any slice `s`, the following inequality holds at all times:
 
-.image img/slice_under_hood.svg _ 900
+  0 <= len(s) <= cap(s)
 
-: https://excalidraw.com/#json=QDrelIT4EykP6QR1kmh1_,jVs2RcYcsHfABXvU3SjKyQ
+.image img/slice_capacity.svg 200 _
+
+Note that the part of the backing array that extends before the start of the slice doesn't factor in the slice's capacity.
+
+: https://excalidraw.com/#json=GdXPwfEINQppeQbgEeVI0,aLwF22Wr97DQElcExGF_6Q
 
 
 
-* Slices under the hood (cont'd)
+* Initializing a slice with custom length and capacity
 
-With `make`, you can specify the desired length and capacity of your slice independently:
+With the `make` built-in function, you can specify the desired length and capacity of your slice independently:
 
-  roles := make([]string, 0, 4) // note: one more parameter for the slice's capacity
-  fmt.Println(len(roles))       // 0
-  fmt.Println(cap(roles))       // 4
+  roles := make([]string, 0, 3)       // note: one more parameter for the slice's capacity
+  fmt.Println(len(roles), cap(roles)) // 0 3
 
 .image img/slice_under_hood2.svg 200 _
 
 Doing this is useful as a micro-optimization when you're about to grow a slice and you already know what its final length will be.
+
+Of course, the specified capacity must be greater or equal to the length, or [[https://go.dev/play/p/Igtzx7wAgZz][a compilation error or a panic will occur]].
+
 
 : https://excalidraw.com/#json=TiMTjJURaNLArsUwaeo3q,sY2pt8gItY8QI4JWhWHkZA
 
@@ -2679,11 +2690,13 @@ Doing this is useful as a micro-optimization when you're about to grow a slice a
 
 * Slice function parameters are cheap and flexible
 
-The function operates on a copy of the slice, but copying the slice doesn't cause a copy of the backing array!
+Remember: a slice is only a descriptor of a portion of an array.
 
-Moreover, a slice parameter is much more flexible than an array parameter because the length of the slice can be arbitrary.
+Accordingly, functions that take a slice operate on a copy of their slice argument, but copying the slice doesn't incur any copy of its backing array!
 
 .play -edit src/slice_cheap.go  /^//START/,/^//END
+
+Moreover, a slice parameter is much more flexible than an array parameter because the length of the slice argument can be arbitrary.
 
 : 24 bytes on a 64-bit architecture
 
@@ -2709,8 +2722,10 @@ The _slicing_operator_ can be applied to an array or a slice and produces a slic
 
 * Slicing operator (cont'd)
 
-The first index is inclusive and, if unspecified, defaults to `0`.
-The second index is exclusive and, if unspecified, defaults to the length of the slice.
+The semantics of the slicing operator are that of a [[https://en.wikipedia.org/wiki/Interval_(mathematics)#Definitions][half-open interval]]:
+
+- The first index is inclusive and, if unspecified, defaults to `0`.
+- The second index is exclusive and, if unspecified, defaults to the length of the slice.
 
 .play -edit src/slicing_operator2.go  /^//START/,/^//END/
 
@@ -2720,11 +2735,17 @@ In the slicing expression `s[i:j]`,  indices `i` and `j` must satisfy
 
 Otherwise, a compilation error or a panic will occur.
 
+There's also [[https://go.dev/ref/spec#Slice_expressions][a three-index form of the slicing operator]], which is useful for controlling the capacity of the resulting slice, but that is an advanced feature.
+
+
+
+* Slicing operator (cont'd)
+
 Note that the slicing operator allows you to retrieve the part of the backing array that extends beyond the length of the slice you're operating on:
 
 .play -edit src/slicing_operator3.go  /^//START/,/^//END/
 
-: There's also a three-index form, which can be useful in some cases, but we won't talk about it here.
+However, attempts to re-slice a slice beyond its capacity results in either a compilation error or a panic.
 
 
 
@@ -2840,6 +2861,7 @@ Under the hood, the `append` function copies elements of the backing array to a 
 : mention that s := make([]int, 0, 1024) would have prevented copies
 
 
+
 * Aliasing
 
 Bear in mind that multiple slices may share the same backing array.
@@ -2863,7 +2885,14 @@ After appending, the pointer may well point to an element of an old array that i
 : could cause a memory leak, because old array cannot be GC'd
 
 
-* Maps
+
+* Other operations on slices TODO
+
+copy function
+
+slices package (requires generics)
+
+👉 Enough about slices for now. Let's talk about maps.
 
 
 
@@ -2907,7 +2936,7 @@ The zero value of map types is `nil`.
 
 Under the hood, a map is simply a pointer to a [[https://en.wikipedia.org/wiki/Hash_table][hash table]]. Therefore, maps [[https://dave.cheney.net/2017/04/30/if-a-map-isnt-a-reference-variable-what-is-it][can be thought of as "reference types"]].
 
-A function that has a parameter of some map type operates on a copy of a pointer to the same underlying hash table, and any changes it makes to the contents of the map will be visible to the caller.
+A function that takes a map operates on a copy of a pointer to the same underlying hash table, and any changes the function makes to the contents of the map will be visible to the caller.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/zorro.svg 200 _
 
@@ -2915,7 +2944,7 @@ A function that has a parameter of some map type operates on a copy of a pointer
 
 
 
-* Map are not comparable.
+* Map are not comparable
 
 Regardless of their key and value types, maps are not comparable: the compiler won't allow you to use the `==` operator to test the equality of two arbitrary map values.
 
@@ -3166,7 +3195,7 @@ To allow clients of your package to manipulate values of such types, provide fun
 
 * Struct as function parameters
 
-Functions that have a struct as parameter operate on a full copy of that struct!
+Functions that have a struct as parameter operate on a entire copy of that struct!
 
 .play -edit src/struct_func_param.go /^//START/,/^//END/
 
@@ -4846,35 +4875,35 @@ those parameters would instead need to be pointers to channels.)
 
 
 
-* Channel directions
+* Directional channels
 
-By adding an arrow on either side of the `chan` keyword, you can mark a channel as
+Adding an arrow on one side of the `chan` keyword in a channel type restricts the _direction_ of that channel, i.e. its "mode of operation".
 
-- _send-only_ (no receiving allowed)
-- _receive-only_ (no sending or closing allowed)
+In this first example, `ch` is a _send-only_channel_; the `produce` function can only send values to it and/or close it, but not receive values from it.
 
-This is useful to restrict the direction of communication of channel within a function,
+  func produce(ch chan<- string) {}
 
-  func produce(ch chan<- string) {} // ch is send-only
+In this second example, `ch` is a _receive-only_channel_; the `consume` function can only receive values from it, but neither send values to it nor close it:
+
   func consume(ch <-chan string) {} // ch is receive-only
 
-or of a channel resulting from a function,
+In this third example, the channel result of function `Done` is receive-only:
 
   func Done() <-chan struct{}
 
-You can pass a bidirectional channel wherever a unidirectional channel is expected.
+Wherever a (uni)directional channel is expected, a bidirectional channel is accepted.
 
 
 
-* Channel directions: example
+* Directional channels (cont'd)
 
 .play -edit src/channel_dir.go /^//START/,/^//END/
 
 
 
-* Why use unidirectional channels
+* Why use directional channels
 
-Unidirectional channels are great for
+Directional channels are great for
 
 - clarifying the role of a channel within a function,
 - increasing your confidence in the correctness of your code.
@@ -4885,9 +4914,9 @@ However, in cases where a function [[https://go.dev/talks/2012/10things.slide#10
 
 
 
-* Namecheck project: use unidirectional channels
+* Namecheck project: use directional channels
 
-Review the functions that accept a channel parameter, and determine whether a channel direction could have been specified.
+Review the functions that accept a channel parameter, and determine whether a direction could be specified.
 
 .image https://go.dev/blog/gopher/plush.jpg 400 _
 
@@ -5545,155 +5574,7 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 
 
 
-* Appendix A: strings
-
-
-
-* Bytes, code points, characters
-
-Three distinct concepts are at play with strings in Go: _bytes_, _code_points_, and _characters_.
-
-*Bytes*
-
-- A byte is made up of 8 bits. Duh!
-
-*Code*points*
-
-- Also known as "runes" in the Go world.
-- A code point simply corresponds to a place in the Unicode alphabet.
-
-*Characters*
-
-- Also known as "glyphs".
-- A character is made up of one or mode code points.
-
-See [[https://go.dev/blog/strings][Rob Pike - Strings, bytes, runes and characters in Go (Golang blog)]]
-
-
-
-* Runes
-
-The predeclared `rune` type is a 32-bit integer type that represents a Unicode code point.
-Unsurprisingly, its zero value is `0`.
-
-Rune literals are delimited by single quotes. Escape sequences (`'\u00e9'`) are possible.
-
-In UTF-8, a rune is encoded as a sequence of 1 to 4 bytes.
-
-.play -edit src/rune_bytes.go /^//START/,/^//END/
-
-The `rune` type is an alias of type `int32`. The two types are interchangeable.
-
-
-
-* Characters
-
-You're used to reading characters on a computer screen, but the Unicode concept of _character_ is harder to grasp than you might think!
-
-Note in particular that
-
-- a character can be made up of more than one code points, and
-- a given character can have multiple representations.
-
-For instance, the character `é` can be represented either by
-
-- a single code point named [[https://unicode-table.com/en/00E9/][_Latin_Small_Letter_E_with_Acute_]], or by
-- the combination of a [[https://unicode-table.com/en/0065/][_Latin_Small_Letter_E_]] and an [[https://unicode-table.com/en/00B4/][_Acute_Accent_]] (a _combining_code_point_):
-
-.play -edit src/characters.go /^//START/,/^//END/
-
-
-
-* The string type: zero value and literals
-
-The `string` type's zero value is simply the empty string.
-
-String literals come in two forms:
-
-*Interpreted*string*literals*
-
-- delimited by double quotes (`"`)
-- the most common form
-- guaranteed to contain valid UTF-8 (if they do no contain byte-level escapes)
-
-*Raw*string*literals*
-
-- delimited by backticks (```)
-- escape sequences are not applied
-- can be multiline
-- guaranteed to contain valid UTF-8
-
-
-: string literals always contain UTF-8 text as long as they have no byte-level escapes
-: Go source code is UTF-8, so the source code for the string literal is UTF-8 text
-: useful for regexp, templates, multiline strings
-
-
-
-* The string type's zero value and string literals
-
-.play -edit src/string_literals.go /^//START/,/^//END/
-
-
-
-* The string type: under the hood
-
-A string is _not_ stored in memory as a sequence of runes, but as a more compact sequence of bytes that (usually) represent valid UTF-8 text.
-
-More specifically, a string is a two-word immutable data structure made up of
-
-- a pointer to a byte array,
-- an integer corresponding to the number of bytes that make up the string.
-
-For instance, the string `"Hello,`World!"` is represented in memory as follows:
-
-.image img/strings_two_words.svg 200 _
-
-
-
-* String indexing
-
-`s[i]` returns the `i`-th *byte* (not rune or character!) using 0-based indexing in string `s`.
-
-If `i` is either negative or larger than `len(s)-1`, then `s[i]` causes a _panic_!
-
-Overwriting `s[i]` or taking its address is illegal and will cause a compilation error.
-
-.play -edit src/string_indexing.go /^//START/,/^//END/
-
-
-
-: panic is a run-time error
-: also substring operator, but similar to slicing operator which we'll see later
-
-
-
-* Ranging over a string
-
-A for-range loop decodes one UTF-8-encoded *rune* (not character!) on each iteration:
-
-.play -edit src/string_range.go /^//START/,/^//END/
-
-In the code above, during each iteration of the loop,
-
-- `i` corresponds to the starting position of the current rune (measured in bytes),
-- `r` corresponds to the current rune.
-
-
-
-* Other operations on strings
-
-As in many other languages, the plus sign is used for string concatenation.
-
-Built-in function `len` returns the number of *bytes* in a string, whereas
-function `utf8.RuneCountInString` returns the number of *runes* in a string.
-
-.play -edit src/strings_etc.go /^//START/,/^//END/
-
-Other useful functions for manipulating strings are can be found in packages `unicode/utf8`, `strings`, `strconv`, `fmt`, and `regexp`.
-
-
-* Appendix B: other import syntaxes
+* Appendix A: other import syntaxes
 
 
 
@@ -5742,7 +5623,7 @@ Avoid relative imports like the plague!
 
 
 
-* Appendix C: more about interfaces
+* Appendix B: more about interfaces
 
 
 

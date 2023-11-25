@@ -6,7 +6,6 @@ func main() {
 	// START OMIT
 	names := []string{"foo", "bar", "baz"}
 	red := names[:2]
-	names = red[:cap(red)] // HL
-	fmt.Println(names)
+	fmt.Println(red[:cap(red)]) // HL
 	// END OMIT
 }
