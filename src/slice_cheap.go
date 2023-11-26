@@ -4,16 +4,18 @@ import "fmt"
 
 // START OMIT
 func main() {
-	numbers := []int{4, 8, 15, 16, 23, 42}
-	fmt.Printf("addr in main:\t%p\n", &numbers[0])
-	printAddrOfFirstElemIfAny(numbers) // HL
+	a := []int{1, 2}
+	fmt.Println(&a[0])
+	p := addressOfFirst(a)
+	fmt.Println(p)
+	fmt.Println(&a[0] == p) // true // HL
 }
 
-func printAddrOfFirstElemIfAny(s []int) { // HL
-	if len(s) < 1 {
-		return
+func addressOfFirst(a []int) *int {
+	if len(a) == 0 {
+		return nil
 	}
-	fmt.Printf("addr in function:\t%p\n", &s[0])
+	return &a[0]
 }
 
 // END OMIT

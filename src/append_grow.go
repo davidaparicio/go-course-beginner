@@ -4,10 +4,13 @@ import "fmt"
 
 func main() {
 	// START OMIT
+	const n = 513
+	const tmpl = "len: %4d; cap: %4d\n"
 	var s []int
-	for i := 0; i < 1024; i++ {
-		fmt.Printf("len: %4d; cap: %4d\n", len(s), cap(s))
+	fmt.Printf(tmpl, len(s), cap(s))
+	for i := 0; i < n; i++ {
 		s = append(s, i) // HL
+		fmt.Printf(tmpl, len(s), cap(s))
 	}
 	// END OMIT
 }

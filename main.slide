@@ -2747,13 +2747,23 @@ Moreover, a slice parameter is much more flexible than an array parameter becaus
 
 
 
+* Slice function parameters allow updates to the backing array
+
+Furthermore, updates to elements of a slice argument are visible to the caller:
+
+.play -edit src/slice_update.go  /^//START/,/^//END
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
+
+
+
 * Passing a slice to variadic function
 
 You can "explode" a slice argument into a variadic parameter using a trailing ellipsis:
 
 .play -edit src/slice_explode.go  /^//START/,/^//END/
 
-This functionality is reminiscent of [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax][JavaScript's spread syntax]], [[https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists][Python's]] and [[https://docs.ruby-lang.org/en/2.0.0/syntax/calling_methods_rdoc.html#label-Array+to+Arguments+Conversion][Ruby's]] `*` operator.
+This functionality is reminiscent of [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax][JavaScript's spread syntax]], [[https://docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists][Python's]] and [[https://docs.ruby-lang.org/en/2.0.0/syntax/calling_methods_rdoc.html#label-Array+to+Arguments+Conversion][Ruby's]] "splat" (`*`) operator.
 
 
 
@@ -2895,41 +2905,76 @@ It also allows you to limit which subtests to run within a given test function, 
 
 * Appending elements to a slice
 
-A built-in function named `append` allows you to add elements to the end of a slice.
+  names := []string{"foo"}
 
-Its last parameter is variadic: you can add more than one element to the slice at a time.
+.image img/slice_append_before.svg _ 500
 
-.play -edit src/append.go  /^//START/,/^//END/
+: https://excalidraw.com/#json=zmXtzqfMn5wEAJTXOwMbe,P15kQvBq2NqwBCam8chFnw
 
-Under the hood, the `append` function copies elements of the backing array to a larger one when capacity in the former has been reached and returns a slice that points to the new array:
+[[https://pkg.go.dev/builtin#append][A built-in function named "append"]] allows you to add elements to the end of a slice. Its last parameter is variadic, which allows you to add multiple elements in one call:
+
+  names = append(names, "bar", "baz")
+
+.image img/slice_append_after.svg _ 500
+
+: https://excalidraw.com/#json=9qoTSCzImp47KqLXlN3V1,KTBQ_exGPDUsez3PJ20XfQ
+
+
+
+* Append: under the hood
+
+When the slice's backing array is at capacity, the `append` function
+
+1. allocates a new array large enough to accommodate both the old and new elements,
+2. copies the elements of the slice's backing array into the new array,
+3. adds the new elements to the new backing array,
+4. returns a slice that points to the new array.
+
+If the old backing array is no longer referenced anywhere in the program, it becomes eligible for garbage collection:
+
+.image img/slice_append_gc.svg _ 500
+
+: https://excalidraw.com/#json=snAWYDiuwLLRDlArjyLp0,ZVZuFKw9kgpna5-maewrKA
+
+
+
+* Append: under the hood (cont'd)
+
+How exactly does append choose the size of the new backing array? This detail remains unspecified in the language spec. In practice, the Go runtime does the right thing.
+
+However, if you're curious, the following program allows you to peek under the hood:
 
 .play -edit src/append_grow.go  /^//START/,/^//END/
 
-: mention that s := make([]int, 0, 1024) would have prevented copies
+A change in the slice's capacity indicates that the slice reached capacity and `append` had to allocate a new array and copy the elements of the old array into the new one.
+
+However, in this case (since you know in advance how long the slice will ultimately be), all these intermediate allocations and copies are unnecessary and avoidable. How?
 
 
 
 * Aliasing
 
-Bear in mind that multiple slices may share the same backing array.
-
-A change to an element of one such slice will be reflected in the other slices.
+Bear in mind that multiple slices may share the same backing array. In this case, a change to an element of one such slice will be reflected in the other slices:
 
 .play -edit src/slice_spooky.go  /^//START/,/^//END/
 
-In fact, that is what happens when you pass a slice to a function: functions operate on copies of their arguments, but both the original slice and its copy reference the same backing array.
+In particular, when you pass a slice to a function, the function operates on a copy of that slice, but both the original slice and its copy uses the same backing array:
+
+.play -edit src/slice_spooky_func.go  /^//START/,/^//END/
 
 
+* Inadvertent slice decoupling
 
-* Aliasing (cont'd)
+However, remember that the slice returned by `append` may well have a different backing array from that of the original slice:
 
-Be careful: holding a pointer to a slice element while appending is a bad idea!
-
-After appending, the pointer may well point to an element of an old array that is no longer backing the slice!
 
 .play -edit src/slice_aliasing.go  /^//START/,/^//END/
 
-: could cause a memory leak, because old array cannot be GC'd
+If you forget this subtlety, you may introduce subtle bugs in your programs.
+
+In particular, taking the address of a slice element as you're about to append to that slice is rarely a good idea!
+
+: quiz: append in function on previous slide and ask them why this change isn't reflected in main
 
 
 

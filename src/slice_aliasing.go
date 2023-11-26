@@ -2,23 +2,17 @@ package main
 
 import "fmt"
 
-// START OMIT
-type User struct {
-	name    string
-	isAdmin bool
-}
-
 func main() {
-	users := []User{
-		User{name: "Julien"},
-	}
-	julien := &users[0]                     // HL
-	users = append(users, User{name: "Ed"}) // HL
-	julien.isAdmin = true
-	fmt.Println(*julien)
-	fmt.Println(users)
-	fmt.Printf("%p\n", julien)
-	fmt.Printf("%p\n", &users[0])
-}
+	// START OMIT
+	a := []int{1, 2}
+	b := a
+	fmt.Println(a, b)
 
-// END OMIT
+	b = append(b, 3) // side effect: decouples b from a! // HL
+	fmt.Println(a, b)
+
+	// a proof: some change to b's 1st element isn't reflected in a
+	b[0] = 0
+	fmt.Println(a, b)
+	// END OMIT
+}

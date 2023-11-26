@@ -4,10 +4,10 @@ import "fmt"
 
 func main() {
 	// START OMIT
-	numbers := []int{4, 8, 15, 16, 23, 42}
-	first3 := numbers[:3]
-	first3[0] = 99
-	fmt.Println(first3)
-	fmt.Println(numbers)
+	a := []int{1, 2}
+	b := a
+	fmt.Println(a, b)
+	b[0] = 0 // this change affects both b and a // HL
+	fmt.Println(a, b)
 	// END OMIT
 }
