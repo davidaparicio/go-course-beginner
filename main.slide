@@ -842,6 +842,26 @@ However, Go requires many conversions from one type to another to be explicit.
 
 
 
+* Memory safety TODO
+
+No dangling pointers
+
+Automatic memory management: The Go runtime includes a memory allocator and a garbage collector.
+no need to explicitly allocate memory (Go's runtime includes a memory allocator) or free memory (Go's runtime also includes a Garbage collector)
+
+variables not referenced anywhere in the program get eligible to garbage collection.
+
+not a nightmare like in Java
+
+This and the absence of pointer arithmetic makes the language memory-safe and eliminates a whole class of memory-related bugs.
+
+- no dangling pointers
+	- : mention heap-overflow vuln discovered in curl
+
+TODO: add love
+
+
+
 * Variable declaration
 
 You can declare variables at the package level or locally within a function:
@@ -1353,13 +1373,9 @@ Go supports anonymous functions but lacks a concise "lambda" notation:
 
   incr := func(i int) int { return i + 1 }
 
-A [[https://en.wikipedia.org/wiki/Closure_(computer_programming)][_closure_]] is an anonymous function that references variables from an enclosing scope:
+A [[https://en.wikipedia.org/wiki/Closure_(computer_programming)][_closure_]] is an anonymous function that references (or "captures" or "closes over") variables from its lexical scope:
 
 .play -edit src/function_closure.go /^//START/,/^//END/
-
-: lexical closure: an anonymous function that captures variables from its lexical environment
-: the anonymous function closes over / is bound to the sum variable
-: Anonymous functions are often conveniently used in conjunction with the `go` keyword to launch goroutines.
 
 
 
@@ -2509,6 +2525,24 @@ In the code snippet above, during each iteration of the loop,
 
 For more about strings, see [[https://go.dev/blog/strings][Rob Pike - Strings, bytes, runes and characters in Go]].
 
+
+
+* for-range loop over an int (new in Go 1.22)
+
+You will soon be able to also [[https://github.com/golang/go/issues/61405][range over an int]]. Instead of writing the following three-clause loop,
+
+  for i := range 42 {
+    // ...
+  }
+
+you'll be able to write the following equivalent (but more concise) loop:
+
+  for i := 0; i < 42; i++ {
+    // ...
+  }
+
+Try this example on the [[https://go.dev/play/p/2VyjaOK_5pq?v=gotip][Playground]].
+
 👉 Enough about loops and strings! Let's learn about arrays and slices.
 
 
@@ -2735,7 +2769,7 @@ Of course, the specified capacity must be greater or equal to the length, or [[h
 
 * Slice function parameters are cheap and flexible
 
-Remember: a slice is only a descriptor of a portion of an array.
+Remember: a slice is only a [[https://go.dev/blog/slices-intro#slice-internals][descriptor of an array segment]].
 
 Accordingly, functions that take a slice operate on a copy of their slice argument, but copying the slice doesn't incur any copy of its backing array!
 
@@ -2863,11 +2897,11 @@ One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-usi
 
 
 
-* Namecheck project: use table-driven subtests
+* Namecheck project: use table-driven tests
 
-1. Write a `TestIsValid` test function that uses table-driven subtests. If the anonymous struct confuses you, you can declare a `TestCase` struct type at the top of your function.
+1. Write a `TestIsValid` test function that uses table-driven tests. If the anonymous struct confuses you, you can declare a `TestCase` struct type at the top of your function.
 
-2. Move all the test cases for the `IsValid` function inside the slice of test cases within your `TestIsValid` test function.
+2. Move all the test cases for the `IsValid` function inside a slice of test cases within your `TestIsValid` test function.
 
 3. You can now safely remove your original test functions.
 
@@ -2903,6 +2937,18 @@ It also allows you to limit which subtests to run within a given test function, 
 
 
 
+* Namecheck project: use table-driven subtests
+
+1. Turn your table-driven tests into table-driven subtests.
+
+2. Run your tests.
+
+3. Using the `-run` flag, run only a fraction of the test cases.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
 * Appending elements to a slice
 
   names := []string{"foo"}
@@ -2923,7 +2969,7 @@ It also allows you to limit which subtests to run within a given test function, 
 
 * Append: under the hood
 
-When the slice's backing array is at capacity, the `append` function
+When `append` is called and its slice argument's backing array is at capacity, it
 
 1. allocates a new array large enough to accommodate both the old and new elements,
 2. copies the elements of the slice's backing array into the new array,
@@ -2940,7 +2986,7 @@ If the old backing array is no longer referenced anywhere in the program, it bec
 
 * Append: under the hood (cont'd)
 
-How exactly does append choose the size of the new backing array? This detail remains unspecified in the language spec. In practice, the Go runtime does the right thing.
+How exactly does `append` choose the size of the new backing array? This detail remains unspecified in the language spec. In practice, the Go runtime does the right thing.
 
 However, if you're curious, the following program allows you to peek under the hood:
 
@@ -2963,6 +3009,7 @@ In particular, when you pass a slice to a function, the function operates on a c
 .play -edit src/slice_spooky_func.go  /^//START/,/^//END/
 
 
+
 * Inadvertent slice decoupling
 
 However, remember that the slice returned by `append` may well have a different backing array from that of the original slice:
@@ -2978,21 +3025,23 @@ In particular, taking the address of a slice element as you're about to append t
 
 
 
-* Other operations on slices TODO
+* Other operations on slices
 
-copy function
+[[https://pkg.go.dev/builtin#copy][The built-in `copy` function]]  allows you to copy elements from one slice into another.
 
-slices package (requires generics)
+[[https://pkg.go.dev/builtin#clear][The built-in `clear` function]] sets all the elements of its slice argument to the zero value of the slice's element type.
 
-👉 Enough about slices for now. Let's talk about maps.
+Finally, [[https://pkg.go.dev/slices][the `slices` package]] provides many functions for performing usual operations on slices, such as [[https://pkg.go.dev/slices#Equal][testing for equality]], [[https://pkg.go.dev/slices#Sort][sorting]], [[https://pkg.go.dev/slices#BinarySearch][running a binary search]], etc.
+
+👉 Enough about slices. Let's talk about maps.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 
 * Maps
 
-A map is a built-in type that represent an unordered collection of key-value pairs.
-
-Names from other languages include _dictionary_ (Python) and _associative_array_ (PHP).
+A map is a built-in type that represent an unordered collection of key-value pairs. Names from other languages include _dictionary_ (Python) and _associative_array_ (PHP).
 
 The type of a map of keys of type `K` and values of type `V` is denoted by
 
@@ -3002,13 +3051,13 @@ The key type *must* be comparable:
 
 .play -edit src/incomparable_key_type.go /^//START/,/^//END/
 
-.image https://golangforall.com/assets/dvoe.svg 150 _
+Internally, a map stores its key-value pairs in a [[https://en.wikipedia.org/wiki/Hash_table][hash table]].
 
-: implemented as a hash table
+.image https://golangforall.com/assets/dvoe.svg 100 _
 
 
 
-* Creating map values
+* Initializing a map
 
 You can create and populate a map with a _map_literal_:
 
@@ -3017,6 +3066,8 @@ You can create and populate a map with a _map_literal_:
 Alternatively, you can use the built-in function `make` to initialize an empty map of the desired type:
 
 .play -edit src/map_make.go /^//START/,/^//END/
+
+As an optional second argument to `make`, you can specify a _size_hint_ as a non-negative integer. The resulting map will be large enough to accommodate that many key-value pairs before requiring [[https://en.wikipedia.org/wiki/Hash_table#Dynamic_resizing][internal resizing]].
 
 
 
@@ -3049,7 +3100,8 @@ However, you can use [[https://pkg.go.dev/maps#Equal][the `Equal` function]] fro
 .play -edit src/map_equal.go /^//START/,/^//END/
 
 
-* Accessing a value associated to a map key
+
+* Retrieving a value associated to a map key
 
 `m[k]` yields the value associated with a key `k` in a map `m`:
 
@@ -3124,6 +3176,18 @@ Maps are unordered collections. Surprisingly, perhaps, the iteration order is [[
 
 
 
+* Namecheck project: table-driven subtests using a map
+
+1. Remove the field named `desc` from the declaration of your `TestCase` struct type.
+
+2. In your `TestIsValid` function, range over a `map[string]TestCase` instead of a `[]TestCase`.
+
+3. Run your tests.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
 * Ranging over a map in a deterministic order
 
 To range over a map in a certain order, you must
@@ -3140,11 +3204,22 @@ The `Keys` function (and other useful generic functions that operate on maps) ar
 
 
 
-* Structs
+* Other operations on maps
+
+[[https://pkg.go.dev/builtin#clear][The built-in `clear` function]] deletes all the elements of its map argument, leaving the map empty.
+
+Also, [[https://pkg.go.dev/maps][the `maps` package]] provides functions for performing usual operations on maps, such as [[https://pkg.go.dev/maps#Equal][testing two maps for equality]], [[https://pkg.go.dev/maps#Clone][copying a map]], [[https://pkg.go.dev/maps#Copy][merging two maps]], etc.
+
+👉 We'll use maps again later in our project. Let's learn about structs.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
 
 * Declaring a named struct type
 
-A [[https://go.dev/ref/spec#Struct_types][struct type]] is a sequence of _fields_. Each field has a name and a type:
+A [[https://go.dev/ref/spec#Struct_types][struct type]] is a sequence of _fields_. Each field typically has both a name and a type:
+
 
   type User struct {
     firstName string
@@ -3152,10 +3227,37 @@ A [[https://go.dev/ref/spec#Struct_types][struct type]] is a sequence of _fields
     isAdmin   bool
   }
 
-All fields of a struct value are stored in a contiguous fashion in memory; the compiler may add some padding between fields to respect alignment rules, though.
+_Embedded_fields_ are fields that have a type but no explicit name; their effective name is derived from the name of their type. Embedding is useful (though not necessary) for [[https://en.wikipedia.org/wiki/Object_composition][composition]].
+
+  type Manager struct {
+    *User
+    title string
+  }
+
+All fields of a struct value are laid out in a contiguous fashion in memory; the compiler may add some padding between fields to respect [[https://en.wikipedia.org/wiki/Data_structure_alignment][alignment rules]], though.
 
 : compare to Java classes, where everything but primitive types is a reference (not memory/cache efficient)
 
+
+
+* Limitation on recursive struct types
+
+A struct type `T` cannot have a field of type `T`:
+
+  type User struct {
+    firstName string
+    lastName  string
+    spouse    User   // compilation error
+  }
+
+However, it can have fields of type `*T` and `[]T`, etc.
+
+  type User struct {
+    firstName string
+    lastName  string
+    spouse    *User
+    friends   []User
+  }
 
 
 * A struct type's zero value
@@ -3197,13 +3299,11 @@ Consider the following struct type and unkeyed and keyed literals of it:
 
 .play -edit src/unkeyed_literals.go /^//START/,/^//END/
 
-[[https://go.dev/doc/go1compat#expectations][You should avoid unkeyed literals]] (esp. of third-party types) because their
-reliance on the order of the fields in the struct type declaration makes them
+[[https://go.dev/doc/go1compat#expectations][You should avoid unkeyed literals]] (esp. of cross-package struct types); in fact, the `vet` subcommand warns you about them.
 
-- less expressive (harder to write and read)
-- brittle to changes in the declaration (addition of a field, re-ordering of the fields)
+Their reliance on the order of the fields in the struct-type declaration makes them less expressive (harder to write and read) and brittle to changes in the declaration ([[https://www.youtube.com/watch?v=v24wrd3RwGo&t=5m2s][addition of a field]], or re-ordering of the fields).
 
-`go`vet` is your friend!
+Support for unkeyed struct literals [[https://www.youtube.com/watch?v=v24wrd3RwGo&t=19m28s][may be removed in a future version of Go]].
 
 : error-prone
 : In struct literals, you can either specify all the...
@@ -3237,12 +3337,14 @@ Contrary to what you may believe, the empty struct is often useful.
 
 * Field access
 
-Field access uses the usual dot syntax present in many languages.
+Field access uses the usual dot syntax present in many languages:
 
   type User struct {
-    Name    string
-    IsAdmin bool
+    firstName string
+    lastName  string
+    isAdmin   bool
   }
+
 
   func main() {
     u := User{Name: "Julien"}
@@ -3272,20 +3374,46 @@ Struct fields are also conveniently accessible through a pointer to the struct v
 
 
 
+* Promoted fields
+
+A field of an embedded field is promoted to the embedding field.
+
+In the example below, the `firstName` field of struct type `User` is a promoted field of struct type `Manager`:
+
+  type User struct {
+    firstName string
+    lastName  string
+    isAdmin   bool
+  }
+
+  type Manager struct {
+    *User
+    title string
+  }
+
+  func main() {
+    j := User{Name: "Julien"}
+    m := Manager{User: j, title: "Big Boss"}
+    fmt.Println(m.firstName) // Julien
+  }
+
+
+
 * Exported or unexported fields
 
 The case of a struct field's first letter dictates whether that field is exported.
 
   type User struct {
-    name    string
-    isAdmin bool
+    FirstName string
+    LastName  string
+    isAdmin   bool
   }
 
-Unexporting struct fields is the primary mechanism for encapsulation in Go.
+Keeping struct fields unexported is the primary mechanism for encapsulation in Go.
 
 Don't export the fields of your package-level struct types (unless you have to, e.g. for JSON decoding).
 
-Well-designed struct types are _opaque_ ones, which export none of their fields. For example, see `time.Time` or `regexp.Regexp`.
+Completely encapsulated struct types are _opaque_: they export none of their fields. For example, see `time.Time` or `regexp.Regexp`.
 
 To allow clients of your package to manipulate values of such types, provide functions and methods.
 
@@ -3544,34 +3672,9 @@ Many of the interface types provided by Go's standard library are single-method:
 
 
 
-* Namecheck project: move your main.go to a cmd folder
-
-1. Create a folder named `cmd`; move your `main.go` file to `cmd/`.
-
-2. Create a file `namecheck.go` that belongs to a new package itself named `namecheck`.
-
-  namecheck
-  ├── cmd
-  │   └── main.go
-  ├── github
-  │   ├── github.go
-  │   └── github_test.go
-  ├── go.mod
-  ├── namecheck.go
-  └── reddit
-      └── reddit.go
-
-3. From the root of your project, check that `main.go` still compiles:
-
-  go run cmd/main.go
-
-: We're about to create a `namecheck` package at the root of our project, but our `main.go` (which belongs to package `main`) is getting in the way. Let's move it elsewhere.
-
-
-
 * Namecheck project: declare a Validator interface
 
-1. In `namecheck.go`, declare the following interface type:
+1. In `main.go`, declare the following interface type:
 
   type Validator interface {
     IsValid(string) bool
@@ -3587,7 +3690,7 @@ Many of the interface types provided by Go's standard library are single-method:
 
 * Namecheck project: declare an Availabler interface
 
-1. Still in `namecheck.go`,  declare the following interface type:
+1. Still in `main.go`,  declare the following interface type:
 
   type Availabler interface {
     IsAvailable(string) (bool, error)
@@ -3646,7 +3749,7 @@ The declaration above is equivalent to the one below but requires no code duplic
 
 * Namecheck project: declare a Checker interface
 
-1. Still in `namecheck.go`, declare an interface type named `Checker` by composition of the following interface types:
+1. Still in `main.go`, declare an interface type named `Checker` by composition of the following interface types:
 
 - `Validator`
 - `Availabler`
@@ -3659,12 +3762,12 @@ The declaration above is equivalent to the one below but requires no code duplic
 
 * Namecheck project: use a slice of Checkers
 
-1. In your `main` function, create a slice of `namecheck.Checker` with two elements:
+1. In your `main` function, create a slice of `Checker` with two elements:
 
 - a pointer to a `github.GitHub`
 - a pointer to a `reddit.Reddit`
 
-2. Simplify the existing code by ranging over the slice of `namecheck.Checker` values.
+2. Simplify the existing code by ranging over the slice of `Checker` values.
 
 3. There currently is no way to ask a `Checker` to which platform (GitHub or Reddit) it's dedicated. Any idea?
 
@@ -3694,11 +3797,11 @@ If a type satisfies `fmt.Stringer`, its `String` method governs the textual repr
 
 * Namecheck project: satisfy the fmt.Stringer
 
-1. Modify the declaration of the `namecheck.Checker` interface so that the latter also be an `fmt.Stringer`.
+1. Modify the declaration of the `Checker` interface so that the latter also be an `fmt.Stringer`.
 
-2. Do `*github.GitHub` and `*reddit.Reddit` still satisfy the `namecheck.Checker` interface? If not, fix that.
+2. Do `*github.GitHub` and `*reddit.Reddit` still satisfy the `Checker` interface? If not, fix that.
 
-3. Make good use of `namecheck.Checker`'s new `String` method in your `main` function.
+3. Make good use of `Checker`'s new `String` method in your `main` function.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
@@ -3904,6 +4007,29 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 
 
+* Namecheck project: move your main.go to a cmd folder
+
+1. Create a folder named `cmd`; move your `main.go` file to `cmd/`.
+
+2. Create a file `namecheck.go` that belongs to a new package itself named `namecheck`.
+
+  namecheck
+  ├── cmd
+  │   └── main.go
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
+  ├── go.mod
+  ├── namecheck.go
+  └── reddit
+      └── reddit.go
+
+3. From the root of your project, check that `main.go` still compiles:
+
+  go run cmd/main.go
+
+
+
 * Namecheck project: declare an interface for *http.Client
 
 1. In `namecheck.go`, judiciously declare a useful interface named "Getter" that type `*http.Client` already satisfies.
@@ -3977,7 +4103,7 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
 
 * Namecheck project: simulate support for many platforms
 
-1. In `main.go`, judiciously populate your `[]namecheck.Checker` slice with twenty pointers to the same `github.GitHub` variable.
+1. In `main.go`, judiciously populate your `[]Checker` slice with twenty pointers to the same `github.GitHub` variable.
 
 2. Similarly, populate your slice of checkers with twenty pointers to the same `github.GitHub` instance.
 
@@ -3986,31 +4112,6 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
 4. Comment on user experience. Is it fast? How could you improve things?
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 250 _
-
-
-
-* Namecheck project: make room for another main.go
-
-We'll experiment with concurrency inside another `main.go`. Later, we'll write a server in that file. Let's set things up!
-
-1. Create a folder named "cli" within the `cmd` folder. Move your `main.go` to `cmd/cli/`.
-
-2. Create a folder named "server" within the `cmd` folder. Create a new `main.go` there.
-
-  namecheck
-  ├── cmd
-  │   ├── cli
-  │   │   └── main.go
-  │   └── server
-  │       └── main.go
-  ├── github
-  │   ├── github.go
-  │   └── github_test.go
-  ├── go.mod
-  ├── namecheck.go
-  └── reddit
-      ├── reddit.go
-      └── reddit_test.go
 
 
 
@@ -4055,21 +4156,23 @@ If you've got help in the kitchen, you can _parallelize_ and finish the dish fas
 
 *Concurrency*
 
-- the art of structuring a program in terms of independenly executing computations
-- a property of the program's _code_
+- the art of structuring a program in terms of *independent* computations
+- a property of the program's *code*
 
 *Parallelism*
 
-- the simultaneous execution of multiple things on multiple cores
-- a property of the program's _execution_
+- the *simultaneous* execution of multiple computations on multiple cores
+- a property of a program's *execution*
+
+.image https://go.dev/blog/store/gophers.jpg 150 _
 
 
 
 * Parallelism is not the goal of concurrency
 
-Concurrency enables scalability through parallelism, but parallelism isn't the goal.
+Concurrency enables scalability through parallelism, but [[https://www.youtube.com/watch?v=jgVhBThJdXc&t=1925s][parallelism isn't the goal]].
 
-Writing concurrent code is a valuable act of design regardless of whether the program will eventually be run in parallel.
+[[https://www.youtube.com/watch?v=jgVhBThJdXc&t=1278s][Writing concurrent code is a valuable act of design]] regardless of whether the program will eventually be run in parallel.
 
 And if well-designed concurrent code _does_ run in parallel, we can reasonably expect performance to scale gracefully as the number of cores increase.
 
@@ -4125,50 +4228,9 @@ No need for you to think about it yet; for now, simply picture the Go scheduler 
 
 .image https://rrsg.s3.amazonaws.com/wp-content/uploads/2020/03/25180622/90517519_1171371749860657_3506201698723816143_n.jpg 250 _
 
+: goroutines are non-preemptive: they cannot be interrupted
 : switching goroutines is much cheaper than switching OS threads
 : also OS threads typically take 1Mo of memory compared to 2kb
-
-
-
-* Goroutines execute in the same address space
-
-For example, a goroutine can pass a pointer to another goroutine, and the latter can dereference that pointer without causing an access violation.
-
-[[https://go.dev/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid _data_races_!
-
-A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location in a concurrent fashion (i.e. at the "same" time).
-
-Programs that modify data being simultaneously accessed by multiple goroutines must serialize such access. See [[https://go.dev/ref/mem#tmp_1][The Go Memory Model]].
-
-.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
-
-
-
-* Concurrency safety
-
-_Concurrency_safety_ is a property of a given operation on a variable of a given type.
-
-An operation is _concurrency-safe_ if it can be carried out in a concurrent fashion (from multiple goroutines) without explicit synchronization and consistently produces predictable results.
-
-Here are a few examples of operations that are *not* concurrency-safe:
-
-- updating a package-level variable
-- incrementing a local `int` variable
-- appending to a local slice variable
-
-
-
-* Concurrency safety (cont'd)
-
-When all the methods on a given type are safe for concurrent use by multiple goroutines, the type itself is said to be _concurrency-safe_.
-
-An example of concurrency-safe type is [[https://pkg.go.dev/net/http#Client][`http.Client`]]: you can safely send HTTP requests using the same client from multiple goroutines.
-
-Unless a type is documented to be concurrency-safe, do not assume it is!
-
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
-
-: consult the doc
 
 
 
@@ -4187,7 +4249,7 @@ The function's results (if any) are lost, but channels can be used to communicat
 
 
 
-* The go keyword (cont'd)
+* go keyword applied to an anonymous function
 
 Launching an anonymous function as a goroutine is sometimes convenient for grouping statements that should be executed in the background:
 
@@ -4224,13 +4286,40 @@ Therefore, a goroutine cannot readily be _killed_.
 
 
 
-* Be careful with the go keyword
+* Beware goroutine leaks
 
 Before spawning a new goroutine, you must understand exactly under what conditions it will terminate. See [[https://github.com/golang/go/wiki/CodeReviewComments#goroutine-lifetimes][CodeReviewComments - Goroutine lifetimes]].
 
-If you're careless and spawn goroutines willy-nilly, you expose yourself to correctness and performance bugs (_goroutine_leaks_).
+Goroutines may be cheap, but they're not free. If your program carelessly spawns goroutines, it is at risk of _leaking_goroutines_, i.e. accumulating "zombie" goroutines that are unable to do any meaningful work and that never terminate!
+
+Symptoms of a goroutine leak include memory leaks and program crashes! 😱
 
 .image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
+
+
+
+* Namecheck project: make room for another main.go
+
+We'll experiment with concurrency inside another `main.go`. Later, we'll write a server in that file. Let's set things up!
+
+1. Create a folder named "cli" within the `cmd` folder. Move your `main.go` to `cmd/cli/`.
+
+2. Create a folder named "server" within the `cmd` folder. Create a new `main.go` there.
+
+  namecheck
+  ├── cmd
+  │   ├── cli
+  │   │   └── main.go
+  │   └── server
+  │       └── main.go
+  ├── github
+  │   ├── github.go
+  │   └── github_test.go
+  ├── go.mod
+  ├── namecheck.go
+  └── reddit
+      ├── reddit.go
+      └── reddit_test.go
 
 
 
@@ -4283,7 +4372,7 @@ However, this solution is not entirely satisfactory. Why?
 
 
 
-* Sleeping is not the answer
+* Sprinkling sleeps on your code is no way to coordinate goroutines
 
 How long should the sleep be, exactly? Impossible to know in advance.
 
@@ -4294,7 +4383,7 @@ How long should the sleep be, exactly? Impossible to know in advance.
 
 Sleeping is simply not a reliable and efficient way of coordinating goroutines!
 
-We need another mechanism...
+To properly tell the `main` function to wait, we need another mechanism...
 
 : there are legitimate use cases for `time.Sleep` in a Go program, but...
 
@@ -4307,7 +4396,6 @@ The [[https://pkg.go.dev/sync][`sync` package]] provides a useful mechanism: _wa
 A wait group implements something like a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]]: it allows you to wait for a group of goroutines to terminate before moving on.
 
 Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
-
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/upright.svg 200 _
 
@@ -4324,7 +4412,7 @@ The zero value of type [[https://pkg.go.dev/sync#WaitGroup][`sync.WaitGroup`]] i
 
   var wg sync.WaitGroup
 
-A `sync.WaitGroup` is typically declared within a function; declaring one at the top level is rarely (if ever) useful.
+A `sync.WaitGroup` is typically declared within a function. Declaring one at the top level is rarely (if ever) useful.
 
   var wg sync.WaitGroup // bad
 
@@ -4338,7 +4426,7 @@ A `sync.WaitGroup` is typically declared within a function; declaring one at the
 
 * How to use a wait group
 
-A wait group is little more than a counter that supports _concurrency-safe_ operations.
+A wait group is little more than a counter safely usable from multiple goroutines.
 
 A wait group has three methods:
 
@@ -4349,8 +4437,6 @@ A wait group has three methods:
 - `Add` increments the counter by `delta`. Call it _just_before_ spawning a goroutine.
 - `Done` decrements the counter by 1. Call it _at_the_very_end_ of each spawned goroutine, typically via a `defer` statement.
 - `Wait` blocks until the counter goes back to 0. Call it at the point of the spawning goroutine where you need to wait for the spawned goroutines to terminate.
-
-: wg.Done() is equivalent to wg.Add(-1)
 
 
 
@@ -4393,7 +4479,53 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 
 
-* Closures running as goroutines: spot the bug
+* Goroutines execute in the same address space
+
+For example, a goroutine can pass a pointer to another goroutine, and the latter can dereference that pointer without causing an access violation.
+
+[[https://go.dev/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid _data_races_!
+
+A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location in a concurrent fashion (i.e. at the "same" time).
+
+Programs that modify data being simultaneously accessed by multiple goroutines must serialize such access. See [[https://go.dev/ref/mem#tmp_1][The Go Memory Model]].
+
+.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
+
+
+
+* Concurrency safety
+
+_Concurrency_safety_ is a property of a given operation on a variable of a given type.
+
+An operation is _concurrency-safe_ if it can be carried out in a concurrent fashion (from multiple goroutines) without explicit synchronization and consistently produces predictable results.
+
+Be careful: a simple update to a package-level variable is *never* concurrency-safe!
+
+
+
+* Concurrency-safe types
+
+When all the methods on a given type are safe for concurrent use by multiple goroutines, the type itself is said to be _concurrency-safe_. Here are some examples:
+
+- [[https://pkg.go.dev/sync#WaitGroup][`sync.WaitGroup`]] is a typical example of a concurrency-safe type.
+- [[https://pkg.go.dev/net/http#Client][Struct type `http.Client`]] is also concurrency-safe: you can safely send HTTP requests using the same client from multiple goroutines.
+- [[https://pkg.go.dev/net/http#CookieJar][Interface `http.CookieJar`]] requires its implementations to be concurrency-safe.
+
+Unless a type is documented to be concurrency-safe, do not assume that it is!
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
+
+: consult the doc
+
+
+
+* Synchronization bug
+
+TODO
+
+
+
+* Closures running as goroutines: spot the bug (Go <1.22)
 
 Can you spot the bug in the following program?
 
@@ -4404,7 +4536,7 @@ Can you spot the bug in the following program?
 
 
 
-* Closures running as goroutines: explanation
+* Closures running as goroutines: explanation (Go <1.22)
 
 The program contains a [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bug_]], which is very likely to cause a _data_race_ and yield unpredictable and undesirable results! 😱
 
@@ -4460,7 +4592,7 @@ Don't leave the race detector on in production: its overhead is prohibitive.
 
 
 
-* One way to fix the synchronization bug
+* One way to fix the synchronization bug (Go <1.22)
 
 In constrast to the iteration variable, variables declared within the body of the loop are not shared between iterations. Therefore, one way to fix the synchronization bug consists in declaring a copy of the iteration variable inside the loop, before the `go` statement:
 
@@ -4472,7 +4604,7 @@ Although the redeclaration looks a bit weird, this solution has merit insofar as
 
 
 
-* Another way to fix the synchronization bug
+* Another way to fix the synchronization bug (Go <1.22)
 
 An alternative solution consists in passing the value of the iteration variable as an argument to the anonymous function.
 
@@ -4482,7 +4614,7 @@ That way, by virtue of Go's call-by-value evaluation strategy, the function only
 
 
 
-* Yet another way to fix the synchronization bug
+* Yet another way to fix the synchronization bug (Go <1.22)
 
 When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may introduce synchronization bugs.
 
@@ -4511,9 +4643,9 @@ For more details about this change, see [[https://go.dev/blog/loopvar-preview][F
 
 * Namecheck project: check each user name concurrently
 
-1. Extract the body of the for-range loop that iterates on your `[]namecheck.Checker` slice as a function in your `main` package:
+1. Extract the body of the for-range loop that iterates on your `[]Checker` slice as a function in your `main` package:
 
-  func check(checker namecheck.Checker, username string)
+  func check(checker Checker, username string)
 
 2. Add a parameter of type `*sync.WaitGroup` to your `check` function.
 
@@ -4626,7 +4758,7 @@ Channels are comparable.
 
 * Initializing a channel
 
-The zero value of channel types is `nil`. Uninitialized channels are not particularly useful.
+The zero value of channel types is `nil`. You cannot do much with an uninitialized channel (although [[https://www.youtube.com/watch?v=t9bEg2A4jsw][assigning `nil` to a channel variable is sometimes useful]]).
 
 To initialize a channel, use the built-in function `make` with two arguments:
 
@@ -5020,10 +5152,6 @@ Review the functions that accept a channel parameter, and determine whether a di
 
 
 
-* Web server
-
-
-
 * A simple Web server
 
 .play -edit src/server_helloworld.go /^//START/,/^//END/
@@ -5080,11 +5208,13 @@ This bug is particularly insidious because it will only manifest itself under su
 
 * Namecheck project: turn your CLI tool into a Web server
 
-1. Copy `cmd/cli/main.go` to `cmd/server/main.go`. We won't touch `cmd/cli` for the remainder of the course.
+1. Move the declaration of your three interface types from `main.go` to `namecheck.go`; adjust your `main` function accordingly.
 
-2. In `cmd/server/main.go`, rename the `main` function to `handleCheck`.
+2. Copy `cmd/cli/main.go` to `cmd/server/main.go`. We won't touch `cmd/cli` for the remainder of the course.
 
-3. Adjust `handleCheck`'s signature to make it compatible with a HTTP handler:
+3. In `cmd/server/main.go`, rename the `main` function to `handleCheck`.
+
+4. Adjust `handleCheck`'s signature to make it compatible with a HTTP handler:
 
   func handleCheck(w http.ResponseWriter, r *http.Request)
 
@@ -5516,6 +5646,30 @@ You now know enough about the `context` package to fix the goroutine leak! 💪
 
 
 
+* Exercise: debug this ping-pong game
+
+1. Open [[https://go.dev/play/p/n7XQ_TdOY4t][this Playground]] adapted from a talk by Sameer Ajmani ([[https://www.youtube.com/watch?v=QDDwwePbDtw&t=2m54][video]]; [[https://go.dev/talks/2013/advconc.slide#6][slides]]).
+The program models a simple ping-pong game.
+
+2. The game ends with a deadlock. Can you explain why?
+
+3. Discuss and fix the program.
+
+Two solutions ([[https://go.dev/play/p/xi2-SMe3xyW][1]] and [[https://go.dev/play/p/yblNr3B5yg7][2]]) are available on the Playground.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+: The `main` goroutine plays the role of the umpire.
+: two goroutines exchanging one value over and over
+: pointer element to reduce memory footprint
+: show that deadlock if you never throw the ball on the table
+: one player terminates while the other is left holding the ball
+: one possibility: buffer size of 1, but no guarantee that the same player will play twice in a row
+: non-blocking send by adding a select statement
+: easy solution: referee receive ball from main after cancel()
+
+
+
 * Namecheck project: fix the goroutine leak
 
 1. Add a `context.Context` parameter to the `check` function.
@@ -5668,7 +5822,45 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 
 
 
-* Open discussion
+* Additional learning resources
+
+*Spec*: [[https://go.dev/ref/spec][the Go programming language specification]]
+
+*Development*: [[https://github.com/golang/go][golang/go (GitHub)]]
+
+*Blogs*
+
+- [[https://go.dev/blog][the (official) Go blog]]
+- [[https://dave.cheney.net/][Dave Cheney's blog]]
+
+*Book*: [[https://www.gopl.io/][Donovan & Kernighan - The Go programming language]] (2015)
+
+*Online*community*:
+
+- [[https://gophers.slack.com][Gophers Slack]]
+- [[https://groups.google.com/g/golang-nuts][golang-nuts Google group]]
+
+: esp. channels #general, #newbies, and #bestpractices
+
+
+
+* Additional learning resources (cont'd)
+
+*Podcast*: [[https://changelog.com/gotime][Go Time (The Changelog)]]
+
+*Vidcast*: [[https://www.youtube.com/c/justforfunc][Francesc Campoy Flores - justforfunc]] (no longer active but still good)
+
+*Conference*talks*
+
+- [[https://www.youtube.com/@GopherAcademy][Gopher Academy (GopherCon US)]]
+- [[https://www.youtube.com/@GopherConEurope][GopherCon Europe]]
+- [[https://www.youtube.com/@GopherConUK][GopherCon UK]]
+
+*Video*courses*:
+
+💲 [[https://www.oreilly.com/library/view/ultimate-go-programming/9780135261651/][Bill Kennedy - Ultimate Go 2]] (2018)
+💲 [[https://www.oreilly.com/library/view/introduction-to-go/9781491913871/][John Graham-Cumming - Introduction to Go Programming]] (2014)
+
 
 
 

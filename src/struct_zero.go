@@ -4,9 +4,9 @@ import "fmt"
 
 // START OMIT
 type User struct {
-	name    string
-	isAdmin bool
-	manager *User
+	firstName string
+	lastName  string
+	isAdmin   bool
 }
 
 func main() {
