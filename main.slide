@@ -1270,7 +1270,7 @@ A function can return multiple results, whose types must be specified within par
     return count, nil
   }
 
-Go's support for multiple function results is key to error reporting!
+Go's support for multiple function results [[https://go.dev/doc/effective_go#multiple-returns][is key to error reporting]]!
 
 : Bonus question: can you explain why function `CountWordsInFile` returns an error whereas function `CountWords` does not?
 
@@ -4064,7 +4064,7 @@ Consider the following single-method interface type:
     Climb(meters uint) error
   }
 
-A [[https://pkg.go.dev/net/http#HandlerFunc][frequently useful]] trick to implement such an interface is the following. First, declare a type based on a function whose signature matches that of the interface's method:
+A [[https://pkg.go.dev/net/http#HandlerFunc][frequently useful trick]] to implement such an interface is the following. First, declare a type based on a function whose signature matches that of the interface's method:
 
   type ClimberFunc func(uint) error
 
@@ -5152,7 +5152,7 @@ Review the functions that accept a channel parameter, and determine whether a di
 
 
 
-* A simple Web server
+* A simple Web server (Go 1.22)
 
 .play -edit src/server_helloworld.go /^//START/,/^//END/
 
@@ -5161,7 +5161,7 @@ You can define a handler as a package-level function. It must have two parameter
 - a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface for you to compose the HTTP response.
 - a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.
 
-You can then register your handler for a given route using [[https://pkg.go.dev/net/http#HandleFunc][function `http.HandleFunc`]].
+You can then use [[https://pkg.go.dev/net/http#HandleFunc][function `http.HandleFunc`]] to register a pattern and associate it to some handler.
 
 Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][function `http.ListenAndServe`]], which blocks for as long as the server stays up. Don't forget to check the error it returns.
 
@@ -5194,7 +5194,7 @@ The following program contains a simple synchronization bug:
   }
 
   func main() {
-      http.HandleFunc("/toggle", handleToggle)
+      http.HandleFunc("POST /toggle", handleToggle)
       if err := http.ListenAndServe(":8080", nil); err != nil {
           log.Fatal(err)
       }
@@ -5231,7 +5231,7 @@ This bug is particularly insidious because it will only manifest itself under su
   write a `400`Bad`Request` response and terminate the handler.
 - Otherwise, write your slice of results in the response. Hint: use `fmt.Fprint`.
 
-5. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on a route named `/check`, then start the server on port 8080.
+5. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on pattern `GET /check`, then start the server on port 8080.
 
 6. Run the program and hit the `/check` endpoint, e.g. by visiting [[http://localhost:8080/check?username=jub0bs][http://localhost:8080/check?username=jub0bs]] in your browser:
 
@@ -5715,7 +5715,7 @@ Let's keep track (in memory) of how many times each username has been checked.
 
 3. Declare an additional `handleStats` handler that returns a JSON representation of the variable declared in step 1.
 
-4. Register your `handleStats` handler on a route named `/stats`.
+4. Register pattern `GET /stats` and associate it to your `handleStats` handler.
 
 5. Run your server and exercise it.
 
