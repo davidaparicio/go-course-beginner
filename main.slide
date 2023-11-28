@@ -2254,6 +2254,8 @@ Alternatively, for a browser-based breakdown of the coverage by statement, run
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
+: don't forget https://pkg.go.dev/net/url#JoinPath
+: to avoid client-side path traversal (not a big deal with a GET, but could be for a POST)
 
 
 * Introducing the defer keyword
@@ -3538,11 +3540,11 @@ Methods are functions that are attached to a specific type.
 
 They distinguish themselves from _package-level_functions_, e.g.
 
-  func MatchString(pattern string, s string) (matched bool, err error) // package-level function
+  func MatchString(pattern string, s string) (matched bool, err error)
 
 by the presence (in a pair of parentheses between the keyword `func` and the method's name) of an extra parameter called the _method's_receiver_:
 
-  func (re *Regexp) MatchString(s string) bool // method on the *Regexp type
+  func (re *Regexp) MatchString(s string) bool
 
 Methods are tightly related to _interfaces_, which are the primary mechanism for polymorphism.
 
@@ -4107,11 +4109,12 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
 
 2. Similarly, populate your slice of checkers with twenty pointers to the same `github.GitHub` instance.
 
-3. Run your executable.
+3. Run your executable. Is it fast enough?
 
-4. Comment on user experience. Is it fast? How could you improve things?
+Since we only care about receiving all the responses, not the order in which we receive them, we could treat platforms, not sequentially, but concurrently!
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 250 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
 
 
 
@@ -4126,7 +4129,7 @@ Concurrency is the art of composing a program in terms of independent computatio
 Go has native support (i.e. in the language and runtime) for concurrency.
 
 Go's concurrency model arguably is one of the language's most attractive features,
-but can be difficult to learn and master.
+but can be difficult to learn and master. Moreover, even for seasoned Gophers, reasoning about concurrent programs remains harder than about sequential ones.
 
 .image https://i.stack.imgur.com/QjsGt.png 200 _
 
@@ -4203,15 +4206,17 @@ Two fundamental mechanisms for concurrency in Go are
 
 * Goroutines
 
-A goroutine is a concurrent function execution.
+A goroutine is [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][a concurrent thread of control]].
 
-It can be thought of as a very lightweight thread: it's common for programs to have 1000s of goroutines, even on a single core.
+In contrast to traditional threads, goroutines are lightweight: Go programs that have 1000s of goroutines (or more) are common.
 
-The `main` function is itself a goroutine that is created when the program starts.
+The `main` function is itself a goroutine that is automatically created and started by the runtime when the program is executed.
+
+All goroutines execute in the same address space.
 
 Each goroutine gets its own stack, which starts small and grows/shrinks as required.
 
-.image https://go.dev/blog/store/gophers.jpg 300 _
+.image https://go.dev/blog/store/gophers.jpg 200 _
 
 : goroutines != futures/promises/async
 : doesn't return anything that will eventually contain the results
@@ -4220,11 +4225,11 @@ Each goroutine gets its own stack, which starts small and grows/shrinks as requi
 
 * The Go scheduler
 
-The _Go_scheduler_ is a part of the Go runtime that automatically multiplexes goroutines onto operating-system threads and manages their scheduling for us.
+The _Go_scheduler_ is a part of the Go runtime that automatically [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][multiplexes goroutines onto operating-system threads]] and manages their execution for you.
 
-It continually observes the run-time behavior of goroutines and decides to suspends them when they block and then resumes them when they become unblocked.
+It continually observes the run-time behavior of goroutines and decides to suspend them when they block (e.g. as they wait for a network response) and then resumes them when they become unblocked.
 
-No need for you to think about it yet; for now, simply picture the Go scheduler and goroutines as a chef and his/her kitchen assistants.
+No need for you to worry about the intricacies of the Go scheduler yet. For now, simply picture the Go scheduler and goroutines as a chef and his/her kitchen assistants.
 
 .image https://rrsg.s3.amazonaws.com/wp-content/uploads/2020/03/25180622/90517519_1171371749860657_3506201698723816143_n.jpg 250 _
 
@@ -4249,7 +4254,7 @@ The function's results (if any) are lost, but channels can be used to communicat
 
 
 
-* go keyword applied to an anonymous function
+* Starting an anonymous function as a goroutine
 
 Launching an anonymous function as a goroutine is sometimes convenient for grouping statements that should be executed in the background:
 
@@ -4286,7 +4291,7 @@ Therefore, a goroutine cannot readily be _killed_.
 
 
 
-* Beware goroutine leaks
+* Goroutine leaks
 
 Before spawning a new goroutine, you must understand exactly under what conditions it will terminate. See [[https://github.com/golang/go/wiki/CodeReviewComments#goroutine-lifetimes][CodeReviewComments - Goroutine lifetimes]].
 
@@ -4300,7 +4305,7 @@ Symptoms of a goroutine leak include memory leaks and program crashes! 😱
 
 * Namecheck project: make room for another main.go
 
-We'll experiment with concurrency inside another `main.go`. Later, we'll write a server in that file. Let's set things up!
+We're about experiment with concurrency inside another `main.go` and within the comfort of our IDE. Later, we'll write a server in that file. Let's set things up!
 
 1. Create a folder named "cli" within the `cmd` folder. Move your `main.go` to `cmd/cli/`.
 
@@ -4360,14 +4365,15 @@ We must tell `main` to "wait" until the two goroutines terminate normally. Any i
 
 
 
-* Exercise: concurrent coffee making (with sleep)
-
-Sleep a bit at the end?
+* Exercise: concurrent coffee making (with a little sleep at the end)
 
 .play -edit src/goroutines_with_sleep.go /^//START/,/^//END/
 
-However, this solution is not entirely satisfactory. Why?
+There! A little sleep fixed it! Incidentally, note that the relative order of execution between the two functions is unpredictable.
 
+Why is sleeping a bit at the end of `main` unsatisfactory, though?
+
+: just because goroutine A was started before goroutine B doesn't mean that A will be executed before B
 : inefficient at best, nondeterministic at worst
 
 
@@ -4395,7 +4401,7 @@ The [[https://pkg.go.dev/sync][`sync` package]] provides a useful mechanism: _wa
 
 A wait group implements something like a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]]: it allows you to wait for a group of goroutines to terminate before moving on.
 
-Wait groups are particularly useful when the number of goroutines to spawn is not known in advance.
+Wait groups are particularly useful when you don't known in advancec how many goroutines you're going to start.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/upright.svg 200 _
 
@@ -4426,9 +4432,9 @@ A `sync.WaitGroup` is typically declared within a function. Declaring one at the
 
 * How to use a wait group
 
-A wait group is little more than a counter safely usable from multiple goroutines.
+A `sync.WaitGroup` is little more than a counter safely usable from multiple goroutines.
 
-A wait group has three methods:
+It has three methods (all of which use a pointer receiver):
 
   func (wg *WaitGroup) Add(delta int)
   func (wg *WaitGroup) Done()
@@ -4446,9 +4452,7 @@ Calls to `Add` must take place in the spawning goroutine, _not_ within the child
 
 Calls to `Add` with a positive delta that occur when the counter is zero must happen before the call to `Wait`.
 
-Finally, a `sync.WaitGroup` must not be copied after first use. `go`vet` [[https://go.dev/play/p/2KzpEuzFO-j][alerts you about such programming mistakes]].
-
-Therefore, if a function needs to operate on a wait group that was declared elsewhere, pass a *pointer* to it (`*sync.WaitGroup`) as an parameter.
+Finally, a `sync.WaitGroup` must not be copied after first use; the `vet` subcommand [[https://go.dev/play/p/2KzpEuzFO-j][alerts you about such programming mistakes]]. Therefore, if a function needs to operate on a wait group that is declared outside the function, pass a `*sync.WaitGroup` (a pointer, as opposed to a `sync.WaitGroup` value) to the function.
 
 .image https://go.dev/blog/gopher/plush.jpg 200 _
 
@@ -4472,35 +4476,47 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 .play -edit src/goroutines_with_waitgroup.go /^//START/,/^//END/
 
-: mention that Go's runtime embarks a rudimentary deadlock detector
-: don't forget the pair of parens at the end of each function literal!
-: What happens if I remove a wg.Done()? deadlock
-: What happens if I remove a wg.Add(1)? only one of the two goroutine will likely have time execute
+: quiz: What happens if I remove a wg.Done()? deadlock
+: quiz: What happens if I remove a wg.Add(1)? only one of the two goroutine will likely have time execute
 
 
 
-* Goroutines execute in the same address space
+* Synchronization bugs
 
-For example, a goroutine can pass a pointer to another goroutine, and the latter can dereference that pointer without causing an access violation.
+A [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bug_]] is a bug that, due to insufficient synchronization between goroutines (and unpredictable timing of the Go scheduler), causes the program to behave in a non-deterministic and undesirable manner.
 
-[[https://go.dev/doc/effective_go.html#goroutines][The onus is on you to be careful]] in order to avoid _data_races_!
+What is or isn't a synchronization bug depends on the semantics of your program!
 
-A [[https://en.wikipedia.org/wiki/Race_condition#Data_race][data race]] occurs when multiple goroutines write to and read from the same memory location in a concurrent fashion (i.e. at the "same" time).
+For instance, in our recent coffee-making example, if we required `grindCoffeeBeans` to systematically execute before `frothMilk`, our concurrent solution would have contained a synchronization bug.
 
-Programs that modify data being simultaneously accessed by multiple goroutines must serialize such access. See [[https://go.dev/ref/mem#tmp_1][The Go Memory Model]].
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
 
-.image http://alinken.people.ua.edu/uploads/8/7/9/2/87929690/published/ghostbusters.jpg
+
+
+* Race conditions
+
+At run time, a synchronization bug may (or may not) manifest itself as a [[https://en.wikipedia.org/wiki/Race_condition#In_software][_race_condition_]].
+
+Remember this useful distinction (similar to that between concurrency and parallelism):
+
+- a synchronization bug is a property of a program's *code*, whereas
+- a race condition is a property of a program's *execution*.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 
 * Concurrency safety
 
-_Concurrency_safety_ is a property of a given operation on a variable of a given type.
+_Concurrency_safety_ is a property of an operation on a variable of a given type.
 
-An operation is _concurrency-safe_ if it can be carried out in a concurrent fashion (from multiple goroutines) without explicit synchronization and consistently produces predictable results.
+An operation is _concurrency-safe_ if it can be carried out in a concurrent fashion (from multiple goroutines) without explicit synchronization and and without introducing synchronization bugs.
 
-Be careful: a simple update to a package-level variable is *never* concurrency-safe!
+[[https://tip.golang.org/doc/comment#funcs][By convention]], top-level functions should be designed to be concurrency-safe.
 
+However, unless a method (or its whole receiver) is documented to be concurrency-safe, do not assume that it is!
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
 
 
 * Concurrency-safe types
@@ -4511,17 +4527,64 @@ When all the methods on a given type are safe for concurrent use by multiple gor
 - [[https://pkg.go.dev/net/http#Client][Struct type `http.Client`]] is also concurrency-safe: you can safely send HTTP requests using the same client from multiple goroutines.
 - [[https://pkg.go.dev/net/http#CookieJar][Interface `http.CookieJar`]] requires its implementations to be concurrency-safe.
 
-Unless a type is documented to be concurrency-safe, do not assume that it is!
+Do not assume a type is concurrency-safe [[https://tip.golang.org/doc/comment#type][unless it's documented as such]]. By default, you should expect a type to be safe for use only by a single goroutine at a time.
 
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
-
-: consult the doc
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
 
 
 
-* Synchronization bug
+* Shared address space & data races
 
-TODO
+[[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][Goroutines all execute in the same shared address space.]] In other words, multiple goroutines can access some shared memory without triggering an access violation at the OS level.
+
+However, [[https://go.dev/doc/effective_go.html#goroutines][the onus is on you to remain vigilant]]! Go indeed doesn't provide [[https://doc.rust-lang.org/book/ch16-00-concurrency.html][the guarantees about concurrency that Rust does]].
+
+When a race condition involves access to shared memory, it is called a [[https://en.wikipedia.org/wiki/Race_condition#Data_race][_data_race_]].
+
+Your programs [[https://go.dev/ref/mem#tmp_1][*must* serialize concurrent read/write access to shared memory]]; otherwise, you run the risk of data races, which may compromise the correctness and/or security of your programs.
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 150 _
+
+
+
+* An example of a synchronization bug (and a rare data race)
+
+The following (naive) program purports to print either "0" or nothing to the screen:
+
+.play -edit src/data_race.go /^//START/,/^//END/
+
+However, this program suffers from a synchronization bug.
+
+Because the spawned goroutine reads variable `count` while the `main` function updates it without any synchronization, a data race may occur: "1" may be printed to the screen instead of "0".
+
+Observing such a data race during an execution of this program may remain rare, but don't fool yourself: the program really _is_ buggy. [[https://go.dev/play/p/lipJsExYbNX][A more extreme example]] may be sufficient to convince you.
+
+
+
+* Go's race detector
+
+Go provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution. Caution: the race detector is [[https://go.dev/doc/articles/race_detector][not guaranteed to catch _all_ data races]].
+
+  $ go run -race main.go
+  0
+  ==================
+  WARNING: DATA RACE
+  Write at 0x00c0000120d8 by goroutine 6:
+    main.main.func1()
+        ~/Desktop/go-course-beginner/main.go:8 +0x44
+
+  Previous read at 0x00c0000120d8 by main goroutine:
+    main.main()
+        ~/Desktop/go-course-beginner/main.go:10 +0xb0
+
+  Goroutine 6 (running) created at:
+    main.main()
+        ~/Desktop/go-course-beginner/main.go:7 +0xa6
+  ==================
+  Found 1 data race(s)
+  exit status 66
+
+Don't leave the race detector on in production: its overhead is prohibitive.
 
 
 
@@ -4550,7 +4613,7 @@ See the [[https://go.dev/doc/faq#closures_and_goroutines][Go FAQ]] and [[https:/
 
 
 
-* Detection of synchorization bugs with go vet
+* Detection of synchorization bugs with go vet (Go <1.22)
 
 The `vet` subcommand performs some static analysis and can report a range of issues, including some synchronization bugs.
 
@@ -4564,31 +4627,6 @@ In the [[https://go.dev/play/p/8-lOBoCLGTy][Go Playground]], `vet` is run before
 And VS Code runs `vet` in the background and directly highlights issues in your code.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
-
-
-
-* Go's race detector
-
-Go provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool that can detect data races during execution. Caution: the race detector is [[https://go.dev/doc/articles/race_detector][not guaranteed to catch _all_ data races]].
-
-  $ go run -race main.go
-  5
-  4
-  5
-  ==================
-  WARNING: DATA RACE
-  Read at 0x00c00011e038 by goroutine 6:
-    main.printTenIntsConcurrently.func1()
-        /Users/jub0bs/my-project/main.go:19 +0x8b
-
-  Previous write at 0x00c00011e038 by main goroutine:
-    main.printTenIntsConcurrently()
-        /Users/jub0bs/my-project/main.go:16 +0xa4
-    main.main()
-        /Users/jcretel/Desktop/go-course-beginner/main.go:9 +0x1c
-  -snip-
-
-Don't leave the race detector on in production: its overhead is prohibitive.
 
 
 
@@ -4626,14 +4664,14 @@ Defining a dedicated named function helps in guarding your code against such bug
 
 * Good news: Go 1.22 will fix for loops!
 
-From Go 1.22 onwards, variables introduced by a `for` loop will have per-iteration scope, instead of per-loop scope (as they are in versions prior to Go 1.22).
+This unfortunate behaviour causes so many bugs that [[https://www.youtube.com/watch?v=v24wrd3RwGo&t=20m38s][the Go team recently decided to change the semantics of loops]].
+
+[[https://go.dev/blog/loopvar-preview][From Go 1.22 onwards]], variables introduced by a `for` loop will have _per-iteration_ scope, instead of _per-loop_ scope (as they are in versions prior to Go 1.22).
 
 You can already preview this scoping change
 
 - in [[https://go.dev/play/p/xuAs_QEW6xd?v=gotip][the Go Playground]] after selecting _Go_dev_branch_, and
 - locally, which Go 1.21+, by setting `GOEXPERIMENT=loopvar` in your environment.
-
-For more details about this change, see [[https://go.dev/blog/loopvar-preview][Fixing For Loops in Go 1.22]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
 
@@ -4641,7 +4679,7 @@ For more details about this change, see [[https://go.dev/blog/loopvar-preview][F
 
 
 
-* Namecheck project: check each user name concurrently
+* Namecheck project: check each user name concurrently (fan out)
 
 1. Extract the body of the for-range loop that iterates on your `[]Checker` slice as a function in your `main` package:
 
@@ -4655,55 +4693,45 @@ For more details about this change, see [[https://go.dev/blog/loopvar-preview][F
 
 5. Time the program's execution. Does user experience improve?
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+Now, what if, instead of printing the results, we wanted to somehow aggregate them?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
+
+: Remember: the result(s) of the function call to which the `go` keyword is applied are lost.
+: We need a mechanism to communicate between goroutines: channels.
 
 
 
-* Namecheck project: aggregate the results (how?)
+* Shared-state concurrenvy vs. message-passing concurrency
 
-What if, instead of printing the results, we wanted to somehow aggregate them?
+To safely communicate data between goroutines, a concurrent Go program may follow two distinct approaches:
 
-Remember: the result(s) of the function call to which the `go` keyword is applied are lost.
+- [[https://wiki.c2.com/?SharedStateConcurrency][_shared-state_concurrency_]], whereby access to data by multiple goroutines is mediated via traditional mechanisms like locks and mutexes; and 
+- [[https://wiki.c2.com/?MessagePassingConcurrency][message-passing concurrency]], whereby [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][ownership of data is transferred between goroutines via channels]].
 
-We need a way to communicate between goroutines...
-
-.image https://go.dev/blog/gopher/plush.jpg 300 _
-
-
-
-* Channels
-
-
-
-* Sharing is caring
-
-Because goroutines all execute in the same address space, programs that modify data being simultaneously accessed by multiple goroutines [[https://go.dev/ref/mem#tmp_1][*must* serialize such access]].
-
-Programs that ignore this injunction are bound to contain [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bugs_]], which may manifest as _data_races_...
-
-
-.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 300 _
-
-
-
-* Share memory by communicating
-
-Rather than using locks to synchronize goroutine access to the shared memory, Go encourages an approach in which shared values are passed around on _channels_.
-
-The Go community [[https://go.dev/doc/effective_go#sharing][summarizes this powerful idea]] through a slightly cryptic mantra:
-[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=2m42s][_Do_not_communicate_by_sharing_memory;_instead,_share_memory_by_communicating._]]
-
-Compared to their lower-level alternatives alternatives like mutexes, channels are indeed often [[https://www.youtube.com/watch?v=oV9rvDllKEg&t=1280s][more elegant, more composable, and less error-prone]].
-
-As Rob Pike puts it: [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=4m20s][channels orchestrate; mutexes serialize]].
+Although both approaches are possible (even within a single program), [[https://go.dev/doc/effective_go#sharing][Go's culture favors message passing]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
 
 
+* Share by communicating
+
+The Go community [[https://go.dev/doc/effective_go#sharing][summarizes its preference for message-passing concurrency]] with the following pithy mantra:
+
+[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=2m42s][_Do_not_communicate_by_sharing_memory;_instead,_share_memory_by_communicating._]]
+
+Channels are indeed more composable and less error-prone than mutexes. [[https://www.youtube.com/watch?v=oV9rvDllKEg&t=18m13s][Rob Pike once illustrated channels' superiority with an elegant load-balancer implementation.]]
+
+As he also puts it: [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=4m20s][channels orchestrate, [whereas] mutexes [merely] serialize]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 200 _
+
+
+
 * Channels are typed
 
-Channels are typed conduits that allow goroutines to synchronize and exchange data.
+Channels are typed conduits that allow goroutines to synchronize and transfer data.
 
 A channel whose element type is `T` has type `chan`T`.
 
@@ -4937,7 +4965,6 @@ A channel is _not_ a [[https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_p
 
 
 
-
 * Dispelling the ambiguity on receive
 
 If we receive the zero value of the channel's element type, how can we tell whether the value we're receiving is from a closed and empty channel or whether someone really sent that value to the channel?
@@ -4955,9 +4982,27 @@ The value of variable `ok` is
 
 
 
+* Deadlock
+
+A Go program is [[https://en.wikipedia.org/wiki/Deadlock][deadlocked]] when all goroutines are waiting on one another.
+
+In the most simple deadlock cases, the Go runtime detects the deadlock and crashes the program:
+
+  fatal error: all goroutines are asleep - deadlock!
+
+In more complex cases, though, you'll get no such help, and the execution of your program will "hang" and won't make any progress.
+
+Deadlocks typically result from an incautious use of channels. Depending on a channel's state, a communication on that channel may indeed block.
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 150 _
+
+: French: interblocage, étreinte fatale
+
+
+
 * Exercise: resolving a deadlock
 
-Here is a short but instructive code snippet about channel semantics:
+Here is a short but instructive program:
 
 .play -edit src/deadlock_example.go /^//START/,/^//END/
 
@@ -4983,14 +5028,15 @@ A freshly initialized channel starts its life in an "open" state.
 
   ch := make(chan string) // ch is open (until closed)
 
-You can inform receivers on a channel that no more items will be sent to the channel
-by _closing_ the channel. To do so, simply pass the channel to the built-in `close` function:
+You can _close_ a channel simply by passing it to the built-in `close` function:
 
   close(ch)
 
 Closing a channel is definitive; a closed channel cannot be "re-opened".
 
 Contrary to a common misconception, closing a channel doesn't make it `nil`.
+
+Why close a channel? It's a powerful (!) way to *broadcast*a*signal*to*all*receivers* on the channel that no more items will be send to that channel.
 
 : not to be confused with Close methods, e.g. on the body of a http.Response
 
@@ -5008,14 +5054,13 @@ Note that you must structure your program in such a way that, when a channel get
 
 Another common misconception is that channels _must_ systematically be closed. Not so!
 
-Channels are not resources; closing a channel is not a way to reclaim or clean up resources (memory, etc.).
+Channels (unlike file descriptors or network sockets) are not resources. Closing a channel is not motivated by the need to reclaim or clean up resources (memory, etc.).
 
-A channel will get garbage-collected just like any other variable once it becomes unreachable from the rest of the program.
+When a channel variable becomes unreachable from elsewhere in the program, it becomes eligible for garbage collection just like any other variable, even if the channel isn't closed or empty.
 
 Don't guess; only close a channel if the semantics of your program demand it.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
-
 
 
 
@@ -5076,7 +5121,7 @@ those parameters would instead need to be pointers to channels.)
 
 
 
-* Namecheck project: aggregate the results
+* Namecheck project: aggregate the results (fan out, fan in)
 
 1. At the top of `cmd/cli/main.go`, declare the following `Result` type:
 
@@ -5094,7 +5139,7 @@ those parameters would instead need to be pointers to channels.)
 
 4. In `main`, range over that channel and store the results in a slice, then print the slice.
 
-.image https://go.dev/blog/store/gophers.jpg 150 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 : the channel allows us to serialize access to the slice (local mutable state)
 : for anonymous function for wait and close, no need for a wait group? why not?
@@ -5144,26 +5189,40 @@ However, in cases where a function [[https://go.dev/talks/2012/10things.slide#10
 
 
 
-* Namecheck project: use directional channels
+* Namecheck project: use a directional channel
 
-Review the functions that accept a channel parameter, and determine whether a direction could be specified.
+1. Review the `check` function and determine whether its channel parameter could be directional.
 
-.image https://go.dev/blog/gopher/plush.jpg 400 _
+2. If so, could it be a send-only channel or a receive-only channel?
+
+3. What happens in your IDE when your choice of channel direction is incorrect?
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+
+* A simple HTTP handler (Go 1.22)
+
+You can define a `net/http` handler as a package-level function:
+
+  func handleHello(w http.ResponseWriter, _ *http.Request) {
+    fmt.Fprint(w, "Hello, world!\n")
+  }
+
+That function must have two parameters:
+
+- a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface type broader than `io.Writer` that allows you to compose the HTTP response, and
+- a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.
 
 
 
 * A simple Web server (Go 1.22)
 
-.play -edit src/server_helloworld.go /^//START/,/^//END/
-
-You can define a handler as a package-level function. It must have two parameters:
-
-- a [[https://pkg.go.dev/net/http#ResponseWriter][`http.ResponseWriter`]], an interface for you to compose the HTTP response.
-- a pointer to a [[https://pkg.go.dev/net/http#Request][`http.Request`]], which describes the HTTP request to handle.
-
-You can then use [[https://pkg.go.dev/net/http#HandleFunc][function `http.HandleFunc`]] to register a pattern and associate it to some handler.
+You can then call [[https://pkg.go.dev/net/http#HandleFunc][function `http.HandleFunc`]] to register a pattern (composed of a HTTP method and a path pattern) and associate it to some handler.
 
 Finally, start the server with [[https://pkg.go.dev/net/http#ListenAndServe][function `http.ListenAndServe`]], which blocks for as long as the server stays up. Don't forget to check the error it returns.
+
+.play -edit src/server_helloworld.go /^//START/,/^//END/
 
 : http.HandleFunc registers the handler on the DefaultServeMux (package-level variable)
 : ListenAndServe: it last arg is nil, serves the DefaultServeMux
@@ -5362,7 +5421,6 @@ Don't forget to track changes to this file in your version-control system!
 
 * Select statement
 
-
 The `select` statement is a multi-way communication selector: it allows you to randomly select one among several channel communications.
 
 With goroutines and channels, `select` completes the concurrency trifecta.
@@ -5442,7 +5500,7 @@ Otherwise, if more than one cases are non-blocking, one of those cases gets sele
 `select` is often used in conjunction with `for` to form a so-called _event_loop_.
 
 For instance, if you want to continually receive from two (or more) channels,
-a simple for-range loop won't do; you'll need to nest a `select` inside a loop:
+a simple for-range loop won't do. You'll need to nest a `select` inside a loop:
 
   loop:
     for {
@@ -5460,19 +5518,20 @@ a simple for-range loop won't do; you'll need to nest a `select` inside a loop:
 
 Note that a [[https://go.dev/ref/spec#Label][label]] (named `loop`) is required in order to break out of the infinite loop rather than out of the `select` statement nested within.
 
+: another mistake: thinking that two for-range loops will do: https://stackoverflow.com/questions/77541735/fatal-error-all-goroutines-are-asleep-deadlock-for-same-length-of-channel
 
 
-* Event loop: a select nested inside a loop (cont'd)
 
-To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][labeled statements]], you may prefer a "while" loop controlled by a boolean variable:
+* Eschewing labels in an event loop
+
+To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][labeled statements]], you may want [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=9m58s][to restructure your program]]:
 
   var finished bool
   for !finished {
     select {
     case err := <-errorCh:
       fmt.Fprintln(os.Stderr, err)
-      finished = true
-      continue
+      return
     case res, ok := <-resultCh:
       if !ok {
         finished = true
@@ -5482,13 +5541,11 @@ To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][la
     }
   }
 
-: TODO: add a link to Mat Ryer's talk https://www.youtube.com/watch?v=5DVV36uqQ4E&t=9m58s
-
 
 
 * Namecheck project: fail early if an availability check fails
 
-Modify your `cmd/server/main.go` as follows:
+The following exercise is a bit contrived but enlightening. Modify your `cmd/server/main.go` as follows:
 
 1. Remove the `Err` field from your `Result` type.
 
@@ -5505,6 +5562,8 @@ Modify your `cmd/server/main.go` as follows:
 : smallest channel capacity to prevent goroutine leaks: len(checkers) - 1
 : use a bool variable to control the termination of the loop
 : mangle the domain name in github.Github's IsAvailable method in order to cause an error
+: contrived because we could fail fast by keeping the error bundled in Result
+: Cox-Buday: If your goroutine can produce errors, those errors should be tightly coupled with your result type, and passed along through the same lines of communication—just like regular synchronous functions.
 
 
 * Goroutines leak!
@@ -5534,7 +5593,7 @@ If you did not modify the `check` function, what capacities should `resultCh` an
 
 * Canceling goroutines
 
-Spawning goroutines is easy, but making sure they terminate sometimes requires more effort. For example, consider the following function:
+Spawning goroutines is easy; forcing them to terminate sometimes requires more effort. For example, consider the following function:
 
 .code -edit src/uncancelable.go /^//START1/,/^//END1/
 
@@ -5690,18 +5749,16 @@ What could be further improved?
 
 * Communicating by sharing memory
 
-Go encourages you to use channels to communicate between goroutines.
+Go encourages you to use channels to communicate data between goroutines.
 
-However, sharing memory can sometimes be simpler and/or more performant.
+However, [[https://github.com/golang/go/wiki/MutexOrChannel][sharing memory can sometimes be simpler and/or more performant]].
 
 Go's standard library provides two main mechanisms for sharing memory:
 
 - [[https://en.wikipedia.org/wiki/Mutual_exclusion][mutual exclusions]], provided by [[https://pkg.go.dev/sync][the `sync` package]],
-- synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]], which are difficult to use correctly and which most programs should avoid.
+- synchronized operations on fixed-sized integers from [[https://pkg.go.dev/sync/atomic/][the `sync/atomic` package]], whose correct use is complicated and which most programs should avoid.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
-
-: won't cover the latter because easy to misuse
 
 
 
@@ -5739,11 +5796,13 @@ One solution: synchronizing access to the map via a mutex.
 
 * Mutual exclusions
 
-A [[https://en.wikipedia.org/wiki/Mutual_exclusion][_mutual_exclusion_]] (a.k.a. _mutex_) allows you to delineate sections of code that must (in order to guarantee correctness of the program) be executed by at most one goroutine at any given time.
+Some sections of your program require (in order to guarantee correctness) exclusive access to some resource and therefore must be executed by at most one goroutine at any given time.
 
 Such a section of code to be executed in mutual exclusion is known as a [[https://en.wikipedia.org/wiki/Critical_section][_critical_section_]].
 
-To avoid [[https://en.wikipedia.org/wiki/Resource_contention][_contention_]], strive to keep critical sections short and free of I/O operations.
+A [[https://en.wikipedia.org/wiki/Mutual_exclusion][_mutual_exclusion_]] (a.k.a. _mutex_) is a mechanism for guarding critical sections.
+
+Be aware that, to avoid [[https://en.wikipedia.org/wiki/Resource_contention][_contention_]], you should not hold the shared lock any longer than necessary. In particular, strive to keep critical sections short and free of I/O operations. Otherwise, you risk introducing a performance bottleneck in your program.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
 
@@ -5761,9 +5820,9 @@ Mutex variables are typically declared in a function rather than at package leve
 
 Then, surround the critical section(s) by calls to the `Lock` and `Unlock` methods:
 
-  mu.Lock()   // 🔒
+  mu.Lock()   // 🔒 wait to acquire the shared lock, then proceed
   // critical section
-  mu.Unlock() // 🔓
+  mu.Unlock() // 🔓 release the shared lock
 
 Like a `sync.WaitGroup`, a `sync.Mutex` must not be copied after first use. `go`vet` [[https://go.dev/play/p/set7VxnF7yj][alerts you about such programming mistakes]].
 
