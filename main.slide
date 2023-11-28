@@ -3600,17 +3600,21 @@ Interfaces, by focusing on _behavior_ rather than _implementation_, promote deco
 
 * Naming convention for interface types
 
-Resist the temptation to name your interface types with an "I" prefix, as you would in other languages (e.g. `IEnumerable` in C#)!
+Resist the temptation to name your interface types with an "I" prefix, as you would in other languages (e.g. `IEnumerable` in C#). The names of Go interface types typically are nouns rather than adjectives.
 
-Also, in Go, the names of interface types are typically nouns rather than adjectives.
-
-For a single-method interface types, convention dictates that its name be derived by appending "er" to the name of its method, even if doing so yields a weird name:
+For a single-method interface types, a [[https://go.dev/doc/effective_go#interface-names][common practice is simply to append "er" to the name of the method]], even if doing so yields a weird name:
 
   type Stringer interface {
     String() string
   }
 
-For interfaces types that require multiple methods or are composed of multiple smaller interfaces, naming conventions are not as firmly established. Pick something sensible.
+Not all single-method interfaces in the standard library follow this naming convention:
+
+  type Handler interface {
+    ServeHTTP(http.ResponseWriter, *http.Request)
+  }
+
+For interfaces types that require multiple methods, [[https://go.dev/talks/2014/names.slide#13][naming conventions are not as firmly established]]. Pick something sensible.
 
 
 
@@ -3724,6 +3728,8 @@ To declare an interface type that is both a `Reader` a `Closer`, you could of co
   }
 
 But no need to repeat yourself! Interface composition is easier than this in Go...
+
+: why not CloseReader? the name order reflects the order of operations
 
 
 
@@ -4056,34 +4062,6 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 
 
-* Single-method adapter
-
-: Remember that you can add methods to any of your named types, regardless of their underlying types.
-
-Consider the following single-method interface type:
-
-  type Climber interface {
-    Climb(meters uint) error
-  }
-
-A [[https://pkg.go.dev/net/http#HandlerFunc][frequently useful trick]] to implement such an interface is the following. First, declare a type based on a function whose signature matches that of the interface's method:
-
-  type ClimberFunc func(uint) error
-
-Then, declare a method that simply delegates to the underlying function! 🤯
-
-  func (f ClimberFunc) Climb(meters uint) error {
-    return f(meters)
-  }
-
-: Note that the method's implementation simply delegates to the underlying function.
-
-Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy conversion of ordinary functions to the interface type:
-
-  climber := Climber(func(meters uint) {return nil})
-
-
-
 * Namecheck project: "stub" the HTTP client
 
 1. Create a package named `namechecktest`. In it, declare the following struct type:
@@ -4096,7 +4074,7 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
 
 3. Now write a few unit tests for `github.GitHub`'s `IsAvailable` method and run them.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 150 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 : https://www.martinfowler.com/articles/mocksArentStubs.html
 : rationale for the package name: https://www.youtube.com/watch?v=cAWlv2SeQus&t=1685s
@@ -4113,12 +4091,7 @@ Such an [[https://en.wikipedia.org/wiki/Adapter_pattern][_adapter_]] allows easy
 
 Since we only care about receiving all the responses, not the order in which we receive them, we could treat platforms, not sequentially, but concurrently!
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
-
-
-
-
-* Concurrency
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
 
 
@@ -4702,7 +4675,7 @@ Now, what if, instead of printing the results, we wanted to somehow aggregate th
 
 
 
-* Shared-state concurrenvy vs. message-passing concurrency
+* Shared-state concurrency vs. message-passing concurrency
 
 To safely communicate data between goroutines, a concurrent Go program may follow two distinct approaches:
 
@@ -4748,14 +4721,14 @@ The element type of a channel is completely arbitrary; here is a contrived examp
 
 
 
-* Popular naming choices for channels
+* Naming conventions for channels
 
-"ch" on its own or as a suffix (with or without camelcase):
+Popular names for channels include "ch", either alone or as a suffix:
 
   ch := make(chan string)
   taskCh := make(chan Task)
 
-Plural of the channel's element type:
+Naming a channel after the plural form of its element type is also common:
 
   tasks := make(chan Task)
 
@@ -5139,7 +5112,7 @@ those parameters would instead need to be pointers to channels.)
 
 4. In `main`, range over that channel and store the results in a slice, then print the slice.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
 
 : the channel allows us to serialize access to the slice (local mutable state)
 : for anonymous function for wait and close, no need for a wait group? why not?
@@ -5869,13 +5842,11 @@ If access to some variable or struct field is protected by a mutex, convention d
 
 * Conclusion
 
+Congratulation! You've reached the end of the course.
 
+You can now apply what you've learned in your Go projects. Practice regularly for a few weeks or months. Feel free to revisit the course material.
 
-* What we haven't covered
-
-We're nearing the end of the course.
-
-You've learned a lot, but there is [[https://www.humancoders.com/formations/go-avance][more]]!
+You've learned a lot, but there is [[https://www.humancoders.com/formations/go-avance][more]]...
 
 .image https://go.dev/blog/store/gophers.jpg 400 _
 
