@@ -4139,7 +4139,7 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 200 _
 
-: 
+:
 
 
 * Namecheck project: move your main.go to a cmd folder
@@ -4674,7 +4674,7 @@ As the following diagram (on which time flows downwards) illustrates, if the gor
 
   (main)  (func)  |  count
                   |
-           read   |    0 
+           read   |    0
    read           |    0
            write  |    1
    read           |    1
@@ -4710,94 +4710,16 @@ Don't leave the race detector on in production: [[https://go.dev/doc/articles/ra
 
 
 
-* Closures running as goroutines: spot the bug (Go <1.22)
+* Inappropriate scoping of iteration variables prior to Go 1.22
 
-Can you spot the bug in the following program?
+The following function, [[https://go.dev/play/p/LzZiizWD205?v=1.21][in older versions of Go]], contains a synchronization bug:
 
-.play -edit src/goroutine_func_quiz.go /^//START/,/^//END/
+.code src/per_loop_iteration_variables.go /^//START/,/^//END/
 
-: ask them first how they expect the program to behave
-: sometimes prints 10, not 9! because iteration variable goes beyond bound before loop can end
+Before v1.22, [[https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables][iteration variables indeed had _per-loop_ rather than _per-iteration_ scope]].
+Therefore, variable `i` is shared between `main` (which updates it) and the ten goroutines (which read it)! 😱
 
-
-
-* Closures running as goroutines: explanation (Go <1.22)
-
-The program contains a [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bug_]], which is very likely to cause a _data_race_ and yield unpredictable and undesirable results! 😱
-
-.play -edit src/goroutine_func_answer.go /^//START/,/^//END/
-
-Why? Because `i` is a single variable scoped to the loop (not to individual iterations). And, crucially, variable `i` is [[https://en.wikipedia.org/wiki/Closure_(computer_programming)][_captured_]] and _read_ by the child goroutines while it's being _updated_ by the loop, in a concurrent fashion, without any precautions!
-
-See the [[https://go.dev/doc/faq#closures_and_goroutines][Go FAQ]] and [[https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables][CommonMistakes - Using goroutines on loop iterator variables]].
-
-: before learning how to fix it, let's see how we can get help for detecting it
-
-
-
-* Detection of synchorization bugs with go vet (Go <1.22)
-
-The `vet` subcommand performs some static analysis and can report a range of issues, including some synchronization bugs.
-
-If you run `vet` on your program, it will report something like the following:
-
-  $ go vet main.go
-  ./main.go:19:16: loop variable i captured by func literal
-
-In the [[https://go.dev/play/p/8-lOBoCLGTy][Go Playground]], `vet` is run before compilation (when you click _Run_).
-
-And VS Code runs `vet` in the background and directly highlights issues in your code.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
-
-
-
-* One way to fix the synchronization bug (Go <1.22)
-
-In constrast to the iteration variable, variables declared within the body of the loop are not shared between iterations. Therefore, one way to fix the synchronization bug consists in declaring a copy of the iteration variable inside the loop, before the `go` statement:
-
-.play -edit src/goroutine_func_redecl.go /^//START/,/^//END/
-
-Although the redeclaration looks a bit weird, this solution has merit insofar as the fix is colocated with the start of the `go` statement (reduced cognitive load).
-
-: kind of awkward to pass them as parameters further down if the anonymous function is long
-
-
-
-* Another way to fix the synchronization bug (Go <1.22)
-
-An alternative solution consists in passing the value of the iteration variable as an argument to the anonymous function.
-
-That way, by virtue of Go's call-by-value evaluation strategy, the function only has access to a copy of the iteration variable's value at the time of the iteration of interest.
-
-.play -edit src/goroutine_func_arg.go /^//START/,/^//END/
-
-
-
-* Yet another way to fix the synchronization bug (Go <1.22)
-
-When running a closure as a goroutine, it's very easy to inadvertently capture variables, which may introduce synchronization bugs.
-
-Defining a dedicated named function helps in guarding your code against such bugs:
-
-.play -edit src/goroutine_func_standalone.go /^//START/,/^//END/
-
-
-
-* Good news: Go 1.22 will fix loops once and for all!
-
-This unfortunate behaviour causes so many bugs that [[https://www.youtube.com/watch?v=v24wrd3RwGo&t=20m38s][the Go team recently decided to change the semantics of loops]].
-
-[[https://go.dev/blog/loopvar-preview][From Go 1.22 onwards]], variables introduced by a `for` loop will have _per-iteration_ scope, instead of _per-loop_ scope (as they are in versions prior to Go 1.22).
-
-You can already preview this scoping change
-
-- in [[https://go.dev/play/p/xuAs_QEW6xd?v=gotip][the Go Playground]] after selecting _Go_dev_branch_, and
-- locally, which Go 1.21+, by setting `GOEXPERIMENT=loopvar` in your environment.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/birthday.svg 200 _
-
-: Inadvertently capturing a loop variable is so common that the Go team had to act.
+This unfortunate behavior caused so many bugs that [[https://www.youtube.com/watch?v=v24wrd3RwGo&t=20m38s][the Go team recently decided to take action]] by [[https://go.dev/blog/loopvar-preview][changing the semantics of loop variables in Go 1.22]]. 😌
 
 
 
@@ -4829,7 +4751,7 @@ Now, what if, instead of printing the results, we wanted to somehow aggregate th
 
 To safely communicate data between goroutines, a concurrent Go program may follow two distinct approaches:
 
-- [[https://wiki.c2.com/?SharedStateConcurrency][_shared-state_concurrency_]], whereby access to data by multiple goroutines is mediated via traditional mechanisms like locks and mutexes; and 
+- [[https://wiki.c2.com/?SharedStateConcurrency][_shared-state_concurrency_]], whereby access to data by multiple goroutines is mediated via traditional mechanisms like locks and mutexes; and
 - [[https://wiki.c2.com/?MessagePassingConcurrency][message-passing concurrency]], whereby [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][ownership of data is transferred between goroutines via channels]].
 
 Although both approaches are possible (even within a single program), [[https://go.dev/doc/effective_go#sharing][Go's culture favors message passing]].
