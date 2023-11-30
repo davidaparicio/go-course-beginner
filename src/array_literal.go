@@ -4,13 +4,11 @@ import "fmt"
 
 func main() {
 	// START OMIT
-	roles := []string{ // HL
+	roles := [3]string{ // HL
 		"Viewer",
 		"Editor",
 		"Admin", // this final comma is mandatory // HL
 	}
-	fmt.Printf("type name: %T\n", roles)
-	s := make([]int, 10) // HL
-	fmt.Println(s)
+	fmt.Printf("%T\n", roles)
 	// END OMIT
 }
