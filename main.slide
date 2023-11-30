@@ -677,11 +677,11 @@ Whether a symbol is exported depends on the case of its first letter:
 
 We'll cover two ways of importing packages: normal imports and named imports.
 
-The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility takes care of
+The [[https://pkg.go.dev/golang.org/x/tools/cmd/goimports][`goimports`]] utility (which your IDE invokes under the hood) takes care of
 
 - adding missing imports,
 - removing unused imports ([[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-4][which Go disallows in order to avoid bloat]]), and
-- organizing imports in a canonical wayo
+- organizing imports in a canonical way.
 
   import (
     // standard-library packages
@@ -793,6 +793,7 @@ When you declare a variable without initializing it, its value is the zero value
 Types whose zero value is `nil` are sometimes called "reference types": pointers, functions, channels, interfaces, slices, and maps.
 
 : in French: valeur vierge
+: a reference type does not directly hold its contents. Instead a it holds a pointer to an underlying underlying data structure that holds the contents
 
 
 
@@ -982,9 +983,9 @@ Aside from the _blank_identifier_, don't use underscores in variable names.
 
 Because Go has two syntaxes for declaring variables, you may be wondering which one to use in a given situation...
 
-Convention dictactes that the `:=` operator be used whenever possible, *except* when the variable's initial value doesn't matter or should be the variable type's zero value:
+Convention dictactes that the `:=` operator be used whenever possible, *except* when the initial value doesn't matter or simply should be the type's zero value.
 
-  finished := false // not great
+  finished := false // possible but unidiomatic
   var finished bool // better
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
@@ -993,7 +994,7 @@ Convention dictactes that the `:=` operator be used whenever possible, *except* 
 
 * Resort to the var keyword if needed
 
-In many cases, you have no option but to use the `var` keyword...
+In some cases, you have no option but to use the `var` keyword...
 
 *To*declare*a*package-level*variable*
 
@@ -1011,11 +1012,11 @@ In many cases, you have no option but to use the `var` keyword...
 
   type Fahrenheit float64
 
-  freezing := 32                // type int :(
-  var freezing Fahrenheit = 32 // type Fahrenheit :)
+  freezing := 32               // type int 😞
+  var freezing Fahrenheit = 32 // type Fahrenheit 🙂
+  freezing := Fahrenheit(32)   // also possible but unidiomatic
 
 : a nil value carries no type information (could be a map, a function, a slice, a pointer)
-: more idiomatic than freezing := Fahrenheit(32)
 
 
 
@@ -3829,7 +3830,22 @@ The declaration above is equivalent to the one below but requires no code duplic
 
 
 
-* fmt.Stringer
+* Avoid premature abstraction
+
+An aphorism attributed to Rob Pike is: [[https://www.youtube.com/watch?v=YXV7sa4oM4I&t=840s][don’t design with interfaces, discover them.]]
+
+In other words, you should resist the temptation to declare interface types upfront.
+
+Instead, [[https://medium.com/@cep21/what-accept-interfaces-return-structs-means-in-go-2fe879e25ee8][start with concrete types and let interfaces reveal themselves organically]], as needed for abstraction or testing purposes.
+
+Note that we declared the `github.GitHub` and `reddit.Reddit` struct types first,
+and only then did we declare the interface types that pointers to those types satisfy.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+
+
+* Other notable interfaces: fmt.Stringer
 
 [[https://pkg.go.dev/fmt#Stringer][`fmt.Stringer`]] is an interface type that requires a single method:
 
@@ -3843,7 +3859,7 @@ If a type satisfies `fmt.Stringer`, its `String` method governs the textual repr
 
 
 
-* fmt.Stringer
+* Other notable interfaces: fmt.Stringer (cont'd)
 
 .play -edit src/stringer.go /^//START/,/^//END/
 
@@ -3895,29 +3911,6 @@ Therefore, peppering empty interfaces all over the business layer of your applic
 
 
 
-* Other notable interfaces: error
-
-`error` is a interface type predeclared by the language:
-
-  type error interface {
-    Error() string
-  }
-
-You can declare your own types and make them satisfy the `error` interface.
-
-  type UnkownAvailabilityError struct {
-    Username string
-    Platform string
-    Cause    error
-  }
-
-  func (e *UnkownAvailabilityError) Error() string {
-    const tmpl = "unknown availability of %q on %s: %v"
-    return fmt.Sprintf(tmpl, e.Username, e.Platform, e.Cause)
-  }
-
-
-
 * Other notable interfaces: io.Reader and io.Writer
 
 The `io` package provides two complementary interface types: `Reader` and `Writer`.
@@ -3934,7 +3927,7 @@ The `io` package provides two complementary interface types: `Reader` and `Write
     Write(src []byte) (int, error)
   }
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/network-side.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/projects/network-side.svg 150 _
 
 
 
@@ -3978,18 +3971,100 @@ This principle [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m36s][echoes]] 
 
 
 
-* Avoid premature abstraction
+* Other notable interfaces: error
 
-An aphorism attributed to Rob Pike is: [[https://www.youtube.com/watch?v=YXV7sa4oM4I&t=840s][don’t design with interfaces, discover them.]]
+You've been manipulating the `error` type without known its true nature, but it is an interface type [[https://pkg.go.dev/builtin#error][predeclared by the language]]:
 
-In other words, you should resist the temptation to declare interface types upfront.
+  type error interface {
+    Error() string
+  }
 
-Instead, [[https://medium.com/@cep21/what-accept-interfaces-return-structs-means-in-go-2fe879e25ee8][start with concrete types and let interfaces reveal themselves organically]], as needed for abstraction or testing purposes.
+When convenient, you can make some of your own types satisfy the `error` interface:
 
-Note that we declared the `github.GitHub` and `reddit.Reddit` struct types first,
-and only then did we declare the interface types that pointers to those types satisfy.
+  type UnkownAvailabilityError struct {
+    Username string
+    Platform string
+    Cause    error
+  }
+
+  func (e *UnkownAvailabilityError) Error() string {
+    const tmpl = "unknown availability of %q on %s: %v"
+    return fmt.Sprintf(tmpl, e.Username, e.Platform, e.Cause)
+  }
+
+
+
+* Type assertion
+
+A [[https://go.dev/ref/spec#Type_assertions][type assertion]] allows you to ask, at run time, two types of questions about the dynamic type of an interface value `v`:
+
+- Does the dynamic type of `v` satisfy a different interface type `T`?
+- Does `v` contain a value of concrete type `T`?
+
+As when accessing a value in a map, you can use the comma-ok idiom:
+
+  t, ok := v.(T)
+
+If the assertion holds, `ok` is true. Otherwise, `ok` is `false` and `t`'s value is `T`'s zero value.
+
+An alternative form exists, but should generally be avoided because it panics if the assertion doesn't hold:
+
+  t := v.(T) // possible panic here
+
+
+
+* Type-asserting on behavior
+
+Consider [[https://pkg.go.dev/net#Error][the `net.Error` interface]], which is broader than `error`:
+
+  package net
+
+  type Error interface {
+    error
+    Timeout() bool   // Is the error a timeout?
+    Temporary() bool // deprecated
+  }
+
+Upon getting a non-`nil` `error`, you could [[https://blog.golang.org/error-handling-and-go][check whether it stemmed from a timeout]]:
+
+  res, err := http.Get("https://example.com")
+  if err != nil {
+    if err, ok := err.(net.Error); ok && err.Timeout() {
+      // the error was caused by a timeout... retry
+    }
+    return err
+  }
+
+See also [[https://pkg.go.dev/errors#As][`errors.As`]], a function more powerful than a simple type assertion on an error.
+
+
+
+* Type-assertion on data
+
+A type assertion also allows you to probe an interface value about its dynamic type:
+
+  gh, ok := checker.(github.GitHub)
+  if ok {
+    fmt.Println("GitHub")
+  }
+
+However, such type assertions undermine polymorphism and introduce coupling to concrete types. Therefore, you should avoid type assertions to concrete types, especially ones you do not own!
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+
+: closest analogue in Java: instanceof operator
+
+
+
+* Type switch
+
+A sequence of type assertions is annoying to write and hard to read:
+
+.play -edit src/type_assertion_sequence.go /^//START/,/^//END/
+
+Instead, you can use a special switch statement known as a [[https://go.dev/ref/spec#Type_switches][_type_switch_]]:
+
+.play -edit src/type_switch.go /^//START/,/^//END/
 
 
 
