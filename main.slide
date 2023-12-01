@@ -3605,7 +3605,7 @@ Let's pave the way for the introduction of useful interface types in our project
 
 
 
-* Interfaces are a big deal in Go
+* The power of Go interfaces
 
 Interfaces enable [[https://en.wikipedia.org/wiki/Polymorphism_(computer_science)][_polymorphism_]]: they are abstract types that allow interchangeable use of different concrete types that happen to provide the same behavior(s).
 
@@ -3635,13 +3635,25 @@ The names of method parameters and results are inconsequential and may be omitte
     Climb(int) error
   }
 
-Although we won't revisit this subtlety, be aware that, since the advent of generics to Go, there also exists non-basic interface types, which can only be used as type-parameter constraints. [[https://pkg.go.dev/builtin#comparable][The built-in interface type named "comparable"]] is one example:
+Although we won't revisit this subtlety, be aware that, since the advent of generics to Go, there also exists non-basic interface types, which can only be used as type-parameter constraints, not as values. [[https://pkg.go.dev/cmp#Ordered][The `cmp.Ordered` interface type]] is one example:
 
-  var c comparable // compilation error
-
-
+  var ord cmp.Ordered // compilation error
 
 : what matters are the names and signatures of the methods required by the interface.
+
+
+
+* Interface types are comparable
+
+Basic interfaces are comparable.
+
+If you (correctly) guessed that `error` is an interface type, you already knew this. If basic interfaces weren't comparable, you indeed wouldn't be able to compare error values:
+
+  if err != io.EOF {
+    // ...
+  }
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/music.svg 200 _
 
 
 
@@ -3707,19 +3719,54 @@ Bear in mind that the compiler cannot enforce such informal rules and that the o
 
 
 
+* Notable interface types: the empty interface
+
+The empty interface is an interface that requires no method:
+
+  interface{}
+
+Therefore, it is automatically satisfied by _all_ types (no exception) in Go.
+
+Go 1.18 [[https://go.dev/doc/go1.18#generics][introduced]] `any` as a [[https://pkg.go.dev/builtin#any][predeclared alias for `interface{}`]]:
+
+  type any = interface{}
+
+The empty interface is useful for maximum flexibility in functions that require it:
+
+  func Println(a ...any) (int, error)
+
+
+
+* Don't overuse the empty interface
+
+Because the empty interface is the least specific type in Go, you should use it sparingly.
+
+[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=7m36s][As Rob Pike puts it]], the empty interface says nothing.
+
+If you declare a function that has a parameter of type `any`, Go's type checker can't provide any compile-time guarantees about the nature of that parameter.
+
+Therefore, peppering empty interfaces all over the business layer of your application (where being very specific pays off) is not a good idea...
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 150 _
+
+: a bit like *void in C
+: in
+
+
+
 * Keep interfaces small and focused
 
-The [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] states that clients should not be forced to depend on methods that they do not use. See [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m49s][Dave Cheney - SOLID Go Design]].
+The [[https://en.wikipedia.org/wiki/Interface_segregation_principle][Interface-Segregation principle]] states that clients should not be forced to depend on methods that they do not use. Accordingly, interface types should be be [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m49s][just specific enough for the job, but no more]].
 
-Accordingly, refrain from _interface_pollution_, i.e. declaring interface types with many methods. Smaller interfaces are comparatively easier to satisfy and more composable.
+Refrain from _interface_pollution_, i.e. declaring interface types with many methods. Smaller interfaces are comparatively easier to satisfy and are more composable.
 
-[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=5m18s][As Rob Pike puts it]]: _the_bigger_the_interface,_the_weaker_the_abstraction_.
+[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=5m18s][As Rob Pike puts it]], _the_bigger_the_interface,_the_weaker_the_abstraction_.
 
-Many of the interface types provided by Go's standard library are single-method:
-`error`, `fmt.Stringer`, `io.Writer`, `io.Reader`, `http.Handler`, etc.
+Many of the interface types provided by Go's standard library only have one method.
 
-.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 200 _
+.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 150 _
 
+: flip side of previous slide!
 : small interfaces are also easier to redeclare locally, in order to promote source decoupling
 : could redeclare Stringer locally to avoid namecheck having to depend on fmt
 
@@ -3757,7 +3804,7 @@ Many of the interface types provided by Go's standard library are single-method:
 
 * Interface composition
 
-Consider these two interfaces:
+Consider the following two elementary interface types:
 
   type Reader interface {
     Read([]byte) (n int, err error)
@@ -3780,9 +3827,9 @@ But no need to repeat yourself! Interface composition is easier than this in Go.
 
 
 
-* Interface composition (cont'd)
+* Easier interface composition
 
-You can declare a larger interface type by simply listing the more elementary interfaces it's made of:
+You can declare a broader interface type by simply listing the interfaces it's made of:
 
   type ReadCloser interface {
     Reader
@@ -3824,8 +3871,6 @@ The declaration above is equivalent to the one below but requires no code duplic
 
 2. Simplify the existing code by ranging over the slice of `Checker` values.
 
-3. There currently is no way to ask a `Checker` to which platform (GitHub or Reddit) it's dedicated. Any idea?
-
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
@@ -3845,7 +3890,7 @@ and only then did we declare the interface types that pointers to those types sa
 
 
 
-* Other notable interfaces: fmt.Stringer
+* Notable interface types: fmt.Stringer
 
 [[https://pkg.go.dev/fmt#Stringer][`fmt.Stringer`]] is an interface type that requires a single method:
 
@@ -3859,13 +3904,15 @@ If a type satisfies `fmt.Stringer`, its `String` method governs the textual repr
 
 
 
-* Other notable interfaces: fmt.Stringer (cont'd)
+* Notable interface types: fmt.Stringer (cont'd)
 
 .play -edit src/stringer.go /^//START/,/^//END/
 
 
 
 * Namecheck project: satisfy the fmt.Stringer
+
+There currently is no way to ask a `Checker` to which platform (GitHub or Reddit) it's dedicated. Let's fix that.
 
 1. Modify the declaration of the `Checker` interface so that the latter also be an `fmt.Stringer`.
 
@@ -3877,41 +3924,7 @@ If a type satisfies `fmt.Stringer`, its `String` method governs the textual repr
 
 
 
-* Other notable interfaces: the empty interface
-
-The empty interface is an interface that requires no method:
-
-  interface{}
-
-Therefore, it is automatically satisfied by _all_ types (no exception) in Go.
-
-Go 1.18 [[https://go.dev/doc/go1.18#generics][introduced]] `any` as a [[https://pkg.go.dev/builtin#any][predeclared alias for `interface{}`]]:
-
-  type any = interface{}
-
-The empty interface is useful for maximum flexibility in functions that require it:
-
-  func Println(a ...any) (int, error)
-
-
-
-* Other notable interfaces: the empty interface (cont'd)
-
-Because the empty interface is the least specific type in Go, you should use it sparingly.
-
-[[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=7m36s][As Rob Pike puts it]], the empty interface says nothing.
-
-If you declare a function that has a parameter of type `any`, Go's type checker can't provide any compile-time guarantees about the nature of that parameter.
-
-Therefore, peppering empty interfaces all over the business layer of your application (where being very specific pays off) is a bad idea!
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
-
-: a bit like *void in C
-
-
-
-* Other notable interfaces: io.Reader and io.Writer
+* Notable interface types: io.Reader and io.Writer
 
 The `io` package provides two complementary interface types: `Reader` and `Writer`.
 
@@ -3971,7 +3984,7 @@ This principle [[https://www.youtube.com/watch?v=zzAdEt3xZ1M&t=12m36s][echoes]] 
 
 
 
-* Other notable interfaces: error
+* Notable interface types: error
 
 You've been manipulating the `error` type without known its true nature, but it is an interface type [[https://pkg.go.dev/builtin#error][predeclared by the language]]:
 
@@ -3991,6 +4004,38 @@ When convenient, you can make some of your own types satisfy the `error` interfa
     const tmpl = "unknown availability of %q on %s: %v"
     return fmt.Sprintf(tmpl, e.Username, e.Platform, e.Cause)
   }
+
+
+
+* The nature of interface values
+
+An interface value essentially [[https://research.swtch.com/interfaces][holds two pieces of information]]:
+
+- its _dynamic_type_, and
+- its _dynamic_value_.
+
+Here are some simple examples:
+
+.play -edit src/interface_nature.go /^//START/,/^//END/
+
+
+
+* Interfaces' zero value... and a major gotcha!
+
+The zero value of basic interfaces is `nil`. A `nil` interface value has no dynamic type.
+
+ var i any
+ i == nil // true
+
+However, an interface value is equal to `nil` only if it has no dynamic type! An interface value that holds a `nil` value of some concrete type is not itself equal to `nil`! 🤯
+
+  var checker Checker = (*github.GitHub)(nil) // dynamic type: *github.GitHub; dynamic value: nil
+  checker == nil // false!
+
+This subtlety is a major source of initial confusion for newcomers to the language.
+If overlooked, [[https://go.dev/doc/faq#nil_error][it can lead to subtle bugs]], especially in connection with error handling.
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 150 _
 
 
 
@@ -4021,8 +4066,8 @@ Consider [[https://pkg.go.dev/net#Error][the `net.Error` interface]], which is b
 
   type Error interface {
     error
-    Timeout() bool   // Is the error a timeout?
-    Temporary() bool // deprecated
+    Timeout() bool // Is the error a timeout?
+    // ...
   }
 
 Upon getting a non-`nil` `error`, you could [[https://blog.golang.org/error-handling-and-go][check whether it stemmed from a timeout]]:
@@ -4159,9 +4204,9 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
   └── reddit
       └── reddit.go
 
-3. From the root of your project, check that `main.go` still compiles:
+3. From the root of your project, check that `cmd/main.go` still compiles.
 
-  go run cmd/main.go
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 100 _
 
 
 
@@ -4175,9 +4220,9 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
     Getter namecheck.Getter
   }
 
-5. In your `IsAvailable` methods, call the `Getter`'s method instead of `http.Get`.
+3. In your `IsAvailable` methods, call the `Getter`'s method instead of `http.Get`.
 
-6. In your `main` function, _inject_ the actual HTTP client when you instantiate the `GitHub` and `Reddit` struct types.
+4. In your `main` function, _inject_ the actual HTTP client when you instantiate the `GitHub` and `Reddit` struct types.
 
 : Now you have everything you need to create a "fake" Getter for testing purposes!
 
@@ -4189,7 +4234,7 @@ See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-test
 
 
 
-* Namecheck project: "stub" the HTTP client
+* Namecheck project: "stub" the HTTP client for testing purposes
 
 1. Create a package named `stub`. In it, declare the following struct type:
 
@@ -6056,114 +6101,5 @@ Avoid relative imports like the plague!
 
 * Appendix B: more about interfaces
 
-
-
-* Interfaces under the hood
-
-  ----------------------
-  | pointer to itable  |
-  ----------------------
-  |  pointer to value  |
-  ----------------------
-
-Under the hood, an interface value is a two-word data structure:
-
-- a pointer to an _itable_, which contains metadata about the concrete type stored in the interface value: name, set of methods, etc.
-- generally, a pointer to the value of the concrete type stored in the interface value.
-
-For the gory details, see [[https://research.swtch.com/interfaces][Russ Cox - Go Data Structures: Interfaces]].
-
-.image https://miro.medium.com/max/4800/1*OxWM0qyTBnb6WfSEw-T9sg.jpeg 150 _
-
-
-
-* Comparability and zero value
-
-Interface types are comparable (but you already knew that).
-
-Interfaces are "reference types"; therefore, manipulating pointers to interface is rare.
-
-An interface type's zero value is `nil`:
-
-.play -edit src/interface_zero.go /^//START/,/^//END/
-
-An interface value is considered `nil` if and only if
-
-- *it*isn't*associated*to*any*concrete*type* (!), and
-- it does contain or point to the value of a concrete type.
-
-  ---------------------------------------
-  |                 nil                 |
-  ---------------------------------------     ==     nil
-  |                 nil                 |
-  ---------------------------------------
-
-: pointers to interfaces useful for decoding JSON to an interface value
-: see https://go.dev/blog/json-and-go
-
-
-
-* Pitfall: interface vs. nil
-
-Be careful: an interface value that holds a `nil` pointer to a concrete type is not itself `nil`!
-
-  ---------------------------------------
-  | pointer to github.GitHub's itable |
-  ---------------------------------------     !=     nil
-  |                 nil                 |
-  ---------------------------------------
-
-Developers who fail to account for this distinction expose themselves to subtle bugs...
-
-More details about this subtlety are available in the [[https://go.dev/doc/faq#nil_error][Go FAQ]].
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 200 _
-
-
-
-* Interface vs. nil: spot the bug
-
-The following program contains a subtle bug. Can you identify it?
-
-.play -edit src/interface_nil.go /^//START/,/^//END/
-
-
-
-* Interface vs. nil: spot the bug (solution)
-
-  -----------------------------------------
-  | pointer to *ErrLaunchFailure's itable |
-  -----------------------------------------     !=     nil
-  |                 nil                   |
-  -----------------------------------------
-
-To indicate failure, a fallible function should return a result of type `error`, as opposed to a result of a concrete type that happens to satisfy the `error` interface!
-
-.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
-
-See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=14m12s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
-
-
-
-* Interface vs. nil: spot the bug again
-
-The following program contains a subtle bug. Can you identify it?
-
-.play -edit src/interface_nil_concrete_var.go /^//START/,/^//END/
-
-
-* Interface vs. nil: spot the bug again (solution)
-
-  -----------------------------------------
-  | pointer to *ErrLaunchFailure's itable |
-  -----------------------------------------     !=     nil
-  |                 nil                   |
-  -----------------------------------------
-
-.play -edit src/interface_nil_fixed.go /^//START/,/^//END/
-
-Avoid declaring variables of a concrete type that happens to satisfy `error`!
-
-See [[https://www.youtube.com/watch?v=ynoY2xz-F8s&t=13m20s][Francesc Campoy Flores - Understanding nil (GopherCon 2016)]].
 
 
