@@ -45,7 +45,7 @@ Some of these slides contain editable and executable code snippets. If you need 
 .image https://habrastorage.org/getpro/habr/post_images/eb1/923/9cc/eb19239cc91d38445932da1ade5a5e7d.png 200 _
 
 : pentests, vulnerability evaluation, code audits
-: present yourselves!
+: introduce yourselves to the other participants in 60 seconds or less
 
 
 
@@ -1415,7 +1415,7 @@ Because Go's call stacks are elastic (they grow and shrink as needed), recursion
 
 
 
-* Methods
+* A glimpse at methods
 
 Methods are functions that are attached to a specific type.
 
@@ -1755,7 +1755,7 @@ However, panicking during the initialization of your package is legitimate, if s
 
 
 
-* Namecheck project: creating a dedicated package per supported platform
+* Namecheck project: creating a package dedicated to GitHub
 
 All the code we've written in `main.go` so far is specific to GitHub, which is a bit messy.
 
@@ -1907,13 +1907,13 @@ If a package exports only one type and a factory function for that type, the fun
 
 * Subpackages
 
-Subpackages of a given package are packages located in subfolders of that package.
+Subpackages of a package are packages located in subfolders of that package.
 
-Subpackages typically provide functionalities that are related to but more specific than those provided by their parent package.
+Subpackages provide functionalities that are related to (but more specific than) those provided by their parent package.
 
 .image img/encoding_core_lib.png 150 _
 
-Beyond this hierarchy in the directory tree, a package and its subpackage don't have any special relationship:
+Such a hierarchy in the directory tree only reflects an organization of packages by themes. A package and its subpackage indeed do not have any special relationship:
 
 - If one depends on the other, the former must import the latter.
 - One does not have access to the other's unexported symbols.
@@ -1926,17 +1926,15 @@ One special case is [[https://go.dev/doc/go1.4#internalpackages][_internal_packa
 
 * Import graphs must be acyclic
 
-The Go compiler disallows cycles in import graphs.
-
-For example, package `foo` cannot import package `bar` if `bar` itself imports `foo`.
+The Go compiler disallows cycles in import graphs. For example, package `foo` cannot import package `bar` if `bar` itself imports `foo`:
 
 .image img/dependency_cycle.svg 150 _
 
 Imports form a _directed_acyclic_graph_, like the graph of commits in a Git repository.
 
-Thanks to this [[https://wiki.c2.com/?LiberatingConstraint][liberating design constraint]], each imported package needs be compiled only once. As a result, the Go compiler is blazingly fast [[https://www.youtube.com/watch?v=sln-gJaURzk&t=14m45s][compared to C and C++ compilers]].
+Thanks to this [[https://wiki.c2.com/?LiberatingConstraint][liberating design constraint]], each imported package needs be compiled only once. As a result, the Go compiler is fast [[https://www.youtube.com/watch?v=sln-gJaURzk&t=14m45s][compared to C and C++ compilers]].
 
-.image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 200 _
+.image https://miro.medium.com/max/4800/1*-bo7H329eM0O1eL_ASBVOA.jpeg 150 _
 
 : ex: the standard library can be compiled in 10s on a modern machine
 : also Go's grammar is designed to enable a source file to be parsed without type information or any other external inputs
@@ -2927,7 +2925,7 @@ One use case for slices is [[https://go.dev/blog/subtests#table-driven-tests-usi
     }
   }
 
-: use of anonymous struct for slice of test cases
+: you can also use a one-off anonymous struct to hold a test case's inputs and expected outputs
 
 
 
@@ -4127,17 +4125,21 @@ Note that we declared our interface types (`Validator`, `Availabler`, and `Check
 
 
 
-* Namecheck project: how to swap a fake HTTP client for the real one?
+* Namecheck project: the need for a test double for the HTTP client
 
-The `IsAvailable` method still isn't easily testable...
+`IsAvailable` still unconditionally sends a request to the social network of interest:
 
-It unconditionally sends a HTTP request to the social network of interest, which means we cannot write unit tests (in the strict sense of the term) for it.
+  package github
 
-For instance, we'd like to check that, if the response from GitHub has status code `200`, then `github.Github`'s `IsAvailable` method returns `false,`nil`.
+  func (*GitHub) IsAvailable(username string) (bool, error) {
+    resp, err := http.Get("https://github.com/" + username)
+    // -snip-
 
-We'd need some way of injecting the real HTTP client in our production code and injecting some fake HTTP client in our test code... Any ideas?
+Therefore, it cannot be unit-tested. For example, how could you check that, if GitHub responds with a `200`, then `IsAvailable` method returns `false,`nil`?
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 200 _
+Our testability problem would be resolved if we used a [[https://www.martinfowler.com/bliki/TestDouble.html][_test_double_]] ([[https://www.martinfowler.com/articles/mocksArentStubs.html][stub]], etc.): some "fake" client that would allow us to simulate interesting GitHub responses in tests.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/crash-dummy.svg 150 _
 
 : test behaviour of IsAvailable given behaviour of its Client
 : system under test: github.GitHub
@@ -4145,7 +4147,7 @@ We'd need some way of injecting the real HTTP client in our production code and 
 
 
 
-* Diving into the source code of the net/http package
+* Namecheck project: diving into the net/http package
 
 Function `http.Get` delegates to a `Get` method on something named `DefaultClient`:
 
@@ -4161,30 +4163,28 @@ Function `http.Get` delegates to a `Get` method on something named `DefaultClien
   // -snip-
   var DefaultClient = &Client{}
 
-Since we want to mock/stub the `*http.Client` type, we need an interface type that `*http.Client` implements...
+Because we need _polymorphism_ (to use either the real HTTP client or a test double),
+we need an interface type that both `*http.Client` and the test double implements...
 
-Does the `net/http` package provide such an interface? If not, is that a problem? 😏
-
-What about in languages other than Go, such as Java, C#, or PHP?
-
+Does the `net/http` package provide such an interface type? If not, is that a problem? 😏
 
 
-* Implicit satisfaction makes "stubbing" easy!
 
-You can declare an interface type that will be satisfied by your own existing types.
+* Implicit satisfaction facilitates dependency injection and test doubles
 
-But you can even create your own interface type for concrete types that you do not own and for which no useful interface is readily provided!
+As you already know, you can declare an interface type that will be satisfied by your own types that already exist. You did this for types `*github.GitHub` and `*reddit.Reddit`.
 
-Therefore, you can "make a hole" that you can then fill with
+But there's more! You can even create your own interface type for concrete types that you do not own and for which no useful interface is readily provided!
 
-- the real thing in your production code, and
-- a [[https://www.martinfowler.com/articles/mocksArentStubs.html][_stub_]] (or some other [[https://www.martinfowler.com/bliki/TestDouble.html][_test_double_]] in your tests.
+This superpower of Go interfaces is [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-tests-in-golang-619653f90742#e976][particularly useful]] for [[https://en.wikipedia.org/wiki/Dependency_injection][_dependency_injection_]]. You can indeed create a "placeholder" in which fits
 
-See [[https://medium.com/@matryer/5-simple-tips-and-tricks-for-writing-unit-tests-in-golang-619653f90742#e976][Mat Ryer's - 5 simple tips and tricks for writing unit tests in #golang]].
+- either the actual dependency (to be injected in your production code), or
+- or a [[https://www.martinfowler.com/articles/mocksArentStubs.html][_stub_]] or some other test double (to be injected in your tests).
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/lifting-1TB.svg 150 _
 
-:
+: What about in languages other than Go, such as Java, C#, or PHP?
+
 
 
 * Namecheck project: move your main.go to a cmd folder
@@ -4339,13 +4339,13 @@ Go's approach to concurrent programming is largely inspired by [[https://dl.acm.
 
 In CSP, concurrent programs are structured as independent processes that execute sequentially and communicate by passing messages.
 
-.image https://i.stack.imgur.com/QjsGt.png 200 _
+.image https://i.stack.imgur.com/QjsGt.png 150 _
 
-Two fundamental mechanisms for concurrency in Go are
+Three fundamental mechanisms for concurrency in Go are
 
 - goroutines: lightweight threads managed by the Go runtime
 - channels: typed pipes used to communicate and synchronize between goroutines
-
+- the `select` statement: a construct for waiting on multiple channel communications
 
 
 
@@ -4671,11 +4671,12 @@ However, unless a method (or its whole receiver) is documented to be concurrency
 
 When all the methods on a given type are safe for concurrent use by multiple goroutines, the type itself is said to be _concurrency-safe_. Here are some examples:
 
-- [[https://pkg.go.dev/sync#WaitGroup][`sync.WaitGroup`]] is a typical example of a concurrency-safe type.
-- [[https://pkg.go.dev/net/http#Client][Struct type `http.Client`]] is also concurrency-safe: you can safely send HTTP requests using the same client from multiple goroutines.
+- [[https://pkg.go.dev/sync#WaitGroup][Struct type `sync.WaitGroup`]] obviously can safely be used concurrently.
+- [[https://pkg.go.dev/log#Logger][Struct type `log.Logger`]] guarantees to serialize access to the underlying `io.Writer`.
+- [[https://pkg.go.dev/net/http#Client][Struct type `http.Client`]] allows you to safely send HTTP requests using the same client from multiple goroutines.
 - [[https://pkg.go.dev/net/http#CookieJar][Interface `http.CookieJar`]] requires its implementations to be concurrency-safe.
 
-Do not assume a type is concurrency-safe [[https://tip.golang.org/doc/comment#type][unless it's documented as such]]. By default, you should expect a type to be safe for use only by a single goroutine at a time.
+Do not assume a type is concurrency-safe [[https://tip.golang.org/doc/comment#type][unless it's documented as such]]! By default, you should expect a type to be safe for use only by a single goroutine at a time.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
 
@@ -4683,7 +4684,7 @@ Do not assume a type is concurrency-safe [[https://tip.golang.org/doc/comment#ty
 
 * Data races: a subtype of race conditions
 
-[[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][Goroutines all execute in the same shared address space]]: multiple goroutines can access some shared memory without triggering an access violation at the OS level.
+[[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][Goroutines share the same memory address space]]: multiple goroutines can access some shared memory without triggering an access violation at the OS level.
 
 However, [[https://go.dev/doc/effective_go.html#goroutines][the onus is on you to be diligent]]! Go indeed doesn't provide [[https://doc.rust-lang.org/book/ch16-00-concurrency.html][the guarantees about concurrency that Rust does]].
 
@@ -4696,7 +4697,7 @@ To be free of data races, your programs [[https://go.dev/ref/mem#tmp_1][*must* s
 
 
 
-* Exercise: a synchronization bug and a rare data race
+* A synchronization bug and a rare data race
 
 The following (naive) program purports to print either "0" or nothing to the screen:
 
@@ -4708,8 +4709,7 @@ Because the spawned goroutine reads variable `count` while the `main` function u
 
 
 
-
-* Exercise: a synchronization bug and a rare data race (solution)
+* A synchronization bug and a rare data race (cont'd)
 
 The `main` function involves two reads of variable `count`, and the spawned goroutine involves one read followed by one write (`count=count+1`).
 
@@ -6050,6 +6050,10 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 
 
 
+
+
+
+
 * Appendix A: other import syntaxes
 
 
@@ -6096,10 +6100,4 @@ A relative import relies on the location of the imported package relative to tha
   import ./github
 
 Avoid relative imports like the plague!
-
-
-
-* Appendix B: more about interfaces
-
-
 
