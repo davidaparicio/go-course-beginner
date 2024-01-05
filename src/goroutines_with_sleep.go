@@ -6,6 +6,15 @@ import (
 	"time" // HL
 )
 
+func main() {
+	go grindCoffeeBeans()
+	go frothMilk()
+	time.Sleep(100 * time.Millisecond) // HL
+}
+
+// omitted declarations of functions grindCoffeeBeans and frothMilk
+// END OMIT
+
 func grindCoffeeBeans() {
 	fmt.Println("Grinding coffee beans...")
 }
@@ -13,11 +22,3 @@ func grindCoffeeBeans() {
 func frothMilk() {
 	fmt.Println("Frothing milk...")
 }
-
-func main() {
-	go grindCoffeeBeans()
-	go frothMilk()
-	time.Sleep(100 * time.Millisecond) // HL
-}
-
-// END OMIT

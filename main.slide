@@ -98,15 +98,17 @@ Go was created in 2007 at Google by
 
 .image https://miro.medium.com/max/1256/0*pCC5UI7QqThjdBvm.png _ 600
 
+: Thompson: first implementor of regexps
 : Pike/Thompson: former Bell Labs employees
 : Pike: predecessors to Go (Newsqueak, Alef, Limbo)
 : Thompson: invented increment/decrement operators; see https://en.wikipedia.org/wiki/B_(programming_language)#History
+: Pike/Griesemer: worked on Sawzall at Google
 
 
 
 * Genesis of the language (cont'd)
 
-Back in 2007, [[https://www.youtube.com/watch?v=sln-gJaURzk&t=17m47s][C++'s increasing complexity]], [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][slow compilation]], and poor support for concurrency were recurring sources of frustration for the three creators of Go, where C++ is heavily used for implementing distributed systems.
+Back in 2007, [[https://www.youtube.com/watch?v=sln-gJaURzk&t=17m47s][C++'s increasing complexity]], [[https://www.youtube.com/watch?v=i0zzChzk8KE&t=545s][slow compilation]], and [[https://www.youtube.com/watch?v=iTrP_EmGNmw&t=18m30s][poor support for concurrency]] were recurring sources of frustration for the three creators of Go, where C++ is heavily used for infrastructure.
 
 .image https://imgs.xkcd.com/comics/compiling.png 180 _
 
@@ -116,6 +118,7 @@ They enlisted the help of Ken Thompson and started working on a new language, wh
 - [[https://www.youtube.com/watch?v=6oF0UblqkGs&t=465s][Carmen Andoh - 10 Years of Go (GopherConAU 2019)]]
 - [[https://www.youtube.com/watch?v=igFz-5rdn2Y&t=85s][Cameron Balahan - Keynote: The State Of Go (GopherCon Europe 2023)]].
 
+: for Google's infrastructure code: https://www.youtube.com/watch?v=rFejpH_tAHM&t=10m42s
 
 
 
@@ -124,7 +127,7 @@ They enlisted the help of Ken Thompson and started working on a new language, wh
 - 2007: Griesemer, Pike & Thompson start working on Go.
 - ----: Ian Lance Taylor & Russ Cox (both from Google) join the Go team.
 - 2009: Go is open-sourced.
-- 2012: Go 1.0 is released. The language becomes stable. Adoption rises sharply.
+- 2012: Go 1.0 is released. The language becomes stable. [[https://www.youtube.com/watch?v=iTrP_EmGNmw&t=34m15s][Adoption rises sharply.]]
 - 2013: Docker
 - 2014: Kubernetes; first GopherCon conference
 - 2015: The go compiler (`gc`) becomes self-hosted.
@@ -228,8 +231,8 @@ a small Go program from your browser. Features include:
 - code formatting & automatic package imports
 - basic static analysis
 - [[https://go.dev/play/p/lEDjyvhttIB][limited support for modules and multiple packages]]
-- permalinks
-- downloading of the program source (^S or ⌘+S)
+- persistent URLs (e.g. [[https://go.dev/play/p/S8HfNUCy13U][https://go.dev/play/p/S8HfNUCy13U]])
+- raw program source (^S or ⌘+S)
 
 : static analysis: go vet
 : permalinks: convenient for sharing code snippets
@@ -263,7 +266,7 @@ You can play with the following program [[https://go.dev/play/p/7vin2BK8_A6][in 
 
 .play -edit src/helloworld.go
 
-.image https://go.dev/blog/gopher/plush.jpg 300 _
+.image https://go.dev/blog/gopher/plush.jpg 200 _
 
 
 
@@ -979,6 +982,7 @@ Aside from the _blank_identifier_, don't use underscores in variable names.
 : _ is considered a letter
 
 
+
 * Favor the := operator in most cases
 
 Because Go has two syntaxes for declaring variables, you may be wondering which one to use in a given situation...
@@ -1031,6 +1035,63 @@ In your `main` function, do the following:
 3. Print the username variable to the screen.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
+
+
+* Constants TODO
+
+The `const` keyword lets you declare constants, which are values fixed at compile time:
+
+  const freezing Farenheit = 32
+
+A constant may be untyped but can only be either a number, a boolean, or a string.
+
+For convenience, Go allows you to group declarations of related constants in blocks, by "factorizing" the `const` keyword:
+
+  const (
+    width int  = 480
+    height int = 360
+  )
+
+: declaration blocks: as well as types, variables, and imports
+: no function calls allowed on right-hand side
+: allow optimisations by the compiler
+
+
+* `iota`: he constant generator
+
+The predeclared name [[https://pkg.go.dev/builtin#iota][`iota`]] 
+
+Go has no [[https://en.wikipedia.org/wiki/Enumerated_type][enums]], but you can declare a set of related constants as a [[https://go.dev/play/p/fMT2U4xnydk][type-unsafe]] ersatz of an enum.
+
+The `iota` is useful for doing so:
+
+  type Shape int
+
+  const (
+    Rock Shape = iota
+    Paper
+    Scissors
+  )
+
+See [[https://pkg.go.dev/time#Month][`time.Month`]] and [[https://pkg.go.dev/net/http#SameSite][`http.SameSite`]] for examples from the standard library.
+
+: typically, named type whose underlying type is int
+: no automatic String method
+
+
+
+* iota (cont'd) TODO
+
+`iota` is also convenient for declaring [[https://en.wikipedia.org/wiki/Bit_field][_bit_fields_]], which can then act as flags and be combined via bitwise integer operations. See 
+
+  const (
+    Ldate         = 1 << iota     // the date in the local time zone: 2009/01/23
+    Ltime                         // the time in the local time zone: 01:23:23
+    Lmicroseconds                 // microsecond resolution: 01:23:23.123123.  assumes Ltime.
+    // etc.
+  )
+
+See [[https://pkg.go.dev/log#pkg-constants][the `log` package]]
 
 
 
@@ -2186,19 +2247,19 @@ Some assertion libraries (like [[https://github.com/stretchr/testify/][github.co
 
 From within a package's folder, you can execute its tests by running
 
- go test
+  $ go test
 
 To execute the tests for a package and all of its subpackages, run
 
-  go test ./...
+  $ go test ./...
 
 Passing tests are not mentioned in the output; use the `-v` flag to change that:
 
-  go test -v ./...
+  $ go test -v ./...
 
 You can also selectively run some test functions by specifying a regexp, e.g.:
 
-  go test -run='^TestUsernameToo.*' ./...
+  $ go test -run='^TestUsernameToo.*' ./...
 
 
 
@@ -2223,21 +2284,19 @@ You can also selectively run some test functions by specifying a regexp, e.g.:
 
 * Measuring code coverage
 
-To determine how much of your package's production code is covered by its tests, run
+Code coverage is metric measuring the fraction of your production code that's covered by tests. Use it [[https://www.youtube.com/watch?v=X4rxi9jStLo&t=6m][as a guide for augmenting your test suite]].
 
-  go test -cover ./...
+To generate a code-coverage report in a file named `coverage.out`, first run
 
-To generate a more detailed (machine-readable) coverage report, first run
+  $ go test -coverprofile="coverage.out" ./...
 
-  go test -coverprofile="coverage.out" ./...
+Then, to see a browser-based breakdown of the coverage by statement, run
 
-Then, to see (on the command line) a breakdown of the coverage by function, run
+  $ go tool cover --html="coverage.out"
 
-  go tool cover --func="coverage.out"
+Be careful: a low code coverage is a clear indication that you need to write more tests, but a high code coverage doesn't guarantee the absence of bugs.
 
-Alternatively, for a browser-based breakdown of the coverage by statement, run
-
-  go tool cover --html="coverage.out"
+As Russ Cox [[https://www.youtube.com/watch?v=X4rxi9jStLo&t=7m29s][puts it]], coverage is no substitute for thought.
 
 
 
@@ -2253,8 +2312,6 @@ Alternatively, for a browser-based breakdown of the coverage by statement, run
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
-: a high code coverage doesn't guarantee that the covered code is well-tested
-: a low code coverage does tell you that you need to write more tests
 
 
 
@@ -3139,7 +3196,7 @@ However, you can use [[https://pkg.go.dev/maps#Equal][the `Equal` function]] fro
 
 .play -edit src/map_access.go /^//START/,/^//END/
 
-`m[k]` is *not* addressable:
+[[https://www.youtube.com/watch?v=Tl7mi9QmLns&t=1273s][For good reasons]], `m[k]` is *not* addressable:
 
 .play -edit src/map_value_not_addressable.go /^//START/,/^//END/
 
@@ -3531,9 +3588,9 @@ A solution is available on the [[https://go.dev/play/p/Wwy4gr9Az1_W][Go Playgrou
 
 
 
-* A glimpse of generics in Go
+* A glimpse of parametric polymorphism in Go
 
-Go 1.18 added _generics_ to the language.
+Go 1.18 added _parametric_polymorphism_ ([[https://www.youtube.com/watch?v=RIvL2ONhFBI&t=1020s][a.k.a. _generics_]]) to the language.
 
 Types and functions can now be parameterized by types (see [[https://go.dev/play/p/CqiNm5rn6Ie][this Playground]]):
 
@@ -3546,19 +3603,19 @@ Types and functions can now be parameterized by types (see [[https://go.dev/play
   func Size(t *Tree[E]) int
   func Sum(t *Tree[E]) E
 
-Type parameter `T` is constrained by `any` ([[https://pkg.go.dev/builtin#any][a predeclared alias for `interface{}`]]).
+_Type_parameter_ `T` is constrained by `any` ([[https://pkg.go.dev/builtin#any][a predeclared alias for `interface{}`]]).
 In other words, `T` can be any type: `bool`, `int`, `string`, etc.
 
 
-* A glimpse of generics in Go (cont'd)
+* A glimpse of parametric polymorphism in Go (cont'd)
 
-You don't need to master generics at this stage of your Go learning, but a basic understanding of generic syntax will benefit you.
+You don't need to master generics at this stage of your Go learning, but a basic understanding of their syntax will benefit you.
 
-Generics promote code reusability while providing some compile-time guarantees.
+Parametric polymorphism promotes code reusability while providing compile-time guarantees.
 
 You may never write generic code yourself, but you will likely use some of the standard-library packages that provide generic functions, such as `slices`, `maps`, and `cmp`.
 
-For more details about generics, see [[https://go.dev/doc/tutorial/generics][Tutorial: Getting started with generics]].
+For more details about parametric polymorphism in Go, see [[https://go.dev/doc/tutorial/generics][Tutorial: Getting started with generics]].
 
 👉 Now, let's learn about methods, which are the key to interfaces.
 
@@ -4072,7 +4129,7 @@ Upon getting a non-`nil` `error`, you could [[https://blog.golang.org/error-hand
 
   res, err := http.Get("https://example.com")
   if err != nil {
-    if err, ok := err.(net.Error); ok && err.Timeout() {
+    if err, ok := err.(interface { Timeout() bool }); ok && err.Timeout() {
       // the error was caused by a timeout... retry
     }
     return err
@@ -4086,7 +4143,7 @@ See also [[https://pkg.go.dev/errors#As][`errors.As`]], a function more powerful
 
 A type assertion also allows you to probe an interface value about its dynamic type:
 
-  gh, ok := checker.(github.GitHub)
+  gh, ok := checker.(*github.GitHub)
   if ok {
     fmt.Println("GitHub")
   }
@@ -4111,7 +4168,7 @@ Instead, you can use a special switch statement known as a [[https://go.dev/ref/
 
 
 
-* Provide interface types only as needed
+* Declare interface types only when needed
 
 Some packages may need to export an interface type to allow for interchangeable use of multiple implementations; see [[https://pkg.go.dev/context#Context][`context.Context`]] for an example.
 
@@ -4119,7 +4176,7 @@ However, you shouldn't systematically export interface types for your concrete t
 
 Gophers can always, for decoupling purposes, declare a custom interface type in such a way that it be satisfied by some concrete type (even one they don't own).
 
-Note that we declared our interface types (`Validator`, `Availabler`, and `Checker`) only in the `main` package, where we actually need those abstractions.
+Note that we declared our interface types (`Validator`, `Availabler`, and `Checker`) only in the `main` package, where we actually need and use those abstractions.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
@@ -4335,7 +4392,7 @@ See also
 
 * Go's concurrency model
 
-Go's approach to concurrent programming is largely inspired by [[https://dl.acm.org/doi/10.1145/359576.359585][Tony Hoare's  _Communicating_Sequential_Processes_ (1978)]], a paper that was decades ahead of its time.
+Go's approach to concurrent programming is largely inspired by [[https://dl.acm.org/doi/10.1145/359576.359585][Tony Hoare's  _Communicating_Sequential_Processes_ (1978)]], a seminal paper ahead of its time.
 
 In CSP, concurrent programs are structured as independent processes that execute sequentially and communicate by passing messages.
 
@@ -4430,9 +4487,15 @@ The `go` keyword is [[https://www.youtube.com/watch?v=oV9rvDllKEg&t=14m45s][conc
   grindCoffeeBeans &
   frothMilk &
 
-However, unlike a Unix process, a goroutine has no concept of an ID (see why [[https://go.dev/talks/2014/go4gophers.slide#38][here]]).
+However, unlike a Unix process, *a*goroutine*has*no*ID*. This limitation results from [[https://go.dev/talks/2014/go4gophers.slide#38][a conscious design decision by the Go team]], who wanted to preclude [[https://en.wikipedia.org/wiki/Thread-local_storage][_thread_locality_]].
 
-Therefore, a goroutine cannot readily be _killed_.
+Therefore, because a goroutine lacks an ID, it cannot readily be _killed_.
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
+
+: thread-local storage: data tied to a specific thread
+: wouldn't play well with Go's concurrency model
+: also mentioned in gopl, but where again?
 
 
 
@@ -4514,9 +4577,9 @@ We must tell `main` to "wait" until the two goroutines terminate normally. Any i
 
 .play -edit src/goroutines_with_sleep.go /^//START/,/^//END/
 
-There! A little sleep fixed it! Incidentally, note that the relative order of execution between the two functions is unpredictable.
+There, sleeping a bit at the end of `main` "fixed" it! Incidentally, note that the relative order of execution between the two functions is unpredictable.
 
-Why is sleeping a bit at the end of `main` unsatisfactory, though?
+However, sleeping a bit at the end of `main` simply isn't good enough. Why not?
 
 : just because goroutine A was started before goroutine B doesn't mean that A will be executed before B
 : inefficient at best, nondeterministic at worst
@@ -4587,19 +4650,34 @@ It has three methods (all of which use a pointer receiver):
 
 - `Add` increments the counter by `delta`. Call it _just_before_ spawning a goroutine.
 - `Done` decrements the counter by 1. Call it _at_the_very_end_ of each spawned goroutine, typically via a `defer` statement.
-- `Wait` blocks until the counter goes back to 0. Call it at the point of the spawning goroutine where you need to wait for the spawned goroutines to terminate.
+- `Wait` blocks until the counter goes back to 0. Call it at the point of the program where you need to wait for the spawned goroutines to terminate.
+
+: now, how not to misuse a wait group
 
 
 
-* How not to misuse wait groups
+* Call Add before starting the corresponding goroutine
 
-Calls to `Add` must take place in the spawning goroutine, _not_ within the child goroutine.
+Calls to `Add` with a positive delta that occur when the counter is zero must happen *before* the call to `Wait`.
 
-Calls to `Add` with a positive delta that occur when the counter is zero must happen before the call to `Wait`.
+In practice, this rule often implies that calls to `Add` must take place in the *spawning* goroutine (i.e. the `main` function in the example below), not within the child goroutine.
 
-Finally, a `sync.WaitGroup` must not be copied after first use; the `vet` subcommand [[https://go.dev/play/p/2KzpEuzFO-j][alerts you about such programming mistakes]]. Therefore, if a function needs to operate on a wait group that is declared outside the function, pass a `*sync.WaitGroup` (a pointer, as opposed to a `sync.WaitGroup` value) to the function.
+.play -edit src/waitgroup_wrong.go /^//START/,/^//END/
 
-.image https://go.dev/blog/gopher/plush.jpg 200 _
+: add a call to runtime.Gosched before the wait to reveal the presence of a sync bug
+: Gosched not to be used to coordinate goroutines
+
+
+
+* Do not copy a wait group after first use
+
+A `sync.WaitGroup` value must not be copied after first use.
+
+Therefore, if a function needs to operate on a wait group that is declared outside the function, pass a *pointer* to that wait group (`*sync.WaitGroup`) to the function.
+
+.play -edit src/waitgroup_wrong2.go /^//START/,/^//END/
+
+The `vet` subcommand [[https://go.dev/play/p/2KzpEuzFO-j][alerts you about such programming mistakes]].
 
 
 
@@ -4630,7 +4708,7 @@ Tip: you can apply the `go` keyword to an anonymous function.
 
 A [[https://medium.com/@val_deleplace/does-the-race-detector-catch-all-data-races-1afed51d57fb][_synchronization_bug_]] is a bug that, due to insufficient synchronization between goroutines (and unpredictable timing factor), causes the program to display an undesirably erratic behavior.
 
-What is or isn't a synchronization bug depends on the semantics of your program!
+What is or isn't a synchronization bug may depend on the semantics of your program.
 
 For instance, in our recent coffee-making example, if we required `grindCoffeeBeans` to systematically execute before `frothMilk`, our concurrent solution would have contained a synchronization bug.
 
@@ -4651,6 +4729,8 @@ Remember this useful distinction (similar to that between concurrency and parall
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
+: eg: data race reproducible only under heavy load
+
 
 
 * Concurrency safety
@@ -4659,7 +4739,7 @@ _Concurrency_safety_ is a property of an operation on a variable of a given type
 
 An operation is _concurrency-safe_ if it can be carried out in a concurrent fashion (from multiple goroutines) without explicit synchronization and and without introducing synchronization bugs.
 
-[[https://tip.golang.org/doc/comment#funcs][By convention]], top-level functions should be designed to be concurrency-safe.
+[[https://tip.golang.org/doc/comment#funcs][By convention]], top-level functions should be designed as concurrency-safe.
 
 However, unless a method (or its whole receiver) is documented to be concurrency-safe, do not assume that it is!
 
@@ -4676,9 +4756,20 @@ When all the methods on a given type are safe for concurrent use by multiple gor
 - [[https://pkg.go.dev/net/http#Client][Struct type `http.Client`]] allows you to safely send HTTP requests using the same client from multiple goroutines.
 - [[https://pkg.go.dev/net/http#CookieJar][Interface `http.CookieJar`]] requires its implementations to be concurrency-safe.
 
-Do not assume a type is concurrency-safe [[https://tip.golang.org/doc/comment#type][unless it's documented as such]]! By default, you should expect a type to be safe for use only by a single goroutine at a time.
+Concurrency-safe types are always documented as such.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/knight.svg 150 _
+
+
+* Concurrency-unsafe types
+
+Be careful: most types are _not_ concurrency-safe!
+
+You should not assume a type is concurrency-safe [[https://tip.golang.org/doc/comment#type][unless it's documented as such]].
+
+To save their users some trouble, some types  even go as far as explicitly documenting their lack of concurrency safety. See, for instance, [[https://pkg.go.dev/math/rand#Source][the documentation of `rand.Source`]] (which represents a source of randomness).
+
+.image https://www.globalnerdy.com/wp-content/uploads/2017/08/gopher-this-is-fine.jpg 200 _
 
 
 
@@ -4711,9 +4802,9 @@ Because the spawned goroutine reads variable `count` while the `main` function u
 
 * A synchronization bug and a rare data race (cont'd)
 
-The `main` function involves two reads of variable `count`, and the spawned goroutine involves one read followed by one write (`count=count+1`).
+The `main` function involves two reads of variable `count`, and the spawned goroutine involves one read followed by one write.
 
-But because neither function carries out its work in an atomic fashion, the `main` function's accesses may interleave with the goroutine's accesses.
+But because neither function carries out its work in an [[https://en.wikipedia.org/wiki/Linearizability][_atomic_]] fashion, the `main` function's accesses may interleave with the goroutine's accesses.
 
 As the following diagram (on which time flows downwards) illustrates, if the goroutine's write gets sandwiched between `main`'s two reads, "1" will be printed to the screen.
 
@@ -4751,7 +4842,7 @@ Go provides a [[https://go.dev/blog/race-detector][race detector]], i.e. a tool 
   Found 1 data race(s)
   exit status 66
 
-Don't leave the race detector on in production: [[https://go.dev/doc/articles/race_detector#Runtime_Overheads][its runtime overhead is prohibitive]].
+Avoid leaving the race detector on in production: [[https://go.dev/doc/articles/race_detector#Runtime_Overheads][its overhead can be prohibitive]].
 
 
 
@@ -4770,9 +4861,9 @@ This unfortunate behavior caused so many bugs that [[https://www.youtube.com/wat
 
 * Namecheck project: check each user name concurrently (fan out)
 
-1. Extract the body of the for-range loop that iterates on your `[]Checker` slice as a function in your `main` package:
+1. Extract the body of the for-range loop that iterates on your `[]namecheck.Checker` slice as a function in your `main` package:
 
-  func check(checker Checker, username string)
+  func check(checker namecheck.Checker, username string)
 
 2. Add a parameter of type `*sync.WaitGroup` to your `check` function.
 
@@ -4797,11 +4888,11 @@ Now, what if, instead of printing the results, we wanted to somehow aggregate th
 To safely communicate data between goroutines, a concurrent Go program may follow two distinct approaches:
 
 - [[https://wiki.c2.com/?SharedStateConcurrency][_shared-state_concurrency_]], whereby access to data by multiple goroutines is mediated via traditional mechanisms like locks and mutexes; and
-- [[https://wiki.c2.com/?MessagePassingConcurrency][message-passing concurrency]], whereby [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][ownership of data is transferred between goroutines via channels]].
+- [[https://wiki.c2.com/?MessagePassingConcurrency][_message-passing_concurrency_]], whereby [[https://cacm.acm.org/magazines/2022/5/260357-the-go-programming-language-and-environment/fulltext#body-6][ownership of data is transferred between goroutines via channels]].
 
 Although both approaches are possible (even within a single program), [[https://go.dev/doc/effective_go#sharing][Go's culture favors message passing]].
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 150 _
 
 
 
@@ -4813,7 +4904,7 @@ The Go community [[https://go.dev/doc/effective_go#sharing][summarizes its prefe
 
 Channels are indeed more composable and less error-prone than mutexes. [[https://www.youtube.com/watch?v=oV9rvDllKEg&t=18m13s][Rob Pike once illustrated channels' superiority with an elegant load-balancer implementation.]]
 
-As he also puts it: [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=4m20s][channels orchestrate, [whereas] mutexes [merely] serialize]].
+As Rob Pike puts it, [[https://www.youtube.com/watch?v=PAAkCSZUG1c&t=4m20s][channels orchestrate, whereas mutexes merely serialize]].
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/stovepipe-hat-front.svg 200 _
 
@@ -4835,6 +4926,7 @@ The element type of a channel is completely arbitrary; here is a contrived examp
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/liberty.svg 200 _
 
 : channels only exist within the confines of your program; they can't be used to communicate between different processes, be they written in Go.
+: obscure reference to a Friends episode
 
 
 
@@ -5005,8 +5097,7 @@ followed by a left-pointing arrow (`<-`) followed by the value to send.
 
   ch := make(chan string)
   // ...
-  v := "superimportant message"
-  ch <- v
+  ch <- "superimportant message"
 
 The `gofmt` tool will adds a space on either side of the arrow; don't fight it.
 
@@ -5411,7 +5502,7 @@ This bug is particularly insidious because it will only manifest itself under su
   write a `400`Bad`Request` response and terminate the handler.
 - Otherwise, write your slice of results in the response. Hint: use `fmt.Fprint`.
 
-5. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on pattern `GET /check`, then start the server on port 8080.
+5. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on pattern `GET`/check`, then start the server on port 8080.
 
 6. Run the program and hit the `/check` endpoint, e.g. by visiting [[http://localhost:8080/check?username=jub0bs][http://localhost:8080/check?username=jub0bs]] in your browser:
 
@@ -5645,7 +5736,7 @@ Note that a [[https://go.dev/ref/spec#Label][label]] (named `loop`) is required 
 
 * Eschewing labels in an event loop
 
-To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][labeled statements]], you may want [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=9m58s][to restructure your program]]:
+To avoid the need for unsightly [[https://go.dev/ref/spec#Labeled_statements][labeled statements]], you can [[https://www.youtube.com/watch?v=5DVV36uqQ4E&t=9m58s][restructure your program]]:
 
   var finished bool
   for !finished {
@@ -5759,6 +5850,8 @@ If function `cancelable` is launched as a goroutine, you can trigger its eventua
 2. Modify the program to make `printInts` cancelable.
 
 3. Cancel the goroutine from `main` after one second.
+
+4. Try again with two (or more) goroutines `printInts`.
 
 (A solution is available in this [[https://go.dev/play/p/7Hsz9o3MwRs][Playground]].)
 
@@ -5887,13 +5980,13 @@ Go's standard library provides two main mechanisms for sharing memory:
 
 Let's keep track (in memory) of how many times each username has been checked.
 
-1. Declare a variable of a suitable type at the top level.
+1. Declare (and initialize!) a variable of a suitable type at the package level.
 
 2. In `handleCheck`, increment the count associated to the username being checked.
 
 3. Declare an additional `handleStats` handler that returns a JSON representation of the variable declared in step 1.
 
-4. Register pattern `GET /stats` and associate it to your `handleStats` handler.
+4. Register pattern `GET`/stats` and associate it to your `handleStats` handler.
 
 5. Run your server and exercise it.
 
