@@ -6,7 +6,7 @@ import (
 
 func main() {
 	// START OMIT
-	var cleanup func(string) string
+	var cleanup func()
 	fmt.Println(cleanup == nil) // true
 	cleanup()                   // panic!
 	// END OMIT

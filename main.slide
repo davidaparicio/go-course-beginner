@@ -1,5 +1,5 @@
 Formation Go
-10 November 2023
+last updated on 16 January 2024
 
 Julien Cretel
 
@@ -56,7 +56,7 @@ If you haven't already, install Go by following the guidance from [[https://go.d
 You can check which version of Go is installed by running the following shell command:
 
   $ go version
-  go version go1.21.4 darwin/amd64
+  go version go1.21.6 darwin/amd64
 
 To cut your teeth on Go, I recommend [[https://code.visualstudio.com/][Visual Studio Code]] and its [[https://code.visualstudio.com/docs/languages/go][Go extension]], which embarks a number of utilities such as `goimports` and `gofmt`.
 
@@ -400,7 +400,7 @@ A `go.mod` file will be created at the root of your project:
 
   module github.com/jub0bs/namecheck
 
-  go 1.21.4
+  go 1.21.6
 
 - The [[https://go.dev/ref/mod#go-mod-file-module][`module` directive]] defines the module's path.
 - The [[https://go.dev/ref/mod#go-mod-file-go][`go` directive]] specifies the minimum required version of the Go toolchain.
@@ -528,7 +528,7 @@ It's useful for cleanup tasks, such as releasing resources.
 
 *fallthrough* is a seldom useful keyword that lets you override the normal "breaking" behavior of Go's `switch` statement.
 
-*goto* [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/strings/strings.go;drc=132fae93b789ce512068ff4300c665b40635b74e;l=1118][has its uses]], but it's not for the average Go developer. Avoid it.
+*goto* [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.6:src/strings/strings.go;drc=132fae93b789ce512068ff4300c665b40635b74e;l=1118][has its uses]], but it's not for the average Go developer. Avoid it.
 
 
 
@@ -1037,7 +1037,7 @@ In your `main` function, do the following:
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 200 _
 
 
-* Constants TODO
+* Constants
 
 The `const` keyword lets you declare constants, which are values fixed at compile time:
 
@@ -1057,7 +1057,7 @@ For convenience, Go allows you to group declarations of related constants in blo
 : allow optimisations by the compiler
 
 
-* `iota`: he constant generator
+* iota: the constant generator
 
 The predeclared name [[https://pkg.go.dev/builtin#iota][`iota`]] 
 
@@ -1080,18 +1080,21 @@ See [[https://pkg.go.dev/time#Month][`time.Month`]] and [[https://pkg.go.dev/net
 
 
 
-* iota (cont'd) TODO
+* iota (cont'd)
 
-`iota` is also convenient for declaring [[https://en.wikipedia.org/wiki/Bit_field][_bit_fields_]], which can then act as flags and be combined via bitwise integer operations. See 
+`iota` is also convenient for declaring [[https://en.wikipedia.org/wiki/Bit_field][_bit_fields_]], as in [[https://pkg.go.dev/log#pkg-constants][the `log` package]]:
 
   const (
-    Ldate         = 1 << iota     // the date in the local time zone: 2009/01/23
-    Ltime                         // the time in the local time zone: 01:23:23
-    Lmicroseconds                 // microsecond resolution: 01:23:23.123123.  assumes Ltime.
+    Ldate         = 1 << iota // the date in the local time zone: 2009/01/23
+    Ltime                     // the time in the local time zone: 01:23:23
+    Lmicroseconds             // microsecond resolution: 01:23:23.123123.  assumes Ltime.
+    Llongfile                 // full file name and line number: /a/b/c/d.go:23
     // etc.
   )
 
-See [[https://pkg.go.dev/log#pkg-constants][the `log` package]]
+Those bit fields can then act as flags and be combined via bitwise integer operations:
+
+  log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Llongfile)
 
 
 
@@ -1396,7 +1399,7 @@ The code above is roughly equivalent to the following:
     return count, err
   }
 
-Named results can [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/context/context.go;l=179][save you a few lines of code]] but also harm readability. Use named results sparingly for your exported functions, preferably [[https://go.dev/talks/2014/names.slide#10][only when they contribute to the function's documentation]].
+Named results can [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.6:src/context/context.go;l=179][save you a few lines of code]] but also harm readability. Use named results sparingly for your exported functions, preferably [[https://go.dev/talks/2014/names.slide#10][only when they contribute to the function's documentation]].
 
 
 
@@ -2093,7 +2096,7 @@ Exported functions should communicate anticipated failures to client code as val
 
 
 
-* Go's support for testing
+* Go's support for automated testing
 
 Testing plays a key role in the Go ecosystem, and is supported out of the box.
 
@@ -2612,13 +2615,13 @@ For more about strings, see [[https://go.dev/blog/strings][Rob Pike - Strings, b
 
 You will soon be able to also [[https://github.com/golang/go/issues/61405][range over an int]]. Instead of writing the following three-clause loop,
 
-  for i := range 42 {
+  for i := 0; i < 42; i++ {
     // ...
   }
 
 you'll be able to write the following equivalent (but more concise) loop:
 
-  for i := 0; i < 42; i++ {
+  for i := range 42 {
     // ...
   }
 
@@ -2648,7 +2651,8 @@ In array literals, you can write "`...`" in place of the array's length. The com
 
 Go arrays [[https://go.dev/doc/effective_go#arrays][differ significantly from C arrays]]. They're _not_ "reference types". An array value is not a pointer to the first element, but denotes the entire collection.
 
-The zero value of an array type is not `nil` (an invalid value for array types), but an array full of zero values of its element type.
+The zero value of an array type is not `nil` (which an invalid value for array types),
+but an array full of zero values of its element type.
 
 .play -edit src/array_zero.go  /^//START/,/^//END/
 
@@ -3607,6 +3611,7 @@ _Type_parameter_ `T` is constrained by `any` ([[https://pkg.go.dev/builtin#any][
 In other words, `T` can be any type: `bool`, `int`, `string`, etc.
 
 
+
 * A glimpse of parametric polymorphism in Go (cont'd)
 
 You don't need to master generics at this stage of your Go learning, but a basic understanding of their syntax will benefit you.
@@ -3621,26 +3626,133 @@ For more details about parametric polymorphism in Go, see [[https://go.dev/doc/t
 
 
 
-* Methods
+* Why methods matter
 
-Methods are functions that are attached to a specific type.
+As discussed earlier, we need some abstraction for the common functionalities provided by our `github` and `reddit` packages.
 
-They distinguish themselves from _package-level_functions_, e.g.
+This abstraction will take the form of one or more interface types.
 
-  func MatchString(pattern string, s string) (matched bool, err error)
+The key to working with interfaces is _methods_, which simply are functions that are attached to a specific user-defined named type.
 
-by the presence (in a pair of parentheses between the keyword `func` and the method's name) of an extra parameter called the _method's_receiver_:
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
 
-  func (re *Regexp) MatchString(s string) bool
 
-Methods are tightly related to _interfaces_, which are the primary mechanism for polymorphism.
 
-Live demo on [[https://go.dev/play/p/axkpaElUyHI][the Playground]].
+* Declaration of a method
 
-: Now let's talk about methods in Go, so we can turn the `IsValid` and `IsAvailable` functions into methods.
-: * Value receiver vs. pointer receiver
+Methods distinguish themselves from _package-level_functions_ by the presence (between the `func` keyword and the method's name) of an extra parameter:
 
-: A method can have either a value receiver or a pointer receiver.
+  type Counter uint
+
+  func Incr(c Counter) Counter { return c + 1 }    // package-level function
+
+  func (c Counter) Incr() Counter { return c + 1 } // method attached to the Counter type
+
+This special parameter is known as the *method's*receiver*.
+
+
+
+* Restrictions on the type of a method's receiver
+
+A method can only be declared in the same package as the named type that appears in its receiver. Therefore, you can only declare methods for the types under your control!
+
+  func (i int) Shout() { // compilation error: cannot define new methods on non-local type int
+    fmt.Println("Hey!")
+  }
+
+Moreover, the receiver's type cannot be a type whose underlying type is a pointer type,
+
+  type Foo *uint
+
+  func (f Foo) Shout() { // compilation error: invalid receiver type Foo (pointer or interface type)
+    fmt.Println("Hey!")
+  }
+
+or an interface type:
+
+  type Bar interface{}
+
+  func (b Bar) Shout() { // compilation error: invalid receiver type Bar (pointer or interface type)
+    fmt.Println("Hey!")
+  }
+
+
+
+* Naming conventions for methods TODO
+
+method name
+
+receiver, can omit parameter name if no used in the body of the method
+
+
+
+* Calling a method
+
+The syntax for calling a method is what you would expect:
+
+.play -edit src/method_call.go /^//START/,/^//END/
+
+However, Go also provides some syntactic sugar. More about that soon.
+
+
+
+* Evaluation of a method's receiver
+
+The receiver is subject to the same call-by-value semantics as regular parameters are.
+In other words, a method only operates on a copy of its receiver argument:
+
+.play -edit src/method_receiver_call_by_value.go /^//START/,/^//END/
+
+In the example above, the method merely updates a copy of its receiver argument, and this change isn't visible outside the method.
+
+
+
+* Value receivers and pointer receivers
+
+The `Incr` method in the previous example was attached to the `Counter` type. It's said to have a _value_receiver_.
+
+  func (c Counter) Incr() { c++ }
+
+However, in cases where updates to the receiver need to be visible outside the method call, you can instead design your method to have a _pointer_receiver_, i.e. attach the method not to the `*Counter` type:
+
+.play -edit src/method_pointer_receiver.go /^//START/,/^//END/
+
+
+
+* Syntactic sugar surrounding method calls
+
+Did you find something surprising in the previous example? A method attached to type `*Counter` can be called directly on a value of type `Counter`!
+
+.play -edit src/method_syntactic_sugar.go /^//START/,/^//END/
+
+The language provides such syntactic sugar for method calls _whenever_possible_.
+
+
+
+* Syntactic sugar surrounding method calls (cont')
+
+.play -edit src/method_syntactic_sugar_full.go /^//START/,/^//END/
+
+Note the asymmetry:
+
+- you can always call a method attached to type `T` on a `*T` value, but
+- you *cannot* always call a method attached to type `*T` on a `T` value.
+
+
+* Method set of a type
+
+This diagram summarizes Go's syntactic sugar surrounding method calls:
+
+.image img/method_sets.svg 250 _
+
+: https://excalidraw.com/#json=HMWz82tT5EkegrVO7WF6k,Y3ZbH6Y8OpfI1LgSDYE7ww
+
+The _method_set_ of a given type is the set of methods that can always be called on values of that type.  Note that
+
+- the method set of type `T` consists of the methods attached to type `T` *and* the methods attached to type `*T`.
+- the method set of type `*T` consists only of the methods attached to type `*T`.
+
+: * Should you use a value receiver or a pointer receiver?
 
 
 
@@ -4739,7 +4851,7 @@ _Concurrency_safety_ is a property of an operation on a variable of a given type
 
 An operation is _concurrency-safe_ if it can be carried out in a concurrent fashion (from multiple goroutines) without explicit synchronization and and without introducing synchronization bugs.
 
-[[https://tip.golang.org/doc/comment#funcs][By convention]], top-level functions should be designed as concurrency-safe.
+[[https://tip.golang.org/doc/comment#func][By convention]], top-level functions should be designed as concurrency-safe.
 
 However, unless a method (or its whole receiver) is documented to be concurrency-safe, do not assume that it is!
 
@@ -6054,7 +6166,7 @@ If access to some variable or struct field is protected by a mutex, convention d
     mu sync.Mutex
   )
 
-\... or that you leave [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.4:src/context/context.go;l=640][a clarifying comment]]:
+\... or that you leave [[https://cs.opensource.google/go/go/+/refs/tags/go1.21.6:src/context/context.go;l=640][a clarifying comment]]:
 
   type timerCtx struct {
     *cancelCtx
@@ -6138,6 +6250,7 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 
 - [[https://gophers.slack.com][Gophers Slack]]
 - [[https://groups.google.com/g/golang-nuts][golang-nuts Google group]]
+- [[https://stackoverflow.com/questions/tagged/go][Stack Overflow]]
 
 : esp. channels #general, #newbies, and #bestpractices
 
