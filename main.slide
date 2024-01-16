@@ -2419,7 +2419,7 @@ The `defer` keyword allows you to [[https://go.dev/doc/effective_go#defer][coloc
 
 
 
-* A defer pitfall
+* Gotcha: defer statements inside a loop
 
 `defer` is unreasonably convenient and powerful, but must be used with caution.
 
@@ -2444,7 +2444,7 @@ Imagine a case where the function `processFiles` function is called with many pa
 
 
 
-* A defer pitfall (cont'd)
+* Gotcha: defer statements inside a loop (cont'd)
 
 Remember that `defer` is function-based, not block-based. In our earlier example,
 the files will all be closed only when `processFiles` terminates!
@@ -2469,6 +2469,7 @@ One solution is to extract the body of the loop to a smaller function:
       // do something interesting with file...
   }
 
+: we haven't covered loops yet, but think of this loop like a foreach
 : defer is not block-based but function-based!
 : If we pass a large number of files to the `processFiles` function, we could run out of file descriptors.
 : ulimit -n
@@ -3048,7 +3049,7 @@ It also allows you to limit which subtests to run within a given test function, 
 
 .image img/slice_append_before.svg _ 500
 
-: https://excalidraw.com/#json=zmXtzqfMn5wEAJTXOwMbe,P15kQvBq2NqwBCam8chFnw
+: https://excalidraw.com/#json=Jf2l5usIl7U7fcj8GWJJ0,4xyYhfANLHaOYvWWj6KjaA
 
 [[https://pkg.go.dev/builtin#append][A built-in function named "append"]] allows you to add elements to the end of a slice. Its last parameter is variadic, which allows you to add multiple elements in one call:
 
@@ -3440,8 +3441,8 @@ Field access uses the usual dot syntax present in many languages:
 
 
   func main() {
-    u := User{Name: "Julien"}
-    fmt.Println(u.Name) // Julien
+    u := User{firstName: "Julien"}
+    fmt.Println(u.firstName) // Julien
   }
 
 Struct fields are addressable:
@@ -3455,14 +3456,15 @@ Struct fields are addressable:
 Struct fields are also conveniently accessible through a pointer to the struct value in question:
 
   type User struct {
-    Name    string
-    IsAdmin bool
+    firstName string
+    lastName  string
+    isAdmin   bool
   }
 
   func main() {
-    u := &User{Name: "Julien"}
-    fmt.Println((*u).Name) // ok but unnecessary
-    fmt.Println(u.Name)    // syntactic sugar!
+    p := &User{firstName: "Julien"}
+    fmt.Println((*p).firstName) // ok but unnecessary
+    fmt.Println(p.firstName)    // syntactic sugar!
   }
 
 
@@ -3494,7 +3496,7 @@ In the example below, the `firstName` field of struct type `User` is a promoted 
 
 * Exported or unexported fields
 
-The case of a struct field's first letter dictates whether that field is exported.
+The case of the first letter of a field's name dictates whether that field is exported.
 
   type User struct {
     FirstName string
@@ -3504,11 +3506,13 @@ The case of a struct field's first letter dictates whether that field is exporte
 
 Keeping struct fields unexported is the primary mechanism for encapsulation in Go.
 
-Don't export the fields of your package-level struct types (unless you have to, e.g. for JSON decoding).
+Completely encapsulated struct types are _opaque_: they export none of their fields.
+For example, see `time.Time` or `regexp.Regexp`.
 
-Completely encapsulated struct types are _opaque_: they export none of their fields. For example, see `time.Time` or `regexp.Regexp`.
+Don't export the fields of your package-level struct types unless you have to (e.g. for JSON decoding).
 
-To allow clients of your package to manipulate values of such types, provide functions and methods.
+To allow clients of your package to manipulate values of struct types that have non-exported fields, provide methods (like `*regexp.Regexp`'s `MatchString` method) and,
+if needed, factory functions (like `regexp.Compile` and `regexp.MustCompile`).
 
 
 
@@ -3634,7 +3638,7 @@ This abstraction will take the form of one or more interface types.
 
 The key to working with interfaces is _methods_, which simply are functions that are attached to a specific user-defined named type.
 
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/fairy-tale/sage.svg 200 _
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
 
 
@@ -3678,11 +3682,11 @@ or an interface type:
 
 
 
-* Naming conventions for methods TODO
+: * Naming conventions for methods TODO
 
-method name
+: method name
 
-receiver, can omit parameter name if no used in the body of the method
+: receiver, can omit parameter name if no used in the body of the method
 
 
 
@@ -3729,28 +3733,28 @@ The language provides such syntactic sugar for method calls _whenever_possible_.
 
 
 
-* Syntactic sugar surrounding method calls (cont')
+* Syntactic-sugar asymmetry
 
 .play -edit src/method_syntactic_sugar_full.go /^//START/,/^//END/
 
-Note the asymmetry:
+Method `Val` (whose receiver if of type `T`) can be called on a value type of `T` or `*T`.
 
-- you can always call a method attached to type `T` on a `*T` value, but
-- you *cannot* always call a method attached to type `*T` on a `T` value.
+Method `Ptr` (whose receiver is of type `*T`) can be called on any value of type `*T`. However, it can be called on a value of type `T` only if that value is _addressable_.
+
 
 
 * Method set of a type
 
-This diagram summarizes Go's syntactic sugar surrounding method calls:
+The _method_set_ of a given type is the set of methods that can be called on _any_ value of that type.  Again, note the asymmetry:
 
-.image img/method_sets.svg 250 _
+- The method set of type `T` consists of the methods attached to type `T` *and* the methods attached to type `*T`.
+- The method set of type `*T` consists only of the methods attached to type `*T`.
+
+.image img/method_sets.svg 300 _
 
 : https://excalidraw.com/#json=HMWz82tT5EkegrVO7WF6k,Y3ZbH6Y8OpfI1LgSDYE7ww
 
-The _method_set_ of a given type is the set of methods that can always be called on values of that type.  Note that
 
-- the method set of type `T` consists of the methods attached to type `T` *and* the methods attached to type `*T`.
-- the method set of type `*T` consists only of the methods attached to type `*T`.
 
 : * Should you use a value receiver or a pointer receiver?
 
@@ -3758,15 +3762,15 @@ The _method_set_ of a given type is the set of methods that can always be called
 
 * Namecheck project: turn IsValid and IsAvailable into methods
 
-Let's pave the way for the introduction of useful interface types in our project and create, for each supported platform, a type for checking username validity and availability.
+To pave the way for useful interface types in our project, let's create, for each supported platform, a type for checking username validity and availability.
 
-1. In the `github` package, declare a `GitHub` type based on an empty struct.
+1. In the `github` package, declare a `GitHub` type based (for now) on an empty struct.
 
-2. Turn `IsValid` and `IsAvailable` into methods on that type (use a pointer receiver).
+2. Turn `IsValid` and `IsAvailable` into methods attached to the `*GitHub` type.
 
 3. Adjust your tests in `github_test.go` and `main.go`.
 
-4. Repeat steps 1-4 for the `reddit` package.
+4. Repeat steps 1-3 for the `reddit` package.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 

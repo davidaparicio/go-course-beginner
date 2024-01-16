@@ -3,13 +3,12 @@ package main
 // START OMIT
 type T int
 
-func (t T) Val() {}
-
-func (t *T) Ptr() {}
+func (t T) Val()  {} // method with value receiver
+func (t *T) Ptr() {} // method with pointer receiver
 
 func main() {
 	var v T = 42
-	p := &v // of type *T
+	p := &v // p is of type *T
 
 	v.Val()
 	p.Ptr()
