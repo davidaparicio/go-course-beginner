@@ -3094,7 +3094,7 @@ However, in this case (since you know in advance what the final length is), all 
 
 
 
-* Aliasing
+* Slice aliasing
 
 Bear in mind that multiple slices may share the same backing array. In this case, a change to an element of one such slice will be reflected in the other slices:
 
@@ -3106,10 +3106,9 @@ In particular, when you pass a slice to a function, the function operates on a c
 
 
 
-* Inadvertent slice decoupling
+* Inadvertent slice de-aliasing
 
 However, remember that the slice returned by `append` may well have a different backing array from that of the original slice:
-
 
 .play -edit src/slice_aliasing.go  /^//START/,/^//END/
 
@@ -3723,7 +3722,7 @@ However, in cases where updates to the receiver need to be visible outside the m
 
 
 
-* Syntactic sugar surrounding method calls
+* Syntactic sugar for calling a method
 
 Did you find something surprising in the previous example? A method attached to type `*Counter` can be called directly on a value of type `Counter`!
 
@@ -3733,13 +3732,15 @@ The language provides such syntactic sugar for method calls _whenever_possible_.
 
 
 
-* Syntactic-sugar asymmetry
+* Asymmetry surrounding method calls
 
 .play -edit src/method_syntactic_sugar_full.go /^//START/,/^//END/
 
 Method `Val` (whose receiver if of type `T`) can be called on a value type of `T` or `*T`.
 
-Method `Ptr` (whose receiver is of type `*T`) can be called on any value of type `*T`. However, it can be called on a value of type `T` only if that value is _addressable_.
+Method `Ptr` (whose receiver is of type `*T`) can be called on any value of type `*T`.
+
+However, because not all values are _addressable_, there is an asymmetry: method `Ptr` can be called on a value of type `T` only if that value has an address.
 
 
 
@@ -3811,20 +3812,6 @@ Although we won't revisit this subtlety, be aware that, since the advent of gene
   var ord cmp.Ordered // compilation error
 
 : what matters are the names and signatures of the methods required by the interface.
-
-
-
-* Interface types are comparable
-
-Basic interfaces are comparable.
-
-If you (correctly) guessed that `error` is an interface type, you already knew this. If basic interfaces weren't comparable, you indeed wouldn't be able to compare error values:
-
-  if err != io.EOF {
-    // ...
-  }
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/party/music.svg 200 _
 
 
 
@@ -4188,6 +4175,22 @@ An interface value essentially [[https://research.swtch.com/interfaces][holds tw
 Here are some simple examples:
 
 .play -edit src/interface_nature.go /^//START/,/^//END/
+
+
+
+* Interface types are comparable, but beware
+
+Basic interfaces are comparable.
+
+You may have (correctly) guessed it already, but `error` is an interface type. If `error` weren't comparable, you wouldn't be able to compare arbitrary `error` values:
+
+  if err != io.EOF {
+    // ...
+  }
+
+Beware, though: comparing two interface values sharing the same dynamic type panics if that dynamic type is not itself comparable:
+
+.play -edit src/interface_comparable.go /^//START/,/^//END/
 
 
 
