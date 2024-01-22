@@ -3,8 +3,8 @@ package main
 // START OMIT
 type T int
 
-func (t T) Val()  {} // method with value receiver
-func (t *T) Ptr() {} // method with pointer receiver
+func (t T) Val()  {} // method with value receiver ("value method")
+func (t *T) Ptr() {} // method with pointer receiver ("pointer method")
 
 func main() {
 	var v T = 42

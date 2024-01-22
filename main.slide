@@ -3573,8 +3573,8 @@ A [[https://en.wikipedia.org/wiki/Binary_tree][binary tree]] is made up of nodes
 
 3. In your `main` function, declare a `Tree` value that corresponds to the tree shown above, then print that value.
 
-
 : https://excalidraw.com/#json=b_AryM5iFA9oUa2kMT6sd,saZDan7wON3vgjTYRDYsgQ
+
 
 
 * Exercise: design a binary tree (cont'd)
@@ -3712,19 +3712,21 @@ In the example above, the method merely updates a copy of its receiver argument,
 
 * Value receivers and pointer receivers
 
-The `Incr` method in the previous example was attached to the `Counter` type. It's said to have a _value_receiver_.
+The `Incr` method in the previous example was attached to the `Counter` type. The method is said to have a _value_receiver_ and is [[https://go.dev/doc/effective_go#pointers_vs_values][colloquially known as a "value method"]]:
 
   func (c Counter) Incr() { c++ }
 
-However, in cases where updates to the receiver need to be visible outside the method call, you can instead design your method to have a _pointer_receiver_, i.e. attach the method not to the `*Counter` type:
+However, in cases where updates to the receiver need to be visible outside the method call, the method can instead be attached to the `*Counter` type. It is then said to have a _pointer_receiver_ and is [[https://go.dev/doc/effective_go#pointers_vs_values][colloquially known as a "pointer method"]]:
 
 .play -edit src/method_pointer_receiver.go /^//START/,/^//END/
+
+: anything surprising?
 
 
 
 * Syntactic sugar for calling a method
 
-Did you find something surprising in the previous example? A method attached to type `*Counter` can be called directly on a value of type `Counter`!
+Perhaps surprisingly, a method with receiver type `*Counter` can be called directly on a value of type `Counter`!
 
 .play -edit src/method_syntactic_sugar.go /^//START/,/^//END/
 
@@ -3732,28 +3734,48 @@ The language provides such syntactic sugar for method calls _whenever_possible_.
 
 
 
+* Exercise: turn functions operating on a binary tree into methods
+
+1. Open [[https://go.dev/play/p/Wwy4gr9Az1_W][the solution]] to the previous exercise on binary trees.
+
+2. Turn the `Size` and `Sum` functions into a methods on type `*Tree`.
+
+3. Adjust the `main` function accordingly.
+
+4. Try calling the two methods on a `nil` `*Tree`. Any panic? Explain.
+
+A solution is available on the [[https://go.dev/play/p/Vt6GW4o6MHC][Go Playground]].
+
+.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
+
+
+
 * Asymmetry surrounding method calls
 
 .play -edit src/method_syntactic_sugar_full.go /^//START/,/^//END/
 
-Method `Val` (whose receiver if of type `T`) can be called on a value type of `T` or `*T`.
+Method `Val` (with receiver type `T`) can be called on a value type of `T` or `*T`.
 
-Method `Ptr` (whose receiver is of type `*T`) can be called on any value of type `*T`.
+Method `Ptr` (with receiver type `*T`) can be called on any value of type `*T`.
 
 However, because not all values are _addressable_, there is an asymmetry: method `Ptr` can be called on a value of type `T` only if that value has an address.
+
+: value method vs. pointer method
 
 
 
 * Method set of a type
 
-The _method_set_ of a given type is the set of methods that can be called on _any_ value of that type.  Again, note the asymmetry:
+The _method_set_ of a given type is the set of methods that can be called on _any_ value of that type. As seen before,
 
-- The method set of type `T` consists of the methods attached to type `T` *and* the methods attached to type `*T`.
-- The method set of type `*T` consists only of the methods attached to type `*T`.
+- The method set of type `*T` consists of all methods with receiver type `*T` or `T`;
+- The method set of type `T` consists only of all methods with receiver type `T`.
+
+Note the asymmetry: the method set of `*T` includes that of `T`, but the reverse is not true.
 
 .image img/method_sets.svg 300 _
 
-: https://excalidraw.com/#json=HMWz82tT5EkegrVO7WF6k,Y3ZbH6Y8OpfI1LgSDYE7ww
+: https://excalidraw.com/#json=2-YtKiMfcZKwlFf6FD5IV,w4uMnhUxg0THUyGrcX0w0w
 
 
 
@@ -4433,7 +4455,7 @@ This superpower of Go interfaces is [[https://medium.com/@matryer/5-simple-tips-
 
 1. In `main.go`, judiciously populate your `[]Checker` slice with twenty pointers to the same `github.GitHub` variable.
 
-2. Similarly, populate your slice of checkers with twenty pointers to the same `github.GitHub` instance.
+2. Similarly, populate your slice of checkers with twenty pointers to the same `reddit.Reddit` instance.
 
 3. Run your executable. Is it fast enough?
 
@@ -4728,7 +4750,7 @@ The [[https://pkg.go.dev/sync][`sync` package]] provides a useful mechanism: _wa
 
 A wait group implements something like a [[https://en.wikipedia.org/wiki/Barrier_(computer_science)][_barrier_]]: it allows you to wait for a group of goroutines to terminate before moving on.
 
-Wait groups are particularly useful when you don't known in advancec how many goroutines you're going to start.
+Wait groups are particularly useful when you don't known in advance how many goroutines you're going to start.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/arts/upright.svg 200 _
 
@@ -5532,7 +5554,7 @@ However, in cases where a function [[https://go.dev/talks/2012/10things.slide#10
 
 
 
-* A simple HTTP handler (Go 1.22)
+* A simple HTTP handler
 
 You can define a `net/http` handler as a package-level function:
 
@@ -5615,15 +5637,15 @@ This bug is particularly insidious because it will only manifest itself under su
 
 * Namecheck project: turn your CLI tool into a Web server (cont'd)
 
-4. Adjust `handleCheck`'s implementation:
+5. Adjust `handleCheck`'s implementation:
 
 - If the client provided no username via a query param named "`username`",
-  write a `400`Bad`Request` response and terminate the handler.
+  send an empty response with status code `400`Bad`Request` and terminate the handler.
 - Otherwise, write your slice of results in the response. Hint: use `fmt.Fprint`.
 
-5. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on pattern `GET`/check`, then start the server on port 8080.
+6. Add a `main` function in `cmd/server/main.go`. In it, register your `handleCheck` handler on pattern `GET`/check`, then start the server on port 8080.
 
-6. Run the program and hit the `/check` endpoint, e.g. by visiting [[http://localhost:8080/check?username=jub0bs][http://localhost:8080/check?username=jub0bs]] in your browser:
+7. Run the program and hit the `/check` endpoint, e.g. by visiting [[http://localhost:8080/check?username=jub0bs][http://localhost:8080/check?username=jub0bs]] in your browser.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/superhero/gotham.svg 150 _
 
@@ -5665,7 +5687,7 @@ Decoding some JSON object to a Go variable words in a similar way:
 
 .play -edit src/json_encoding.go /^//START3/,/^//END3/
 
-The use of a local variable whose type is an anynomous struct is pretty common.
+The use of a local variable whose type is an anonymous struct is pretty common.
 
 Create a `json.Decoder` that reads from the body of the handler's `*http.Request`,
 then pass a pointer to the variable to its `Decode` method.
@@ -5700,7 +5722,7 @@ This command downloads and caches the module locally in `$GOPATH/pkg/mod`.
 
 Running that `go`get` command adds the following line to your `go.mod` file:
 
-  require github.com/jub0bs/fcors v0.6.0 // indirect
+  require github.com/jub0bs/fcors v0.7.0 // indirect
 
 Note the presence of an "indirect" comment, which indicates that you're not (yet?) directly depending on that module in your code.
 
