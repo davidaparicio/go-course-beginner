@@ -1059,7 +1059,7 @@ For convenience, Go allows you to group declarations of related constants in blo
 
 * iota: the constant generator
 
-The predeclared name [[https://pkg.go.dev/builtin#iota][`iota`]] 
+The predeclared name [[https://pkg.go.dev/builtin#iota][`iota`]]
 
 Go has no [[https://en.wikipedia.org/wiki/Enumerated_type][enums]], but you can declare a set of related constants as a [[https://go.dev/play/p/fMT2U4xnydk][type-unsafe]] ersatz of an enum.
 
@@ -1075,7 +1075,7 @@ The `iota` is useful for doing so:
 
 See [[https://pkg.go.dev/time#Month][`time.Month`]] and [[https://pkg.go.dev/net/http#SameSite][`http.SameSite`]] for examples from the standard library.
 
-: typically, named type whose underlying type is int
+: typically, defined type whose underlying type is int
 : no automatic String method
 
 
@@ -3635,7 +3635,7 @@ As discussed earlier, we need some abstraction for the common functionalities pr
 
 This abstraction will take the form of one or more interface types.
 
-The key to working with interfaces is _methods_, which simply are functions that are attached to a specific user-defined named type.
+The key to working with interfaces is _methods_, which simply are functions that are attached to a specific user-defined type.
 
 .image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
 
@@ -3653,17 +3653,56 @@ Methods distinguish themselves from _package-level_functions_ by the presence (b
 
 This special parameter is known as the *method's*receiver*.
 
+Note that, as illustrated above, receiver types are not limited to struct types.
+
+Also, if the method needs not access its receiver argument, you can omit to specify a name for the receiver in the method declaration:
+
+  func (Counter) SayHello() { fmt.Println("Hello!") }
+
+: methods on a function type: https://www.youtube.com/watch?v=yeetIgNeIkc&t=7m30s
+
 
 
 * Restrictions on the type of a method's receiver
 
-A method can only be declared in the same package as the named type that appears in its receiver. Therefore, you can only declare methods for the types under your control!
+The type that appears in a method's receiver must be a package-level defined type:
+
+  type Counter uint
+  func (c Counter) Incr() Counter { return c + 1 } // ok
+
+  func main() {
+    // no way to attach methods to a type not declared at package level
+    type Celsius float64
+
+    // no way to attach methods to an anonymous type
+    var data struct {
+      Username string `json:"username"`
+    }{
+      Username: "jub0bs",
+    }
+    // ...
+  }
+
+
+
+* Restrictions on the type of a method's receiver (cont'd)
+
+Moreover, that type must be declared in the same package as its methods:
+
+  type Counter uint
+  func (c Counter) Incr() Counter { return c + 1 } // ok
 
   func (i int) Shout() { // compilation error: cannot define new methods on non-local type int
     fmt.Println("Hey!")
   }
 
-Moreover, the receiver's type cannot be a type whose underlying type is a pointer type,
+In other words, you can only declare methods for the types that are under your control!
+
+
+
+* Restrictions on the type of a method's receiver (cont'd)
+
+Furthermore, the type of a method receiver cannot be based on a pointer type:
 
   type Foo *uint
 
@@ -3671,7 +3710,7 @@ Moreover, the receiver's type cannot be a type whose underlying type is a pointe
     fmt.Println("Hey!")
   }
 
-or an interface type:
+Also, the type of a method receiver cannot be an interface type:
 
   type Bar interface{}
 
@@ -3681,11 +3720,60 @@ or an interface type:
 
 
 
-: * Naming conventions for methods TODO
+* Naming conventions for methods
 
-: method name
+Naming conventions for methods are essentially the same as for package-level functions, although method names often are shorter.
 
-: receiver, can omit parameter name if no used in the body of the method
+Prefixing the name of accessors and mutators by "Get" and "Set" is unidiomatic in Go:
+
+  type User struct { name string }
+
+  func (u User) GetName() string { return u.name } // bad
+
+  func (u User) Name() string { return u.name }    // better
+
+
+
+* Restrictions on method names
+
+Because the fields and methods of a struct type share the same namespace, no name collision is allowed between them:
+
+  type User struct { Spouse *User }
+
+  // compilation error: field and method with the same name Spouse
+  func (u User) Spouse() *User { return nil }
+
+Bear in mind that Go doesn't support [[https://en.wikipedia.org/wiki/Function_overloading][_function_overloading_]]. In particular, two methods of the same type but with different signatures cannot have the same name:
+
+  type Counter uint
+
+  func (c Counter) Incr() Counter { return c + 1 }
+
+  // compilation error: method Counter.Incr already declared at ...
+  func (c Counter) Incr(delta uint) Counter {
+    return c + Counter(delta)
+  }
+
+
+
+* Naming conventions for method receivers
+
+Resist the temptation to name method receivers "this" or "self".
+
+Idiomatic names for a method receiver are [[https://go.dev/wiki/CodeReviewComments#receiver-names][abbreviations derived from the type name]]:
+
+  func (counter Counter) Incr() Counter { return c + 1 } // unnecessarily verbose
+  func (c Counter) Incr() Counter { return c + 1 }       // good
+
+[[https://tip.golang.org/doc/comment#func][To avoid needless variation]] in the package's documentation, use a [[https://go.dev/talks/2014/names.slide#11][consistent receiver name]] across all methods of a given type:
+
+  // bad
+  func (c Counter) Incr() Counter { return c + 1 }
+  func (cntr Counter) Decr() Counter { return c - 1 }
+
+  // good
+  func (c Counter) Incr() Counter { return c + 1 }
+  func (c Counter) Decr() Counter { return c - 1 }
 
 
 
@@ -3768,12 +3856,12 @@ However, because not all values are _addressable_, there is an asymmetry: method
 
 The _method_set_ of a given type is the set of methods that can be called on _any_ value of that type. As seen before,
 
-- The method set of type `*T` consists of all methods with receiver type `*T` or `T`;
-- The method set of type `T` consists only of all methods with receiver type `T`.
-
-Note the asymmetry: the method set of `*T` includes that of `T`, but the reverse is not true.
+- The method set of type `T` consists only of all methods with receiver type `T`;
+- The method set of type `*T` consists of all methods with receiver type `T` or `*T`.
 
 .image img/method_sets.svg 300 _
+
+Note the asymmetry: the method set of `*T` includes that of `T`, but the reverse is not true.
 
 : https://excalidraw.com/#json=2-YtKiMfcZKwlFf6FD5IV,w4uMnhUxg0THUyGrcX0w0w
 
@@ -6236,25 +6324,27 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 
 * Additional learning resources
 
-*Spec*: [[https://go.dev/ref/spec][the Go programming language specification]]
+*Official*:
 
-*Development*: [[https://github.com/golang/go]] (issues, proposals, etc.)
-
-*Blogs*
-
+- [[https://go.dev/ref/spec][the Go programming language specification]]
+- [[https://github.com/golang/go]] (issues, proposals, etc.)
+- [[https://pkg.go.dev]] (documentation of first- and third-party libraries)
 - [[https://go.dev/blog][the (official) Go blog]]
+
+*Blogs*:
+
 - [[https://www.ardanlabs.com/blog/][ArdanLabs' blog]]
 - [[https://dave.cheney.net/][Dave Cheney's blog]] (no longer active but still good)
 - [[https://rakyll.org/][Rakyll's blog]] (no longer active but still good)
+
+
+
+* Additional learning resources (cont'd)
 
 *Books*
 
 - [[https://katherine.cox-buday.com/concurrency-in-go/][Katherine Cox-Buday - Concurrency in Go]] (2017)
 - [[https://www.gopl.io/][Donovan & Kernighan - The Go programming language]] (2015)
-
-
-
-* Additional learning resources (cont'd)
 
 *Podcast*: [[https://changelog.com/gotime][Go Time (The Changelog)]]
 
@@ -6266,14 +6356,14 @@ You've learned a lot, but there is [[https://www.humancoders.com/formations/go-a
 - [[https://www.youtube.com/@GopherConEurope][GopherCon Europe]]
 - [[https://www.youtube.com/@GopherConUK][GopherCon UK]]
 
+
+
+* Additional learning resources (cont'd)
+
 *Video*courses*:
 
 💲 [[https://www.oreilly.com/library/view/ultimate-go-programming/9780135261651/][Bill Kennedy - Ultimate Go 2]] (2018)
 💲 [[https://www.oreilly.com/library/view/introduction-to-go/9781491913871/][John Graham-Cumming - Introduction to Go Programming]] (2014)
-
-
-
-* Additional learning resources (cont'd)
 
 *Online*community*:
 
