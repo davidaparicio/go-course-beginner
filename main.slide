@@ -960,7 +960,7 @@ Identifiers in Go [[https://go.dev/ref/spec#Identifiers][must]] start with a Uni
 
   identifier = letter { letter | unicode_digit } .
 
-You should [[https://github.com/golang/go/wiki/CodeReviewComments#variable-names][strive for conciseness]]; [[https://go.dev/talks/2014/names.slide#4][the smaller the scope, the shorter the name]].
+You should [[https://go.dev/wiki/CodeReviewComments#variable-names][strive for conciseness]]; [[https://go.dev/talks/2014/names.slide#4][the smaller the scope, the shorter the name]].
 
   var index int // too verbose?
   var i int     // likely preferable
@@ -1597,7 +1597,7 @@ By avoiding the `else` keyword and eliminating failure cases as they arise, you 
 
 For more about this idiom and its relevance in Go, consult the following resources:
 
-- [[https://github.com/golang/go/wiki/CodeReviewComments#indent-error-flow][Go Code Review Comments - Indent Error Flow]]
+- [[https://go.dev/wiki/CodeReviewComments#indent-error-flow][Go Code Review Comments - Indent Error Flow]]
 - [[https://go.dev/talks/2013/bestpractices.slide#3][Francesc Campoy Flores - Twelve Go Best Practices]]
 - [[https://medium.com/@matryer/line-of-sight-in-code-186dd7cdea88][Mat Ryer - Code: Align the happy path to the left edge]]
 - [[https://dave.cheney.net/2019/07/09/clear-is-better-than-clever][Dave Cheney - Clear is better than clever]]
@@ -1731,7 +1731,7 @@ Note the parallel between these two couples of functions:
 
 Convention dictates that error messages
 
-- [[https://github.com/golang/go/wiki/CodeReviewComments#error-strings][be lowercase]],
+- [[https://go.dev/wiki/CodeReviewComments#error-strings][be lowercase]],
 - not contain line breaks,
 - be of the form "<package-name>: <human-readable-error-message>".
 
@@ -2769,7 +2769,7 @@ You can also use the built-in `make` function to initialize a slice of a desired
 
 Slice are "reference types". Their zero value is `nil`.
 
-A `nil` slice is distinct from, but functionally equivalent to, an empty slice. [[https://github.com/golang/go/wiki/CodeReviewComments#declaring-empty-slices][Convention]] dictates that you do not differentiate a `nil` slice from an empty slice in your code.
+A `nil` slice is distinct from, but functionally equivalent to, an empty slice. [[https://go.dev/wiki/CodeReviewComments#declaring-empty-slices][Convention]] dictates that you do not differentiate a `nil` slice from an empty slice in your code.
 
 .play -edit src/slice_zero.go  /^//START/,/^//END/
 
@@ -3027,7 +3027,7 @@ It also allows you to limit which subtests to run within a given test function, 
   go test -v -run='^TestIsValid/too.*' ./...
 
 : Run method: results of each subtest detailed in output
-: https://github.com/golang/go/wiki/TableDrivenTests
+: https://go.dev/wiki/TableDrivenTests
 
 
 
@@ -3625,19 +3625,7 @@ You may never write generic code yourself, but you will likely use some of the s
 
 For more details about parametric polymorphism in Go, see [[https://go.dev/doc/tutorial/generics][Tutorial: Getting started with generics]].
 
-👉 Now, let's learn about methods, which are the key to interfaces.
-
-
-
-* Why methods matter
-
-As discussed earlier, we need some abstraction for the common functionalities provided by our `github` and `reddit` packages.
-
-This abstraction will take the form of one or more interface types.
-
-The key to working with interfaces is _methods_, which simply are functions that are attached to a specific user-defined type.
-
-.image https://raw.githubusercontent.com/egonelbre/gophers/master/vector/friends/heart-hug.svg 200 _
+👉 Now, let's learn about methods.
 
 
 
@@ -3660,6 +3648,30 @@ Also, if the method needs not access its receiver argument, you can omit to spec
   func (Counter) SayHello() { fmt.Println("Hello!") }
 
 : methods on a function type: https://www.youtube.com/watch?v=yeetIgNeIkc&t=7m30s
+
+
+
+* Methods are the key to interfaces
+
+We need some abstraction for the similar behaviors provided by our `github` and `reddit` packages. This abstraction will take the form of one or more interface types.
+
+_Methods_ are the mechanism through which concrete types can satisfy basic interfaces:
+
+  type Rectangle struct { width, height float64 }
+
+  func (r Rectangle) Area() float64 {
+    return r.width * r.height
+  }
+
+  type Circle struct { radius float64 }
+
+  func (c Circle) Area() float64 {
+    return math.Pi * c.radius * c.radius
+  }
+
+  type Shape interface {
+    Area() float64
+  }
 
 
 
@@ -3868,6 +3880,31 @@ Note the asymmetry: the method set of `*T` includes that of `T`, but the reverse
 
 
 : * Should you use a value receiver or a pointer receiver?
+
+
+
+* Methods are great for dependency injection
+
+Whatever dependencies the method needs can indeed conveniently be [[https://en.wikipedia.org/wiki/Dependency_injection]["injected"]] ahead of time in its receiver.
+
+For example, imagine a function that needs to send HTTP requests. As discussed, hardcoding a HTTP client in it would not be a good idea.
+
+  func IsAvailable(username string) (bool, error) {
+    res, err := http.Get("https://github.com/" + username)
+    // ...
+
+Instead, the function be turned into a method and the HTTP client could be injected in the method's receiver:
+
+  type GitHub struct {
+    Client ??? // some type corresponding to the HTTP client
+  }
+
+  func (gh *GitHub) IsAvailable(username string) (bool, error) {
+    res, err := gh.Client.Get("https://github.com/" + username)
+    // ...
+
+: to promote decoupling from the client, don't hardcode it
+: Reducing methods to functions coated in syntactic sugar is tempting, but you would be overlooking their power!
 
 
 
@@ -4730,7 +4767,7 @@ Therefore, because a goroutine lacks an ID, it cannot readily be _killed_.
 
 * Use the go keyword judiciously
 
-Before spawning a new goroutine, you must understand exactly under what conditions it will terminate. See [[https://github.com/golang/go/wiki/CodeReviewComments#goroutine-lifetimes][CodeReviewComments - Goroutine lifetimes]].
+Before spawning a new goroutine, you must understand exactly under what conditions it will terminate. See [[https://go.dev/wiki/CodeReviewComments#goroutine-lifetimes][CodeReviewComments - Goroutine lifetimes]].
 
 Goroutines may be cheap, but they're not free. If your program carelessly spawns goroutines, it is at risk of _leaking_goroutines_, i.e. accumulating "zombie" goroutines that never terminate!
 
@@ -5081,7 +5118,7 @@ The following function, [[https://go.dev/play/p/LzZiizWD205?v=1.21][in older ver
 
 .code src/per_loop_iteration_variables.go /^//START/,/^//END/
 
-Before v1.22, [[https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables][iteration variables indeed had _per-loop_ rather than _per-iteration_ scope]].
+Before v1.22, [[https://go.dev/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables][iteration variables indeed had _per-loop_ rather than _per-iteration_ scope]].
 Therefore, variable `i` is shared between `main` (which updates it) and the ten goroutines (which read it)! 😱
 
 This unfortunate behavior caused so many bugs that [[https://www.youtube.com/watch?v=v24wrd3RwGo&t=20m38s][the Go team recently decided to take action]] by [[https://go.dev/blog/loopvar-preview][changing the semantics of loop variables in Go 1.22]]. 😌
@@ -6194,7 +6231,7 @@ What could be further improved?
 
 Go encourages you to use channels to communicate data between goroutines.
 
-However, [[https://github.com/golang/go/wiki/MutexOrChannel][sharing memory can sometimes be simpler and/or more performant]].
+However, [[https://go.dev/wiki/MutexOrChannel][sharing memory can sometimes be simpler and/or more performant]].
 
 Go's standard library provides two main mechanisms for sharing memory:
 
